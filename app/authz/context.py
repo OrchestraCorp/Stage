@@ -1,8 +1,17 @@
-"""Trusted, immutable authorization input objects."""
+"""Trusted server-side authorization inputs; these are not request DTOs.
+
+The authenticated principal and selected assignment must be loaded by a service.
+Resource organization, scope ancestors, relations, attributes and delegation are
+read from authoritative state, never accepted as claims from a client or Agent.
+References are globally namespaced; loaders must additionally filter by tenant.
+Frozen inputs prevent accidental reassignment, not forged or stale evidence.
+Write commands must recheck critical facts and versions inside their transaction.
+"""
 
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
+from app.authz.permissions import BUILTIN_POLICY_RELEASE_ID
 from app.core.enums import PrincipalType
 
 
@@ -18,6 +27,31 @@ def utc_or_none(value: datetime | None) -> datetime | None:
     return value.astimezone(UTC)
 
 
+def validity_failure(
+    now: datetime,
+    *,
+    valid_from: datetime | None,
+    expires_at: datetime | None,
+    status: str,
+    revoked_at: datetime | None = None,
+) -> str | None:
+    """Describe a validity failure without conflating revocation with expiry."""
+    if revoked_at is not None or status == "revoked":
+        return "revoked"
+    if status != "active":
+        return "inactive"
+    if not is_aware(now) or any(value is not None and not is_aware(value) for value in (valid_from, expires_at)):
+        return "time.invalid"
+    start, end = utc_or_none(valid_from), utc_or_none(expires_at)
+    if start is not None and end is not None and start >= end:
+        return "time.invalid_window"
+    if start is not None and now < start:
+        return "not_yet_valid"
+    if end is not None and now >= end:
+        return "expired"
+    return None
+
+
 @dataclass(frozen=True)
 class RoleAssignment:
     assignment_ref: str
@@ -29,19 +63,19 @@ class RoleAssignment:
     expires_at: datetime | None = None
     status: str = "active"
 
+    def inactive_reason_at(self, now: datetime) -> str | None:
+        return validity_failure(now, valid_from=self.valid_from, expires_at=self.expires_at, status=self.status)
+
     def is_active_at(self, now: datetime) -> bool:
-        if not is_aware(now) or self.status != "active":
-            return False
-        now_utc = now.astimezone(UTC)
-        start = utc_or_none(self.valid_from)
-        end = utc_or_none(self.expires_at)
-        if self.valid_from is not None and not is_aware(self.valid_from):
-            return False
-        if self.expires_at is not None and not is_aware(self.expires_at):
-            return False
-        return not (start is not None and now_utc < start) and not (end is not None and now_utc >= end)
+        return self.inactive_reason_at(now) is None
 
     def covers(self, *, organization_ref: str, resource_scopes: tuple[str, ...]) -> bool:
+        """Match an explicitly granted scope against authoritative ancestors.
+
+        ``organization_ref`` establishes tenant identity; it is not itself a
+        grant. An organization-wide scope must be explicitly assigned rather
+        than appended automatically to every department assignment.
+        """
         if not organization_ref or organization_ref != self.organization_ref:
             return False
         if not self.scope_refs or not resource_scopes:
@@ -63,13 +97,17 @@ class Delegation:
     revoked_at: datetime | None = None
     status: str = "active"
 
+    def inactive_reason_at(self, now: datetime) -> str | None:
+        return validity_failure(
+            now,
+            valid_from=self.valid_from,
+            expires_at=self.expires_at,
+            status=self.status,
+            revoked_at=self.revoked_at,
+        )
+
     def is_active_at(self, now: datetime) -> bool:
-        if not is_aware(now) or not is_aware(self.valid_from) or not is_aware(self.expires_at):
-            return False
-        now_utc = now.astimezone(UTC)
-        if self.status != "active" or self.revoked_at is not None:
-            return False
-        return self.valid_from.astimezone(UTC) <= now_utc < self.expires_at.astimezone(UTC)
+        return self.inactive_reason_at(now) is None
 
     def permits(self, *, action: str, resource_ref: str, organization_ref: str) -> bool:
         return (
@@ -89,16 +127,7 @@ class RelationTuple:
     status: str = "active"
 
     def is_active_at(self, now: datetime) -> bool:
-        if not is_aware(now) or self.status != "active":
-            return False
-        now_utc = now.astimezone(UTC)
-        start = utc_or_none(self.valid_from)
-        end = utc_or_none(self.expires_at)
-        if self.valid_from is not None and not is_aware(self.valid_from):
-            return False
-        if self.expires_at is not None and not is_aware(self.expires_at):
-            return False
-        return not (start is not None and now_utc < start) and not (end is not None and now_utc >= end)
+        return validity_failure(now, valid_from=self.valid_from, expires_at=self.expires_at, status=self.status) is None
 
 
 @dataclass(frozen=True)
@@ -109,7 +138,6 @@ class AttributeContext:
     object_version: int | None = None
     expected_object_version: int | None = None
     resource_state: str | None = None
-    allowed_resource_states: tuple[str, ...] = ()
     delegation_active: bool | None = None
     delegator_active: bool | None = None
 
@@ -128,7 +156,7 @@ class AuthorizationContext:
     relations: tuple[RelationTuple, ...] = ()
     now: datetime | None = None
     attributes: AttributeContext = AttributeContext()
-    policy_release_id: str = "unreleased"
+    policy_release_id: str = BUILTIN_POLICY_RELEASE_ID
     delegation: Delegation | None = None
 
     @property

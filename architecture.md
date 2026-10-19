@@ -6,12 +6,12 @@ status: architecture-proposal
 classification: internal
 owner_role: Stage 产品设计责任岗位（待指定）
 policy_effect: none
-implementation_status: not-started
+implementation_status: foundation
 ---
 
 # Stage 组织运行与热协作架构初稿
 
-本文将已明确的 OrchestraCorp 方向转成 Stage 的首轮产品设计。六个能力域、对象划分、流程和实施顺序属于本轮提案，尚未实现或全部定案；不表示已建立数据库、API、运行 Agent 或真实企业。
+本文将已明确的 OrchestraCorp 方向转成 Stage 的首轮产品设计。当前已建立 Python/FastAPI 工程底板、纯授权内核、基础模型和迁移、健康检查及测试门禁；六个能力域的完整业务流程、运行 Agent 与真实企业接入仍属提案，未实现或全部定案。
 
 ## 1. 定位与已有设计输入
 
@@ -169,7 +169,7 @@ Stage 保存当前上下文与受限过程证据；正式 SOP、Skill 和知识�
 
 首版不实现完整 ERP、财务/合同账本、全行业流程库、薪酬自动结算、第三方 Agent 市场或全功能流程编排。贡献可先记录证据与责任，不从任务计数自动推导奖励。
 
-实现结构优先考虑模块边界清楚的后端与独立执行 worker；语言、数据库、队列、身份提供方和部署形态仍未选择。Stage 是否必须自托管、哪些场景需离线、首版用户规模与保留期限也需要后续确定，不由本轮文档推断成已确认需求。
+底板采用 Python 3.12、FastAPI、SQLAlchemy async 和 Alembic；MySQL 为默认生产目标，PostgreSQL 为另一生产目标，SQLite 用于开发测试，Redis 仅有依赖尚未接入。已补存储类型适配与双库 CI，实际数据库兼容以对应验收结果为准。业务结构优先保持模块化后端，队列、身份提供方、独立 worker 及部署形态仍待确定。Stage 是否必须自托管、哪些场景需离线、首版用户规模与保留期限也需要后续确定。
 
 ## 11. 来源、未决问题与复核
 

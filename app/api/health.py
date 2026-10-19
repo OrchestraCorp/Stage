@@ -1,6 +1,5 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 
-from app.core.config import settings
 from app.core.schemas import HealthResponse
 
 router = APIRouter(tags=["system"])
@@ -16,7 +15,8 @@ router = APIRouter(tags=["system"])
     ),
     responses={200: {"description": "Liveness response"}},
 )
-async def health() -> HealthResponse:
+async def health(request: Request) -> HealthResponse:
     """Report that the Stage process is alive without performing dependency checks."""
 
+    settings = request.app.state.settings
     return HealthResponse(status="ok", app=settings.app_name, env=settings.env)

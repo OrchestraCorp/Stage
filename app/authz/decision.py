@@ -1,9 +1,10 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from uuid import uuid4
 
 from app.authz.attributes import evaluate_attributes
 from app.authz.context import AuthorizationContext, is_aware
-from app.authz.permissions import ACTION_POLICIES, Permission, RoleCode, permissions_of
+from app.authz.permissions import ACTION_POLICIES, BUILTIN_POLICY_RELEASE_ID, Permission, RoleCode, permissions_of
 from app.authz.relations import relation_for_group
 from app.core.enums import DecisionOutcome, PrincipalType
 
@@ -17,19 +18,38 @@ class AuthorizationDecision:
     matched_roles: tuple[str, ...] = ()
     matched_relations: tuple[str, ...] = ()
     failed_constraints: tuple[str, ...] = ()
-    policy_release_id: str = "unreleased"
+    policy_release_id: str = BUILTIN_POLICY_RELEASE_ID
     evaluated_at: datetime | None = None
-    decision_id: str = "unpersisted"
+    # Correlation identifiers are generated here; persistence belongs to the
+    # command transaction, and an allowed decision is not an execution token.
+    decision_id: str = field(default_factory=lambda: str(uuid4()))
+    request_id: str = ""
+    assignment_ref: str | None = None
+    delegation_ref: str | None = None
 
 
 class AuthorizationEngine:
-    """Fail-closed RBAC + ReBAC + ABAC authorization kernel."""
+    """Fail-closed authorization over trusted facts, without database side effects.
+
+    A decision is a point-in-time explanation. It does not reserve capacity or
+    make grants safe against concurrent revocation; command transactions do so.
+    """
 
     def decide(self, context: AuthorizationContext) -> AuthorizationDecision:
         now = context.now or datetime.now(UTC)
         if not is_aware(now):
             return self._deny(context, datetime.now(UTC), "time.naive")
         now = now.astimezone(UTC)
+        for name, value in (
+            ("request", context.request_id),
+            ("subject", context.subject_ref),
+            ("resource", context.resource_ref),
+            ("policy_release", context.policy_release_id),
+        ):
+            if not value or not value.strip():
+                return self._deny(context, now, name + ".missing")
+        if context.policy_release_id != BUILTIN_POLICY_RELEASE_ID:
+            return self._deny(context, now, "policy_release.unknown")
         try:
             principal_type = PrincipalType(context.principal_type)
         except ValueError:
@@ -45,6 +65,10 @@ class AuthorizationEngine:
         assignment = context.assignment
         if assignment is None:
             return self._deny(context, now, "assignment.missing")
+        if not assignment.assignment_ref or not assignment.assignment_ref.strip():
+            return self._deny(context, now, "assignment.reference.missing")
+        if any(not scope or not scope.strip() for scope in (*assignment.scope_refs, *context.resource_scope_refs)):
+            return self._deny(context, now, "scope.invalid")
         try:
             role = RoleCode(assignment.role_code)
         except ValueError:
@@ -55,10 +79,19 @@ class AuthorizationEngine:
             delegation = context.delegation
             if delegation is None:
                 return self._deny(context, now, "delegation.missing", outcome=DecisionOutcome.NEEDS_DELEGATION)
+            if not delegation.delegation_ref or not delegation.delegation_ref.strip():
+                return self._deny(
+                    context, now, "delegation.reference.missing", outcome=DecisionOutcome.NEEDS_DELEGATION
+                )
             if delegation.agent_ref != context.subject_ref:
                 return self._deny(context, now, "delegation.agent_mismatch", outcome=DecisionOutcome.NEEDS_DELEGATION)
-            if not delegation.is_active_at(now):
-                return self._deny(context, now, "delegation.expired", outcome=DecisionOutcome.EXPIRED)
+            if reason := delegation.inactive_reason_at(now):
+                return self._deny(
+                    context,
+                    now,
+                    "delegation." + reason,
+                    outcome=DecisionOutcome.EXPIRED if reason == "expired" else DecisionOutcome.DENIED,
+                )
             if not delegation.permits(
                 action=context.action,
                 resource_ref=context.resource_ref,
@@ -83,17 +116,25 @@ class AuthorizationEngine:
                     outcome=DecisionOutcome.NEEDS_DELEGATION,
                 )
             if context.attributes.delegation_active is not True:
-                return self._deny(context, now, "delegation.active", outcome=DecisionOutcome.EXPIRED)
+                return self._deny(context, now, "delegation.active")
             if context.attributes.delegator_active is not True:
                 return self._deny(context, now, "delegator.active")
-            effective_subjects = (context.subject_ref, delegation.delegator_ref)
+            # Delegation narrows the delegator's authority. Combining their
+            # role with an unrelated relation owned only by the Agent would
+            # create a permission that the delegator never had.
+            effective_subjects = (delegation.delegator_ref,)
         elif context.delegation is not None:
             return self._deny(context, now, "delegation.unexpected")
 
         if assignment.principal_ref not in effective_subjects:
             return self._deny(context, now, "assignment.principal_mismatch")
-        if not assignment.is_active_at(now):
-            return self._deny(context, now, "assignment.expired", outcome=DecisionOutcome.EXPIRED)
+        if reason := assignment.inactive_reason_at(now):
+            return self._deny(
+                context,
+                now,
+                "assignment." + reason,
+                outcome=DecisionOutcome.EXPIRED if reason == "expired" else DecisionOutcome.DENIED,
+            )
         if context.organization_ref is None or context.resource_organization_ref is None:
             return self._deny(context, now, "organization.missing")
         if context.organization_ref != context.resource_organization_ref:
@@ -127,9 +168,11 @@ class AuthorizationEngine:
                 )
             matched_relations.append(matched)
 
-        failed = evaluate_attributes(context.attributes, require_object_version=policy.require_object_version)
-        if policy.allowed_resource_states and context.attributes.resource_state not in policy.allowed_resource_states:
-            failed = (*failed, "resource.state")
+        failed = evaluate_attributes(
+            context.attributes,
+            require_object_version=policy.require_object_version,
+            allowed_resource_states=policy.allowed_resource_states,
+        )
         if failed:
             return self._deny(
                 context,
@@ -145,8 +188,11 @@ class AuthorizationEngine:
             resource_ref=context.resource_ref,
             matched_roles=(role.value,),
             matched_relations=tuple(matched_relations),
-            policy_release_id=context.policy_release_id,
+            policy_release_id=BUILTIN_POLICY_RELEASE_ID,
             evaluated_at=now,
+            request_id=context.request_id,
+            assignment_ref=assignment.assignment_ref,
+            delegation_ref=context.delegation_ref,
         )
 
     @staticmethod
@@ -166,6 +212,9 @@ class AuthorizationEngine:
             matched_roles=matched_roles,
             matched_relations=matched_relations,
             failed_constraints=tuple(reasons),
-            policy_release_id=context.policy_release_id,
+            policy_release_id=BUILTIN_POLICY_RELEASE_ID,
             evaluated_at=now,
+            request_id=context.request_id,
+            assignment_ref=context.assignment.assignment_ref if context.assignment is not None else None,
+            delegation_ref=context.delegation_ref,
         )

@@ -11,3 +11,13 @@ class HealthResponse(BaseModel):
     status: Literal["ok"] = Field(description="The process is alive.")
     app: str = Field(description="Configured Stage application name.")
     env: str = Field(description="Configured runtime environment name.")
+
+
+class ErrorDetail(BaseModel):
+    code: str
+    message: str
+    request_id: str
+
+
+class ErrorResponse(BaseModel):
+    error: ErrorDetail

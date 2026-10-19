@@ -3,6 +3,7 @@ from typing import Any, cast
 
 from app.authz.context import AttributeContext, AuthorizationContext, RelationTuple, RoleAssignment
 from app.authz.decision import AuthorizationEngine
+from app.authz.permissions import BUILTIN_POLICY_RELEASE_ID
 from app.core.enums import DecisionOutcome, PrincipalType
 
 
@@ -32,8 +33,9 @@ def _context(**kwargs: object) -> AuthorizationContext:
             subject_active=True,
             object_version=7,
             expected_object_version=7,
+            resource_state="executing",
         ),
-        "policy_release_id": "policy:test",
+        "policy_release_id": BUILTIN_POLICY_RELEASE_ID,
     }
     values.update(kwargs)
     return AuthorizationContext(**cast(dict[str, Any], values))
@@ -59,6 +61,7 @@ def test_attribute_constraint_denies() -> None:
             classification_ceiling="internal",
             object_version=7,
             expected_object_version=7,
+            resource_state="executing",
         )
     )
     decision = AuthorizationEngine().decide(ctx)

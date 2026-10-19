@@ -23,7 +23,9 @@ Stage 是 OrchestraCorp 的核心同步与热协作系统，用“舞台 / 演�
 - 可解释的授权决策结构。
 - SQLAlchemy 异步数据库、模型和 Alembic 入口。
 - MySQL 和 PostgreSQL 异步驱动；SQLite 作为本地迁移/测试选项。
-- 审计、幂等和 outbox 的底层结构。
+- UTC 时间类型、精确标识符比较和前向迁移预检。
+- 应用生命周期、请求 ID 和脱敏错误响应。
+- 审计、幂等和 outbox 的输入结构；尚无持久化写命令或投递 worker。
 
 底板尚未连接真实身份系统、GitLab、Stage 数据库或企业配置。`uv.lock` 已提交，依赖使用 Python 3.12 和 `uv sync --locked` 固定。
 
@@ -33,12 +35,22 @@ Stage 是 OrchestraCorp 的核心同步与热协作系统，用“舞台 / 演�
 uv sync --locked
 uv run pytest
 uv run ruff check app tests scripts
+uv run ruff format --check app tests scripts
+uv run mypy app tests scripts
 uv run python scripts/check_contract.py
 ```
 
 当前健康检查不需要数据库；真正启动数据库相关功能前，设置 `STAGE_DATABASE_URL` 并完成第一版迁移。
 
-数据库 URL 支持三种异步驱动：`mysql+aiomysql`、`postgresql+asyncpg` 和 `sqlite+aiosqlite`。MySQL 是当前默认生产配置；切换 PostgreSQL 只需要替换连接 URL，并在目标测试数据库上运行完整 Alembic 迁移验证。底板不同时连接或同步两个生产数据库。
+数据库 URL 支持三种异步驱动：`mysql+aiomysql`、`postgresql+asyncpg` 和 `sqlite+aiosqlite`。MySQL 是当前默认生产配置；选择 PostgreSQL 后需要执行同样的迁移和存储语义验收，不能把更换 URL 当作完整兼容证明。底板不同时连接或同步两个生产数据库。
+
+应用存储层统一 UTC aware 时间和精确标识符比较；MySQL 与 PostgreSQL 会话显式使用 UTC、READ COMMITTED。当前验证基线为 MySQL 8.4、PostgreSQL 17；SQLite 仅用于开发测试，不证明生产并发正确性。真实两库的迁移循环与存储测试已加入 GitLab CI；尚未在本地真实服务或远端流水线执行。
+
+生产环境必须显式设置 `STAGE_DATABASE_URL`，不会自动采用默认连接，也不允许 SQLite；生产 `/docs`、`/openapi.json` 默认关闭。配置对象的 repr、普通序列化及校验错误文本隐藏数据库 URL；不要记录配置的原始输入或底层异常对象。`/health` 始终仅为 liveness，不表示数据库已可用。
+
+授权内核当前只接受内置策略版本 `stage-authz:builtin-v1`。任职、关系、资源属性和委托必须由服务端从权威记录构造，不能将请求 body 当成授权上下文；真实身份认证、上下文加载器、动态策略发布和业务写 API 仍待实现。
+
+本轮审查结果、已修问题与后续边界见[框架审查记录](docs/framework-review-2026-10-19.md)。
 
 ## 负责保存
 

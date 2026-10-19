@@ -1,5 +1,30 @@
 components:
   schemas:
+    ErrorDetail:
+      properties:
+        code:
+          title: Code
+          type: string
+        message:
+          title: Message
+          type: string
+        request_id:
+          title: Request Id
+          type: string
+      required:
+      - code
+      - message
+      - request_id
+      title: ErrorDetail
+      type: object
+    ErrorResponse:
+      properties:
+        error:
+          $ref: '#/components/schemas/ErrorDetail'
+      required:
+      - error
+      title: ErrorResponse
+      type: object
     HealthResponse:
       description: Stable response contract for the process liveness probe.
       properties:
@@ -40,6 +65,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
           description: Liveness response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Request validation failed
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unexpected server error
       summary: Liveness probe
       tags:
       - system

@@ -71,7 +71,7 @@ def main() -> None:
         print(serialize_contract(build_openapi(), format=args.format or format_for_path(output)), end="")
         return
     write_contract(output, format=args.format)
-    print(f"wrote {output.relative_to(ROOT)}")
+    print(f"wrote {output}")
 
 
 if __name__ == "__main__":

@@ -1,3 +1,5 @@
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -19,3 +21,17 @@ def test_contract_drift_is_rejected(tmp_path: Path) -> None:
     )
     with pytest.raises(SystemExit, match="contract drift detected"):
         check_contract(drifted)
+
+
+def test_export_contract_can_write_an_absolute_external_path(tmp_path: Path) -> None:
+    output = tmp_path / "exported.json"
+    root = Path(__file__).resolve().parents[2]
+    result = subprocess.run(
+        [sys.executable, "scripts/export_contract.py", "--write", "--output", str(output)],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    check_contract(output)

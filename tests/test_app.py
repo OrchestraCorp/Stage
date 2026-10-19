@@ -1,17 +1,19 @@
-from fastapi.testclient import TestClient
+from httpx import ASGITransport, AsyncClient
 
 from app.core.config import settings
 from app.main import app
 
 
-def test_health() -> None:
-    response = TestClient(app).get("/health")
+async def test_health() -> None:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        response = await client.get("/health")
     assert response.status_code == 200
     assert response.json() == {"status": "ok", "app": settings.app_name, "env": settings.env}
 
 
-def test_health_is_liveness_only() -> None:
-    response = TestClient(app).get("/health")
+async def test_health_is_liveness_only() -> None:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        response = await client.get("/health")
     assert response.headers["content-type"] == "application/json"
     assert response.json()["status"] == "ok"
 

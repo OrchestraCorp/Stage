@@ -24,8 +24,9 @@ def relation_for_group(
     resource_ref: str,
     now: datetime,
 ) -> str | None:
-    for name in relation_names:
+    evidence = tuple(relations)
+    for name in sorted(relation_names):
         for subject in subjects:
-            if has_relation(relations, subject_ref=subject, relation=name, resource_ref=resource_ref, now=now):
+            if has_relation(evidence, subject_ref=subject, relation=name, resource_ref=resource_ref, now=now):
                 return name
     return None
