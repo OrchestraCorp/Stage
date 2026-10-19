@@ -14,3 +14,18 @@ def has_relation(
         and item.is_active_at(now)
         for item in relations
     )
+
+
+def relation_for_group(
+    relations: Iterable[RelationTuple],
+    *,
+    subjects: tuple[str, ...],
+    relation_names: frozenset[str],
+    resource_ref: str,
+    now: datetime,
+) -> str | None:
+    for name in relation_names:
+        for subject in subjects:
+            if has_relation(relations, subject_ref=subject, relation=name, resource_ref=resource_ref, now=now):
+                return name
+    return None

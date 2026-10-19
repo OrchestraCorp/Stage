@@ -20,11 +20,7 @@ class RoleAssignmentTable(IdMixin, TimestampMixin, Base):
 
 class RelationTupleTable(IdMixin, TimestampMixin, Base):
     __tablename__ = "relation_tuple"
-    __table_args__ = (
-        UniqueConstraint(
-            "subject_ref", "relation", "resource_ref", name="uk_relation_tuple"
-        ),
-    )
+    __table_args__ = (UniqueConstraint("subject_ref", "relation", "resource_ref", name="uk_relation_tuple"),)
 
     subject_ref: Mapped[str] = mapped_column(String(256), nullable=False, index=True)
     relation: Mapped[str] = mapped_column(String(128), nullable=False)

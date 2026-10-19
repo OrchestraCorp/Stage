@@ -6,13 +6,15 @@ stages:
 default:
   image: python:3.12-slim
   before_script:
-    - pip install --disable-pip-version-check uv
-    - uv sync --dev
+    - pip install --disable-pip-version-check uv==0.13.1
+    - uv sync --locked --dev
 
 quality:
   stage: quality
   script:
     - uv run ruff check app tests scripts
+    - uv run ruff format --check app tests scripts
+    - uv run mypy app tests scripts
 
 tests:
   stage: test
@@ -22,4 +24,4 @@ tests:
 contract:
   stage: contract
   script:
-    - uv run python scripts/check_contract.py
+    - uv run python scripts/check_contract.py --check

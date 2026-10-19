@@ -2,7 +2,7 @@
 
 Stage 是 OrchestraCorp 的核心同步与热协作系统，用“舞台 / 演出台”指代组织正在发生的工作。
 
-[组织运行与热协作架构初稿](architecture.md)从权威边界、六个能力域、核心对象、任务闭环、Agent 执行、GitLab 接入和首版切片展开设计。当前只有设计文档，尚未实现数据库、API 或运行服务。
+[组织运行与热协作架构初稿](architecture.md)从权威边界、六个能力域、核心对象、任务闭环、Agent 执行、GitLab 接入和首版切片展开设计。当前包含设计文档和可测试的工程底板，尚未连接真实身份系统、GitLab 或企业运行环境。
 
 [z-pool 参考实现分析](reference-z-pool.md)记录了从现有后端实现中吸收的工程方法：单一真源、权限点、状态拆分、原子承接、幂等、审计、outbox、未知结果和契约测试。它不把 z-pool 的供应商资源池业务直接复制到 Stage。
 
@@ -24,7 +24,18 @@ Stage 是 OrchestraCorp 的核心同步与热协作系统，用“舞台 / 演�
 - SQLAlchemy 异步数据库、模型和 Alembic 入口。
 - 审计、幂等和 outbox 的底层结构。
 
-底板尚未连接真实身份系统、GitLab、Stage 数据库或企业配置。依赖锁文件需要在安装 `uv` 的 Python 3.12 环境中生成后再提交。
+底板尚未连接真实身份系统、GitLab、Stage 数据库或企业配置。`uv.lock` 已提交，依赖使用 Python 3.12 和 `uv sync --locked` 固定。
+
+## 本地检查
+
+```bash
+uv sync --locked
+uv run pytest
+uv run ruff check app tests scripts
+uv run python scripts/check_contract.py
+```
+
+当前健康检查不需要数据库；真正启动数据库相关功能前，设置 `STAGE_DATABASE_URL` 并完成第一版迁移。
 
 ## 负责保存
 

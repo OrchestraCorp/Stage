@@ -6,7 +6,7 @@ class Settings(BaseSettings):
 
     env: str = "dev"
     app_name: str = "orchestra-stage"
-    database_url: str = "sqlite+aiosqlite:///./stage.db"
+    database_url: str = "mysql+aiomysql://stage:stage@127.0.0.1:3306/stage"
     log_level: str = "INFO"
 
 

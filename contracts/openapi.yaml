@@ -1,26 +1,45 @@
-openapi: 3.1.0
+components:
+  schemas:
+    HealthResponse:
+      description: Stable response contract for the process liveness probe.
+      properties:
+        app:
+          description: Configured Stage application name.
+          title: App
+          type: string
+        env:
+          description: Configured runtime environment name.
+          title: Env
+          type: string
+        status:
+          const: ok
+          description: The process is alive.
+          title: Status
+          type: string
+      required:
+      - status
+      - app
+      - env
+      title: HealthResponse
+      type: object
 info:
+  description: 组织运行与热协作系统底板
   title: OrchestraCorp Stage
   version: 0.1.0
-  description: 组织运行与热协作系统底板
+openapi: 3.1.0
 paths:
   /health:
     get:
-      operationId: health
-      tags: [system]
+      description: Returns application process metadata. This endpoint does not probe
+        the database or other dependencies.
+      operationId: health_liveness
       responses:
         '200':
-          description: Service health
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
-components:
-  schemas:
-    HealthResponse:
-      type: object
-      required: [status, app, env]
-      properties:
-        status: {type: string}
-        app: {type: string}
-        env: {type: string}
+          description: Liveness response
+      summary: Liveness probe
+      tags:
+      - system
