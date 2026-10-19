@@ -22,6 +22,7 @@ Stage 是 OrchestraCorp 的核心同步与热协作系统，用“舞台 / 演�
 - 分类、对象版本、主体/委托状态等 ABAC 固定谓词。
 - 可解释的授权决策结构。
 - SQLAlchemy 异步数据库、模型和 Alembic 入口。
+- MySQL 和 PostgreSQL 异步驱动；SQLite 作为本地迁移/测试选项。
 - 审计、幂等和 outbox 的底层结构。
 
 底板尚未连接真实身份系统、GitLab、Stage 数据库或企业配置。`uv.lock` 已提交，依赖使用 Python 3.12 和 `uv sync --locked` 固定。
@@ -36,6 +37,8 @@ uv run python scripts/check_contract.py
 ```
 
 当前健康检查不需要数据库；真正启动数据库相关功能前，设置 `STAGE_DATABASE_URL` 并完成第一版迁移。
+
+数据库 URL 支持三种异步驱动：`mysql+aiomysql`、`postgresql+asyncpg` 和 `sqlite+aiosqlite`。MySQL 是当前默认生产配置；切换 PostgreSQL 只需要替换连接 URL，并在目标测试数据库上运行完整 Alembic 迁移验证。底板不同时连接或同步两个生产数据库。
 
 ## 负责保存
 

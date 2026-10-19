@@ -8,3 +8,9 @@ STAGE_DATABASE_URL=sqlite+aiosqlite:///./stage.db uv run alembic downgrade base
 ```
 
 企业使用 MySQL 时设置对应的 `STAGE_DATABASE_URL`，迁移只在目标测试库验证后进入部署。
+
+PostgreSQL 使用：
+
+```bash
+STAGE_DATABASE_URL=postgresql+asyncpg://stage:stage@127.0.0.1:5432/stage uv run alembic upgrade head
+```
