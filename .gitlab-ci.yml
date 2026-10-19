@@ -1,0 +1,25 @@
+stages:
+  - quality
+  - test
+  - contract
+
+default:
+  image: python:3.12-slim
+  before_script:
+    - pip install --disable-pip-version-check uv
+    - uv sync --dev
+
+quality:
+  stage: quality
+  script:
+    - uv run ruff check app tests scripts
+
+tests:
+  stage: test
+  script:
+    - uv run pytest
+
+contract:
+  stage: contract
+  script:
+    - uv run python scripts/check_contract.py

@@ -1,0 +1,25 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.env
+.env.*
+!.env.example
+stage.db
+*.sqlite3
+dist/
+build/
+*.egg-info/
+.DS_Store
+
+# Local runtime state
+logs/
+tmp/
+
+# Editor files
+.idea/
+.vscode/

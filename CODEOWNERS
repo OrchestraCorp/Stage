@@ -1,0 +1,4 @@
+# 首版占位：企业实例化后由责任岗位替换为实际 GitLab 用户或组。
+* @stage-maintainers
+app/authz/ @stage-authz-maintainers
+contracts/ @stage-api-maintainers

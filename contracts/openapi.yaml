@@ -1,0 +1,26 @@
+openapi: 3.1.0
+info:
+  title: OrchestraCorp Stage
+  version: 0.1.0
+  description: 组织运行与热协作系统底板
+paths:
+  /health:
+    get:
+      operationId: health
+      tags: [system]
+      responses:
+        '200':
+          description: Service health
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      required: [status, app, env]
+      properties:
+        status: {type: string}
+        app: {type: string}
+        env: {type: string}
