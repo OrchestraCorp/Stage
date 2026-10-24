@@ -9,6 +9,13 @@ from app.core.config import settings
 from app.core.db import create_engine
 from app.models.authorization import RelationTupleTable, RoleAssignmentTable  # noqa: F401
 from app.models.base import Base
+from app.models.execution import (  # noqa: F401
+    AuditRecordTable,
+    CommandExecutionTable,
+    DeliveryAttemptTable,
+    OutboxRecordTable,
+    TenantGuardTable,
+)
 from app.models.identity import PrincipalTable  # noqa: F401
 from app.models.work import WorkItemTable  # noqa: F401
 

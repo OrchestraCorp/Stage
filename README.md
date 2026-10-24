@@ -1,14 +1,18 @@
 # Stage
 
-Stage 是 OrchestraCorp 的核心同步与热协作系统，用“舞台 / 演出台”指代组织正在发生的工作。
+Stage 是 OrchestraCorp 的可信组织协作运行底座，用“舞台 / 演出台”指代组织正在发生的工作。OrchestraCorp 的长期愿景是 AI 驱动、安全可靠的分布式工作协作平台。
+
+已确定采用自研组件运行时和自研业务流程运行器，参考 Cordis 的组件思想，由 Stage 自己定义一致性工作规范。Graphon / Dify 仅作为研究参考；愿景、职责及演进边界见[自研运行时方向](docs/vision-and-runtime-direction.md)。
 
 产品源码由 GitHub 私有仓库 `OrchestraCorp/Stage` 管理；企业 GitLab 连接器和企业仓库权限仍按业务架构单独建设。
+
+后续实现的统一入口见 [docs 设计目录](docs/README.md)：一期优先建设类Cordis、真实身份验证和WASM共同基座。最新[核对记录](docs/design-review-2026-10-24.md)、[核心对象](docs/core-object-contracts.md)、[身份规范](docs/identity-and-authorization.md)、[WASM宿主](docs/wasm-host-design.md)、[目标架构](docs/architecture.md)、[一期验收](docs/phase-1.md)和[长期路线](docs/roadmap.md)形成统一设计入口。原[完整任务业务](docs/business-slice-plan.md)后置保留。当前仅持久命令/审计/outbox/delivery内部链已实现，其他新基座仍待实现。
 
 [组织运行与热协作架构初稿](architecture.md)从权威边界、六个能力域、核心对象、任务闭环、Agent 执行、GitLab 接入和首版切片展开设计。当前包含设计文档和可测试的工程底板，尚未连接真实身份系统、GitLab 或企业运行环境。
 
 [z-pool 参考实现分析](reference-z-pool.md)记录了从现有后端实现中吸收的工程方法：单一真源、权限点、状态拆分、原子承接、幂等、审计、outbox、未知结果和契约测试。它不把 z-pool 的供应商资源池业务直接复制到 Stage。
 
-[可组合后端框架设计](composable-runtime-design.md)进一步把权限、业务、时间和空间统一到 `RuntimeContext`、能力决策、业务命令、依赖解析和 effect/compensation 记录中；这是首版框架提案，尚未实现。
+[可组合后端框架设计](composable-runtime-design.md)保留早期上下文、能力决策与组合提案；新的[目标架构](docs/architecture.md)将组件 `ComponentContext`、每请求 `ExecutionContext` 及授权输入分开，并区分运行资源清理与持久业务事务。两份文档均不表示新运行时已实现。
 
 [OA 能力组合策略](composition-strategy.md)明确采用“预建能力模块 + 声明式编排 + 受控扩展”：Maestro 负责理解和提出组合蓝图，Stage 负责验证、执行和留痕，首版不加载 Agent 生成的任意后端代码。
 
@@ -27,7 +31,7 @@ Stage 是 OrchestraCorp 的核心同步与热协作系统，用“舞台 / 演�
 - MySQL 和 PostgreSQL 异步驱动；SQLite 作为本地迁移/测试选项。
 - UTC 时间类型、精确标识符比较和前向迁移预检。
 - 应用生命周期、请求 ID 和脱敏错误响应。
-- 审计、幂等和 outbox 的输入结构；尚无持久化写命令或投递 worker。
+- 持久化命令执行、tenant guard、幂等结果、事务审计和 outbox 投递 worker 的第一版内部实现；尚未接入 HTTP、真实身份 adapter、WASM runner 或生产 sink。
 
 底板尚未连接真实身份系统、GitLab、Stage 数据库或企业配置。`uv.lock` 已提交，依赖使用 Python 3.12 和 `uv sync --locked` 固定。
 

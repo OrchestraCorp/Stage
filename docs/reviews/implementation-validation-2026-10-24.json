@@ -1,0 +1,35 @@
+{
+  "checked_at": "2026-10-24T19:43:06.407403+08:00",
+  "scope": "First internal execution foundation: persistence models/migration, CommandKernel, audit/outbox transaction, delivery worker.",
+  "tests": "192 passed (latest full run)",
+  "commands": [
+    ".venv/bin/python -m pytest -q",
+    ".venv/bin/python -m ruff check app tests scripts",
+    ".venv/bin/python -m ruff format --check app tests scripts",
+    ".venv/bin/python -m mypy app tests scripts",
+    "STAGE_ENV=test .venv/bin/python scripts/check_contract.py --check"
+  ],
+  "database_validation": {
+    "sqlite": "executed through execution/delivery/schema tests",
+    "mysql": "CI-only; no local container runtime",
+    "postgresql": "CI-only; no local container runtime"
+  },
+  "implemented_files": [
+    "app/execution",
+    "app/delivery",
+    "app/models/execution.py",
+    "migrations/versions/a1c4e7d9b203_command_execution_audit_outbox.py",
+    "tests/execution",
+    "tests/delivery",
+    "tests/storage/test_execution_schema.py"
+  ],
+  "not_implemented": [
+    "RuntimeHost/ComponentContext",
+    "real authentication adapter/IdP",
+    "WASM runner",
+    "signed artifact admission",
+    "HTTP/CLI integration",
+    "production sink"
+  ],
+  "git_diff_check": "passed"
+}

@@ -10,6 +10,8 @@ implementation_status: not-started
 
 # Stage 可组合后端框架：权限、业务、时间与空间
 
+> 实施设计已细化到 [docs 设计入口](docs/README.md)。本稿第 2 节的统一 RuntimeContext 模型及第 5.1 节的 effect 分类，以新[目标架构](docs/architecture.md)中的 ComponentContext / ExecutionContext 分离、运行资源 / 持久业务副作用分层为准；一期范围与生命周期差异分别见[一期方案](docs/phase-1.md)和[Runtime 规格](docs/runtime-conformance.md)。本稿保留讨论背景，不能据此宣称当前运行时已实现。
+
 本文提出 Stage 的通用后端内核：让同一套业务命令能够在不同岗位、任务、组织空间、时间窗口和 Agent 委托下安全复用，而不把权限判断散落在业务代码中。
 
 本文承接[z-pool 参考实现分析](reference-z-pool.md)、[Stage 组织运行架构](architecture.md)和先前会话中的岗位自治、分派/申请/直接领取、承诺、临时授权、接管与知识沉淀讨论。它是设计提案，不是已实现的权限服务、策略语言或运行时。

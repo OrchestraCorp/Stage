@@ -1,0 +1,62 @@
+{
+  "checked_at": "2026-10-24T16:35:18.393135+08:00",
+  "scope": "Documentation only; no implementation or test execution",
+  "markdown_files": 18,
+  "relative_links": 220,
+  "planned_scenarios": {
+    "runtime-conformance.md": {
+      "defined": 34,
+      "executed": 0,
+      "passed": 0
+    },
+    "identity-and-authorization.md": {
+      "defined": 36,
+      "executed": 0,
+      "passed": 0
+    },
+    "wasm-host-design.md": {
+      "defined": 28,
+      "executed": 0,
+      "passed": 0
+    },
+    "core-object-contracts.md": {
+      "defined": 8,
+      "executed": 0,
+      "passed": 0
+    },
+    "phase-1.md": {
+      "defined": 12,
+      "executed": 0,
+      "passed": 0
+    }
+  },
+  "phase_1_object_cases": [
+    "O1-01",
+    "O1-02",
+    "O1-03",
+    "O1-04",
+    "O1-05",
+    "O1-06",
+    "O1-07"
+  ],
+  "future_object_cases": [
+    "O1-08"
+  ],
+  "identity_profile_note": "Unsupported token profiles must be rejected and marked out-of-scope, not passed. See identity specification stage mapping.",
+  "diagram_dimensions": [
+    3300,
+    3618
+  ],
+  "diagram_sha256": {
+    "stage-architecture.svg": "7393e9a5119df0c739396d0ab8e7fe99f71ead0ce6bd9918dddbb43ed0f10731",
+    "stage-architecture.png": "37262b8a6080704cc8c7865fcf658d9f6e24dc3063d10c9cb99acb4376c8c3db",
+    "stage-architecture.mmd": "79cef0966765b8dab490c10f025abb95bf482940763f43ef9fab922cd11cd60a"
+  },
+  "errors": [],
+  "tracked_changes": [
+    "README.md",
+    "composable-runtime-design.md",
+    "composition-strategy.md"
+  ],
+  "implementation_tests_executed": 0
+}

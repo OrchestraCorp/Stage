@@ -42,7 +42,7 @@ database:mysql:
     STAGE_ALLOW_TEST_DATABASE_RESET: "1"
   script:
     - uv run python scripts/check_database.py
-    - uv run pytest -q tests/storage
+    - uv run pytest -q tests/storage tests/execution tests/delivery
 
 database:postgresql:
   stage: database
@@ -57,4 +57,4 @@ database:postgresql:
     STAGE_ALLOW_TEST_DATABASE_RESET: "1"
   script:
     - uv run python scripts/check_database.py
-    - uv run pytest -q tests/storage
+    - uv run pytest -q tests/storage tests/execution tests/delivery

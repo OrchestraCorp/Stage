@@ -1,0 +1,64 @@
+flowchart TB
+  accTitle: Stage 自研基座：组件运行时、真实身份与受控 WASM
+  accDescr: 一期由单 worker 可信宿主和独立 WASM runner 构成。身份、签名准入、受限计算及事务提交分别校验。紫色区域为后续业务与分布式扩展，所有新能力均待实现。
+
+  CLIENT["人 · Agent · 服务<br/>HTTP / CLI / worker"]
+  IDP["P1 测试 IdP / WebAuthn RP<br/>真实协议凭据与批准证据<br/>生产环境另验收"]
+  ART["不可变 module.wasm + manifest<br/>受控批准与发布签名<br/>私钥始终在 runner 外"]
+
+  subgraph HOST["P1 · Stage 可信宿主 · 单 ASGI worker / 事件循环 · 待实现"]
+    direction TB
+    RT["自研 RuntimeHost / ComponentContext<br/>owner · generation · 声明依赖<br/>lease · drain · 清理结果"]
+    AUTH["认证与可信上下文<br/>主体 · 租户 · 任职 / 服务授权 / 委托<br/>当前 authz · 非客户端自报"]
+    RELEASE["制品准入与 Activation<br/>摘要 / 签名 / 批准 / 环境 / ABI / 预算<br/>当前撤销状态 · 条件版本更新"]
+    CMD["CommandKernel / EvaluateQualification<br/>幂等身份 · 固定能力绑定<br/>资格结果不自动授予权限"]
+    FACT["输入准备<br/>短锁一致采样最小 FactSnapshot<br/>行 + 集合 revision · 结束读取事务"]
+    SUP["WasmRunnerProvider<br/>受保护 IPC · invocation / attempt / digest<br/>进程监督 · 有界队列 · 代次租约"]
+    COMMIT["结果核验与短事务<br/>重验当前权限 / 准入 / 事实 revision<br/>结果 + 命令终态 + 审计 + outbox"]
+    OUTBOX["受管投递 worker<br/>当前服务授权 · 稳定去重<br/>至少一次 · unknown 对账"]
+    AUTH --> CMD
+    RELEASE --> CMD
+    CMD --> FACT --> SUP
+    SUP -->|验证关联与输出| COMMIT
+    RT -. "组件生命周期" .-> AUTH
+    RT -. "租约与子进程监督" .-> SUP
+    RT -. "资源与任务监督" .-> OUTBOX
+  end
+
+  RUNNER["P1 独立受控 runner 进程<br/>Wasmtime · 新 Store / Instance<br/>Core WASM bytes ABI · 无 imports<br/>编译 / start / 调用 / 输出全程预算<br/>无 DB / IdP token / 签名私钥"]
+  DB[("Stage 持久库<br/>身份 / 授权 / 发布 / facts revision<br/>CommandExecution · 评估结果 · audit · outbox")]
+  SINK["虚构测试接收端<br/>成功 / 重复 / 回执丢失"]
+  CLIENT --> AUTH
+  IDP --> AUTH
+  ART --> RELEASE
+  AUTH -->|读取当前事实| DB
+  RELEASE -->|批准与激活记录| DB
+  FACT -->|短读取| DB
+  SUP <-->|受控调用 / 回执| RUNNER
+  COMMIT -->|原子提交| DB
+  DB --> OUTBOX --> SINK
+
+  subgraph LATER["P2–P5 · 后续目标 · 独立验收"]
+    direction LR
+    BIZ["P2 任务业务 + 蓝图发布<br/>承诺 / 容量 / 独立验收<br/>计划 / diff / 扩展治理"]
+    FLOW["P3 自研持久 Workflow Runtime<br/>分支 / 循环 / 人工等待 / 恢复<br/>复用同一能力、身份与命令契约"]
+    DIST["P4–P5 跨组织与扩展<br/>多节点 · 版本升级 · 有限 hostcalls<br/>隐私凭证 / 证明单独选型"]
+  end
+  BIZ -. "复用基座" .-> CMD
+  FLOW -. "每步当前授权" .-> AUTH
+  DIST -. "版本化边界" .-> RT
+
+  classDef external fill:#eef2f6,stroke:#64748b,color:#17243b,stroke-width:1.5px;
+  classDef phase fill:#edf5ff,stroke:#3973c7,color:#142a4b,stroke-width:1.5px;
+  classDef runtime fill:#dbeaff,stroke:#2563eb,color:#12305c,stroke-width:2px;
+  classDef isolated fill:#fff5e8,stroke:#bc7a2c,color:#623b0e,stroke-width:2px;
+  classDef data fill:#e9f5ef,stroke:#34846b,color:#153f32,stroke-width:1.5px;
+  classDef future fill:#f5efff,stroke:#8b65ba,color:#49336a,stroke-dasharray:5 4;
+  class CLIENT,IDP,ART,SINK external;
+  class AUTH,RELEASE,CMD,FACT,SUP,COMMIT,OUTBOX phase;
+  class RT runtime;
+  class RUNNER isolated;
+  class DB data;
+  class BIZ,FLOW,DIST future;
+  style HOST fill:#f7faff,stroke:#8baedc,stroke-width:1.5px
+  style LATER fill:#fcfaff,stroke:#b29acb,stroke-width:1.5px,stroke-dasharray:6 4

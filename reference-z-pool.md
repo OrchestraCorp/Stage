@@ -15,6 +15,8 @@ source_revision: eebab09
 
 本记录基于本地仓库 `/path/to/z-pool-backend-v2` 在提交 `eebab09`（2026-10-08）时的代码、测试和机器契约。它是 Stage 的工程参考，不是把 z-pool 的供应商、渠道、代理或结算业务搬进 OrchestraCorp。
 
+2026-10-24 复核：同一提交的源码现位于 iCloud 文稿目录，完整对照见[当前 Stage 与 Z Pool 架构比较](docs/z-pool-architecture-comparison.md)。下文保留原研究结构，已纠正钱包写入入口的过度概括；首轮实施顺序由最新[一期基座方案](docs/phase-1.md)替代。当前源码核对不等于重新执行原项目测试。
+
 最有价值的部分是它如何把业务边界写进模型、数据库约束、事务和测试。Stage 应吸收这些方法，再用自己的组织、任务、授权和接管对象表达。
 
 ## 2. 可以直接吸收的设计方法
@@ -26,7 +28,7 @@ z-pool 在多处明确写出单一真源：
 - `proxy_assignment` 是代理绑定的权威；资源表上的当前绑定字段是冗余投影。
 - `channel_proxy_region_rule` 是地区规则的权威；旧的内联文本列不再读写。
 - `usage_record` 是结算的唯一事实来源。
-- 钱包余额可以有快照和汇总，但所有改余额的动作都经过同一个 `app/core/wallet.py::move()`。
+- 钱包有集中原语 `app/core/wallet.py::move()`，使用行锁、幂等键和前后快照；但 `app/core/settlement.py::_credit_wallet()` 仍有独立余额写入路径。因此“全部钱包写入已统一”不能作为已落实保证，复用前需核对完整写入路径。
 
 Stage 应用同一原则：
 
@@ -205,7 +207,9 @@ Stage 可以采用同样的质量门槛：对象/接口契约、状态含义、�
 
 ## 5. 对 Stage 首轮实现顺序的影响
 
-建议按以下顺序继续设计和实现：
+以下为2026-10-19从资源池业务提炼的历史顺序。2026-10-24已明确Stage先建设Core、真实身份与受控WASM基座，完整任务切片后置；当前实施以[一期方案](docs/phase-1.md)和[路线图](docs/roadmap.md)为准。
+
+历史建议为：
 
 1. 先冻结对象 ID、状态维度、错误/拒绝原因、权限点和事件信封。
 2. 建立 `WorkItem`、`Application/Assignment`、`Commitment`、`Grant/Delegation`、`Delivery/Acceptance` 的事务边界和唯一约束。
@@ -215,4 +219,3 @@ Stage 可以采用同样的质量门槛：对象/接口契约、状态含义、�
 6. 最后扩展 Agent Gateway、接管包、跨部门视图和知识发布。
 
 这些顺序是从参考实现提炼出的工程建议；Stage 的业务字段、技术栈和部署形态仍需单独决定。
-

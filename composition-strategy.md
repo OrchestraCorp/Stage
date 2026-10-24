@@ -11,6 +11,8 @@ direction: prebuilt-capabilities-with-declarative-composition
 
 # Stage OA 能力组合策略
 
+> 本稿保留“预建能力＋声明式组合＋受控扩展”的长期方向。具体一期边界、后续顺序和验收以 [docs 设计入口](docs/README.md)、[一期方案](docs/phase-1.md)及[长期路线](docs/roadmap.md)为准；本稿的模块列表不表示一期全部交付。
+
 ## 1. 结论
 
 Stage 应采用：
@@ -235,4 +237,3 @@ Stage 应把“高灵活性”放在蓝图、策略、流程和连接器映射�
 - 模块版本和蓝图升级如何做三方迁移。
 - 扩展代码的签名、审核、沙箱和发布仓库。
 - Maestro 生成蓝图后的人工批准层级与 Stage 的实际 apply 权限。
-
