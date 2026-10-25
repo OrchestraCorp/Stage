@@ -27,6 +27,25 @@ def test_database_credentials_are_not_printed_or_serialized() -> None:
     with pytest.raises(ValidationError) as error:
         Settings(database_url=f"unsupported://stage:{secret}@localhost/stage")
     assert secret not in str(error.value)
+    assert secret not in repr(error.value)
+    assert secret not in error.value.json()
+    assert secret not in repr(error.value.errors())
+
+
+def test_database_default_is_postgresql(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("STAGE_DATABASE_URL", raising=False)
+    monkeypatch.setitem(Settings.model_config, "env_file", None)
+    config = Settings()
+    assert config.database_url.startswith("postgresql+asyncpg://")
+    assert "127.0.0.1:15432/stage" in config.database_url
+
+
+def test_malformed_database_url_error_does_not_expose_credentials() -> None:
+    secret = "synthetic-port-secret"
+    with pytest.raises(ValueError) as error:
+        validate_database_url(f"postgresql+asyncpg://stage:password@localhost:{secret}/stage")
+    assert secret not in str(error.value)
+    assert error.value.__suppress_context__
 
 
 def test_production_requires_explicit_database_and_rejects_sqlite(monkeypatch: pytest.MonkeyPatch) -> None:

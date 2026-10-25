@@ -1,5 +1,6 @@
 """Short command transactions with one commit owner and tenant serialization."""
 
+import asyncio
 import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
@@ -14,6 +15,28 @@ from app.execution.errors import ExecutionCleanupFailed, TenantNotProvisioned, T
 from app.models.execution import TenantGuardTable
 
 logger = logging.getLogger(__name__)
+
+
+async def _finish_cleanup(operation: Any) -> None:
+    """Finish session cleanup even when the owner task was cancelled.
+
+    SQLAlchemy asyncpg rollback/close can outlive the cancellation that stopped
+    a worker. Running each operation in its own task and waiting through a
+    shield prevents the pool from being disposed while the transaction still
+    owns a connection.
+    """
+    task = asyncio.create_task(operation)
+    try:
+        await asyncio.shield(task)
+    except asyncio.CancelledError:
+        if not task.done():
+            await asyncio.shield(task)
+        if task.cancelled():
+            raise
+        error = task.exception()
+        if error is not None:
+            raise error from None
+        raise
 
 
 @asynccontextmanager
@@ -34,18 +57,20 @@ async def managed_uow(sessions: async_sessionmaker[AsyncSession]) -> AsyncIterat
         raise
     finally:
         cleanup_failed = False
+        current_task = asyncio.current_task()
+        intentional_cancel = current_task is not None and current_task.cancelling() > 0
         if uow is not None:
             uow.detach()
         if session.in_transaction():
             try:
-                await session.rollback()
+                await _finish_cleanup(session.rollback())
             except BaseException as exc:
-                cleanup_failed = True
+                cleanup_failed = cleanup_failed or not (intentional_cancel and isinstance(exc, asyncio.CancelledError))
                 logger.warning("execution rollback cleanup failed type=%s", type(exc).__name__)
         try:
-            await session.close()
+            await _finish_cleanup(session.close())
         except BaseException as exc:
-            cleanup_failed = True
+            cleanup_failed = cleanup_failed or not (intentional_cancel and isinstance(exc, asyncio.CancelledError))
             logger.warning("execution session close failed type=%s", type(exc).__name__)
         if cleanup_failed and not primary_failed:
             raise ExecutionCleanupFailed()
@@ -55,7 +80,7 @@ async def lock_tenant(session: AsyncSession, tenant_ref: str) -> None:
     """Lock an explicitly provisioned tenant; never create one from caller input.
 
     SQLite needs a write reservation because SELECT FOR UPDATE is ignored.
-    MySQL/PostgreSQL use row locking. All relevant trusted writers must use this
+    PostgreSQL uses row locking. All relevant trusted writers must use this
     same guard; this helper cannot protect against arbitrary out-of-band SQL.
     """
     if session.get_bind().dialect.name == "sqlite":

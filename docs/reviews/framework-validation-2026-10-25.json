@@ -1,0 +1,133 @@
+{
+  "review_date": "2026-10-25",
+  "timezone": "Asia/Shanghai",
+  "scope": "Design/source review and document consistency only; no implementation conformance executed",
+  "stage_base_commit": "eb11e4371ce212629ba9dee3bbe811ebd006ca48",
+  "stage_worktree_contains_prior_storage_changes": true,
+  "reference_commit": "6f7124baabca582d43ce84fd59d2f48e4b790763",
+  "reference_sources": {
+    "vendor/README.md": {
+      "sha256": "463f0475336df70f35805c60ea897b94d15cdd295595d8a50074dedd4555d311",
+      "working_copy_matches_pinned": true
+    },
+    "vendor/cordis/src/fiber.ts": {
+      "sha256": "b7661d6c19be76cef6b97d88719a8112c0f8b5abe65bd9e7d5947773fd4b96d4",
+      "working_copy_matches_pinned": true
+    },
+    "vendor/cordis/src/reflect.ts": {
+      "sha256": "6847b9781044023d65aebb5896a873b9f0a3d777eaf7fa0dd2a7a408eb6b74a6",
+      "working_copy_matches_pinned": true
+    },
+    "vendor/cordis/src/context.ts": {
+      "sha256": "96b388162d6013c1898de61e35f28917abb93809de24174980f2a1a348d0b115",
+      "working_copy_matches_pinned": true
+    },
+    "vendor/cordis/src/utils.ts": {
+      "sha256": "8fe273424583d21267ef13f248840e97454d09d836a0ac08323a9482c2069263",
+      "working_copy_matches_pinned": true
+    },
+    "vendor/cordis/src/events.ts": {
+      "sha256": "9aff93dcfcad98aebb692c19c36d3bf034a96f9085bc66900a997cda3f79e6fe",
+      "working_copy_matches_pinned": true
+    },
+    "vendor/cordis/src/registry.ts": {
+      "sha256": "34bbd60ae502b4f85201c204afb52a9acabde6878d9278493478c1b2183debd3",
+      "working_copy_matches_pinned": true
+    },
+    "vendor/cordis/src/service.ts": {
+      "sha256": "614205c6ce7cf1a057b8b352e96aa4fcd734c967a3d2283a126c9c61f268e3be",
+      "working_copy_matches_pinned": true
+    }
+  },
+  "paper_re_read": false,
+  "typescript_runtime_executed": false,
+  "python_runtime_conformance_executed": false,
+  "document_checks": {
+    "files": 10,
+    "local_links": 153,
+    "errors": [],
+    "fences": "passed",
+    "scenario_ids_unique": true
+  },
+  "core_scenarios": {
+    "defined": [
+      "C1-01",
+      "C1-02",
+      "C1-03",
+      "C1-04",
+      "C1-05",
+      "C2-01",
+      "C2-02",
+      "C2-03",
+      "C2-04",
+      "C3-01",
+      "C3-02",
+      "C3-03",
+      "C3-04",
+      "C4-01",
+      "C4-02",
+      "C4-03",
+      "C4-04",
+      "C5-01",
+      "C5-02",
+      "C5-03",
+      "C5-04",
+      "C6-01",
+      "C6-02",
+      "C6-03",
+      "C6-04",
+      "C7-01",
+      "C7-02",
+      "C7-03",
+      "C7-04",
+      "C8-01",
+      "C8-02",
+      "C8-03",
+      "C8-04",
+      "C8-05"
+    ],
+    "executed": 0,
+    "passed": 0
+  },
+  "supplemental_scenarios": {
+    "defined": [
+      "S1-01",
+      "S1-02",
+      "S1-03",
+      "S1-04",
+      "S1-05",
+      "S1-06",
+      "S1-07",
+      "S1-08",
+      "S1-09",
+      "S1-10",
+      "S1-11",
+      "S1-12"
+    ],
+    "executed": 0,
+    "passed": 0
+  },
+  "intentional_deviations": [
+    "D-01",
+    "D-02",
+    "D-03",
+    "D-04",
+    "D-05",
+    "D-06",
+    "D-07",
+    "D-08",
+    "D-09"
+  ],
+  "documents": {
+    "README.md": "76c790cf4ed5a0500e78b9636f864506772a153bb5e900858953e39eb5ce6b28",
+    "docs/README.md": "2fa7de354f16c707ec986b15944ee8f440ae1189d0c7275ce546e6c398bdcae5",
+    "docs/framework-foundation.md": "5ba1b6a8a80866197fcc47897341d641158f5dd8b154b9d4516ea6a87036623e",
+    "docs/runtime-conformance.md": "c4aef00f7fd7c39f7677a041a8cbf193adcd4bb5ec742bab8f722efc8f9c3f75",
+    "docs/architecture.md": "ba0db550017900126b0c4bf6b19019a83a20e76e58bf651d6f15e6c5c0f1e3fc",
+    "docs/phase-1.md": "22f39c8f279da350795ec34cc44157c91a5f1e3670e9587eee91fe1ffe1c9c71",
+    "docs/core-object-contracts.md": "e1dc0b250cd4add1d5f0056b422de48bf6cd8fd347f5ebe4596d6167c8056666",
+    "docs/roadmap.md": "d82d93f0791cf7f24a54aaa85a31fb8373a9894450e80ae1a74885b0b8950dd4",
+    "docs/research.md": "0c74acbd04ae5b462ed5a446c17b9920f87f8015605b8278c5f8e69d74b89e58",
+    "docs/vision-and-runtime-direction.md": "d6389ca7e780e922f0f6e89d3b4046e7249fc3676c94886290a6ec32f41a819f"
+  }
+}

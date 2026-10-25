@@ -48,8 +48,9 @@ class UTCDateTime(TypeDecorator[datetime]):
 class ExactString(TypeDecorator[str]):
     """Identifiers and machine values use case/accent/space sensitive comparison.
 
-    Display names should remain ordinary String/Text columns. MySQL 8.0.17+
-    provides the required NO PAD binary collation; CI targets MySQL 8.4 LTS.
+    Display names should remain ordinary String/Text columns. PostgreSQL uses
+    C collation and SQLite uses BINARY. The historical MySQL mapping is retained
+    for migration/DDL checks; MySQL is no longer an application database target.
     """
 
     impl = String

@@ -71,7 +71,7 @@ Stage 参考提交：`271d175546901832fd699bc570745901a617b03b`。开始本次�
 2. **清理顺序**：vendor 单个 effect 内逆序串行，Fiber 顶层并发。Stage 为首期可解释性采用同 owner 反序；这是自身规则，不是论文或全部 Cordis 版本的共同标准。
 3. **配置事务性**：vendor 说明 Loader 变更是 eager/non-transactional，激活失败可能部分生效。Stage 长期配置发布必须显式记录中间状态、observed revision 和恢复结果，不能把“有 disposer”写成完整事务回滚。
 
-详细 API 范围、七项偏差和 34 个验收场景集中在 [Runtime 规格](runtime-conformance.md)。不复制 Node 模块缓存操作、TS declaration merging 或 `!!js` 执行能力，也不宣称原 TS 插件可以直接装入 Python。
+详细 API 范围、原七项偏差和 34 个验收场景集中在 [Runtime 规格](runtime-conformance.md)。2026-10-25 又以同一固定源码复核并补充[框架实施规格](framework-foundation.md)，追加在途事件/严格就绪的 D-08、D-09 及 12 个 S1 边界场景，仍未执行。Stage 不复制 Node 模块缓存操作、TS declaration merging 或 `!!js` 执行能力，也不宣称原 TS 插件可以直接装入 Python。
 
 ## 4. Python 与现有技术栈依据
 

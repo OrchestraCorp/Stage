@@ -18,6 +18,8 @@ Stage 已有 FastAPI 应用工厂、请求ID、错误脱敏、异步数据库工
 
 已有 Redis 依赖不意味着已经有可靠队列；当前 Stage delivery worker 使用数据库租约/attempt/unknown 对账，尚未接入外部 sink 或 HTTP。旧 AuditEntry、IdempotencyKey、OutboxMessage 结构仍是历史轻量结构；新增实现位于 `app/execution/` 和 `app/delivery/`，必须按对象的实际边界判断缺口。
 
+2026-10-25 已确定 PostgreSQL 17 为唯一长期主库、Redis 8 为辅助存储，见[存储策略](storage-strategy.md)。不再迁入 MySQL 兼容要求；历史迁移和原项目评审证据保留。Redis 配置/client factory 与业务接入分别验收，不能据依赖或探针将 Z Pool 的队列、缓存或协调保证搬到 Stage。
+
 ## 2. P1 优先提炼的能力
 
 路径为各仓库的相对路径；目标模块为规划边界，不表示已创建。
@@ -38,7 +40,7 @@ Stage 已有 FastAPI 应用工厂、请求ID、错误脱敏、异步数据库工
 
 - **身份入口**：保留“统一构造可信上下文、权限从当前权威记录读取”的经验。Z Pool本地密码/JWT、全局角色与成员权限并集不直接成为Stage身份模型；Stage按选定真实协议profile、ExternalIdentity、任职/ServiceGrant/有限委托实现。
 - **能力注册**：借鉴显式注册、重复key拒绝、Protocol和未知能力不静默降级；Stage追加不可变CapabilitySpec、精确实现摘要、generation和provider lease。注册表不是完整生命周期引擎。
-- **并发与配额**：Redis原子占槽是专用网关机制。P1先用有限runner队列、进程预算与已定义的数据库协调；是否引入Redis分布式限流由负载和部署需要决定，不复制账号资源池的key/额度语义。
+- **并发与配额**：Redis原子占槽是专用网关机制。Stage 使用 PostgreSQL 权威 guard、幂等、outbox 和业务租约，以及有限 runner 队列/进程预算；Redis 8 的可重建缓存、短期提示与唤醒按实际需求逐项接入。每项明确 tenant/权限版本、超时和故障策略，Redis 清空不丢业务事实，不复制账号资源池的 key/额度语义，也不以 Redis 锁取代 PostgreSQL 业务不变量。
 - **调度与恢复**：借鉴任务异常边界和显式资源收尾。Z Pool单副本APScheduler不是Stage通用持久流程协议；当前不为复用而强制新加调度框架或三进程部署。
 - **响应和错误**：保留稳定错误码、请求关联和脱敏原则；不照搬Z Pool控制面的R/P包装及业务错误HTTP200策略，Stage保留自身API契约。
 

@@ -1,0 +1,24 @@
+[Unit]
+Description=Orchestra Stage cloud development service
+After=network.target orchestra-stage-postgres-dev.service orchestra-stage-redis-dev.service
+Wants=orchestra-stage-postgres-dev.service orchestra-stage-redis-dev.service
+
+[Service]
+Type=simple
+User=orchstage
+Group=orchstage
+WorkingDirectory=/srv/orchestra-stage
+BindReadOnlyPaths=/root/OrchestraCorp/Stage:/srv/orchestra-stage
+EnvironmentFile=/etc/orchestra-stage-dev.env
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStart=/srv/orchestra-stage/.venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8080 --workers 1 --timeout-graceful-shutdown 15
+Restart=on-failure
+RestartSec=2
+TimeoutStopSec=30
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+
+[Install]
+WantedBy=multi-user.target

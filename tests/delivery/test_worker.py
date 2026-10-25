@@ -20,6 +20,7 @@ from app.delivery import (
     ReconciliationStatus,
     SinkCapabilities,
 )
+from app.delivery.contracts import DeliveryRunSummary
 from app.delivery.worker import OutboxWorker
 from app.execution.errors import TransactionOwnershipError
 from app.execution.storage import UnitOfWork
@@ -746,3 +747,91 @@ async def test_authorizer_cannot_commit_or_replace_owned_claim_transaction(
     row, attempts = await message_state(persistence_sessions, message_id)
     assert row.status == "pending" and row.attempt_count == 0
     assert attempts == [] and sink.calls == 0
+
+
+@pytest.mark.parametrize("operation", ["send", "reconcile"])
+@pytest.mark.parametrize(
+    "field,value",
+    [("receipt_ref", 42), ("receipt_ref", []), ("receipt_ref", None), ("message_id", 42), ("dedupe_key", [])],
+)
+async def test_malformed_receipt_fields_remain_unknown_without_crashing(
+    persistence_sessions: async_sessionmaker[AsyncSession], operation: str, field: str, value: Any
+) -> None:
+    clock, sink = Clock(), ReceiverSink(failure="after" if operation == "reconcile" else None)
+    message_id, aggregate = await seed_message(persistence_sessions, clock)
+    worker = make_worker(persistence_sessions, clock, MutableAuthorizer(clock, {(TENANT_A, aggregate)}), sink)
+    if operation == "reconcile":
+        assert (await worker.run_once(TENANT_A)).unknown == 1
+
+    async def malformed(envelope: DeliveryEnvelope) -> DeliveryReceipt:
+        return replace(sink.accept(envelope), **{field: value})
+
+    async def malformed_reconcile(envelope: DeliveryEnvelope) -> ReconciliationResult:
+        return ReconciliationResult(ReconciliationStatus.DELIVERED, await malformed(envelope))
+
+    sink.deliver = malformed  # type: ignore[method-assign]
+    sink.reconcile = malformed_reconcile  # type: ignore[method-assign]
+    if operation == "send":
+        assert (await worker.run_once(TENANT_A)).unknown == 1
+    else:
+        assert await worker.reconcile_one(TENANT_A, message_id) == "unknown"
+    row, attempts = await message_state(persistence_sessions, message_id)
+    assert row.status == "unknown" and row.last_error_code == "receipt.invalid"
+    assert row.lease_token is None and attempts[-1].status == "unknown"
+    assert (await worker.run_once(TENANT_A)).claimed == 0
+    await worker.close()
+
+
+async def test_background_poll_failure_is_publicly_observable_and_stops_intake(
+    persistence_sessions: async_sessionmaker[AsyncSession], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    clock, sink = Clock(), ReceiverSink()
+    _, aggregate = await seed_message(persistence_sessions, clock)
+    worker = make_worker(persistence_sessions, clock, MutableAuthorizer(clock, {(TENANT_A, aggregate)}), sink)
+    assert worker.status.state == "idle"
+    original = worker.run_once
+
+    async def broken(tenant_ref: str) -> DeliveryRunSummary:
+        raise OSError("fixture poll failure")
+
+    monkeypatch.setattr(worker, "run_once", broken)
+    task = worker.start([TENANT_A])
+    assert worker.status.state == "running"
+    with pytest.raises(OSError, match="fixture poll failure"):
+        await worker.wait()
+    assert task.done() and worker.status.state == "failed"
+    assert worker.status.exception_type == "OSError"
+    monkeypatch.setattr(worker, "run_once", original)
+    with pytest.raises(DeliveryWorkerClosed):
+        await worker.run_once(TENANT_A)
+    with pytest.raises(DeliveryWorkerClosed):
+        worker.start([TENANT_A])
+    assert sink.calls == 0
+    with pytest.raises(OSError, match="fixture poll failure"):
+        await worker.close()
+
+
+async def test_core_owned_poll_and_cancelled_waiter_preserve_polling_owner(
+    persistence_sessions: async_sessionmaker[AsyncSession], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    clock, sink = Clock(), ReceiverSink()
+    _, aggregate = await seed_message(persistence_sessions, clock)
+    worker = make_worker(persistence_sessions, clock, MutableAuthorizer(clock, {(TENANT_A, aggregate)}), sink)
+    entered = asyncio.Event()
+
+    async def waiting(tenant_ref: str) -> DeliveryRunSummary:
+        entered.set()
+        await asyncio.Event().wait()
+        return DeliveryRunSummary()
+
+    monkeypatch.setattr(worker, "run_once", waiting)
+    owner = asyncio.create_task(worker.run([TENANT_A]))
+    await asyncio.wait_for(entered.wait(), timeout=5)
+    waiter = asyncio.create_task(worker.wait())
+    await asyncio.sleep(0)
+    waiter.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await waiter
+    assert not owner.done() and worker.status.state == "running"
+    await worker.close()
+    assert owner.cancelled() and worker.status.state == "stopped"

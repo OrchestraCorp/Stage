@@ -104,6 +104,12 @@ class DeliveryRunSummary:
     lost_leases: int = 0
 
 
+@dataclass(frozen=True)
+class DeliveryWorkerStatus:
+    state: Literal["idle", "running", "stopping", "stopped", "failed"]
+    exception_type: str | None = None
+
+
 class DeliveryDrainTimeout(RuntimeError):
     """Owned tasks remain live; callers must not report completed teardown."""
 

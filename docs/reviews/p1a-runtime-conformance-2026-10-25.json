@@ -1,0 +1,358 @@
+{
+  "specification": "stage-runtime-core-v1",
+  "scope": "Mapped Python behavior tests; fixed Cordis reference comparison is separate evidence",
+  "defined": 46,
+  "passed": 46,
+  "failed_or_not_run": 0,
+  "test_totals": {
+    "passed": 323,
+    "failure": 0,
+    "error": 0,
+    "skipped": 0
+  },
+  "junit_sha256": "b7718dd7b1da1183841bae21f9670547941185887a600e967aa0f62d0ee6ba3e",
+  "mapping_sha256": "47a46308e7848c5efe3f3b1fa73f82fb2a18453648933d3aa30467107af4b3a5",
+  "sources": {
+    "app/runtime/__init__.py": "0c90bbb4cee45e44020dc7adbf1f1f11820cc30c8f5d8d10b5667e496a7ca6cf",
+    "app/runtime/context.py": "b67ebdfb36300c85f04ab9b6ab4d81959a0b65d0eb751fd49184cda995b56f9f",
+    "app/runtime/contracts.py": "740ed86ba0562f03a30b092aab3f882c0de59a10e984277ddb0efa60b9f8fd0a",
+    "app/runtime/effects.py": "72d7a4aab72d944b6ecb553b8bf8150cd06a8483916101685558b9b563cea77d",
+    "app/runtime/events.py": "8e55c822b08e77382c2f48bbea8af3311fd6d5471fadc64706cf9dff23f25537",
+    "app/runtime/host.py": "1277ab3e2711540c5cf8ca321a0971911013d3fa7dcec48a3ff216a0b15855cc",
+    "app/runtime/leases.py": "556fca86d7445d3dddee7cd52cd5e7941be8cfc7d1ad888688178b46debfd60f",
+    "app/providers/__init__.py": "42b9cf7430e15e010773a6eb4621b9765146f11b7eed7847455156f79d2f7842",
+    "app/providers/execution.py": "3a3276962374caa2615bcb72136d4711f619662c9973919f9e7d38786ab59ef9",
+    "app/providers/storage.py": "87ee931a4ed1358e50228c1dca9601359547f2cc48e901ec56d4b2507161d6dd",
+    "app/bootstrap/__init__.py": "593b63b1904682a242dd2e66dcb0ffcbc892d2edabfb4083c6283c01ab6745b4",
+    "app/bootstrap/application.py": "07bcf9e023e9647d559b0d2d8c4d1506e5b23e3295c72291a8140615074da48d",
+    "tests/runtime_core/test_effects.py": "21fcbea823049442002ccd46e45afa4851f69832cc2588ba12feda36e788f661",
+    "tests/runtime_core/test_events.py": "5c12b3bc4ac95c1c141c00659b437e4897de48f2128e77c75a55c5bdda22a18f",
+    "tests/runtime_core/test_host.py": "1df512affdc1e8ab4ae15952304dbda17825ad4b9638c213a4768ea75b9ec809"
+  },
+  "scenarios": {
+    "C1-01": {
+      "passed": true,
+      "tests": {
+        "tests/runtime_core/test_effects.py::test_setup_failure_preserves_partial_acquisitions_and_safe_cleanup": "passed"
+      }
+    },
+    "C1-02": {
+      "passed": true,
+      "tests": {
+        "tests/runtime_core/test_effects.py::test_close_waits_for_setup_and_reclaims_late_disposer": "passed"
+      }
+    },
+    "C1-03": {
+      "passed": true,
+      "tests": {
+        "tests/runtime_core/test_effects.py::test_shared_close_survives_cancelled_waiter_and_disposes_once": "passed",
+        "tests/runtime_core/test_effects.py::test_manual_close_cannot_release_live_dependent_resources": "passed"
+      }
+    },
+    "C1-04": {
+      "passed": true,
+      "tests": {
+        "tests/runtime_core/test_effects.py::test_async_generator_failure_and_cleanup_failures_are_all_recorded": "passed",
+        "tests/runtime_core/test_effects.py::test_explicit_dependency_is_retained_after_dependent_cleanup_fails": "passed",
+        "tests/runtime_core/test_host.py::test_review_close_report_preserves_every_cleanup_error": "passed"
+      }
+    },
+    "C1-05": {
+      "passed": true,
+      "tests": {
+        "tests/runtime_core/test_effects.py::test_old_owner_and_invalid_disposer_cannot_escape_tracking": "passed",
+        "tests/runtime_core/test_host.py::test_review_stale_context_scope_cannot_register_into_new_generation": "passed"
+      }
+    },
+    "C2-01": {
+      "passed": true,
+      "tests": {
+        "tests/runtime_core/test_host.py::test_c2_01_c2_02_pending_reactive_service_recovery": "passed"
+      }
+    },
+    "C2-02": {
+      "passed": true,
+      "tests": {
+        "tests/runtime_core/test_host.py::test_c2_01_c2_02_pending_reactive_service_recovery": "passed"
+      }
+    },
+    "C2-03": {
+      "passed": true,
+      "tests": {
+        "tests/runtime_core/test_host.py::test_c2_03_availability_get_and_refresh": "passed"
+      }
+    },
+    "C2-04": {
+      "passed": true,
+      "tests": {
+        "tests/runtime_core/test_host.py::test_c2_04_duplicate_and_cycle_readiness": "passed",
+        "tests/runtime_core/test_host.py::test_s1_02_loading_slots_and_whole_generation_publication": "passed"
+      }
+    },
+    "C3-01": {
+      "passed": true,
+      "tests": {
+        "tests/runtime_core/test_host.py::test_c3_01_c4_01_c5_01_old_committed_dependency_cleanup": "passed",
+        "tests/runtime_core/test_host.py::test_c3_03_same_instance_generation_and_c3_04_unrelated": "passed"
+      }
+    },
+    "C3-02": {
+      "passed": true,
+      "tests": {
+        "tests/runtime_core/test_host.py::test_c3_02_dependency_changes_during_loading_only_publish_final_generation": "passed",
+        "tests/runtime_core/test_host.py::test_c3_02_s1_10_loading_aba_and_config_revision_cannot_publish_stale_start": "passed"
+      }
+    },
+    "C3-03": {
+      "passed": true,
+      "tests": {
+        "tests/runtime_core/test_host.py::test_c3_03_same_instance_generation_and_c3_04_unrelated": "passed",
+        "tests/runtime_core/test_host.py::test_c3_02_s1_10_loading_aba_and_config_revision_cannot_publish_stale_start": "passed"
+      }
+    },
+    "C3-04": {
+      "passed": true,
+      "tests": {
+        "tests/runtime_core/test_host.py::test_c3_03_same_instance_generation_and_c3_04_unrelated": "passed"
+      }
+    },
+    "C4-01": {
+      "passed": true,
+      "tests": {
+        "tests/runtime_core/test_host.py::test_c3_01_c4_01_c5_01_old_committed_dependency_cleanup": "passed"
+      }
+    },
+    "C4-02": {
+      "passed": true,
+      "tests": {
+        "tests/runtime_core/test_host.py::test_c4_02_c4_04_s1_11_independent_provider_can_publish_while_old_cleanup_is_pinned": "passed"
+      }
+    },
+    "C4-03": {
+      "passed": true,
+      "tests": {
+        "tests/runtime_core/test_host.py::test_c4_03_s1_03_undeclared_inherited_and_isolated_reads": "passed"
+      }
+    },
+    "C4-04": {
+      "passed": true,
+      "tests": {
+        "tests/runtime_core/test_host.py::test_c4_02_c4_04_s1_11_independent_provider_can_publish_while_old_cleanup_is_pinned": "passed"
+      }
+    },
+    "C5-01": {
+      "passed": true,
+      "tests": {
+        "tests/runtime_core/test_host.py::test_c3_01_c4_01_c5_01_old_committed_dependency_cleanup": "passed"
+      }
+    },
+    "C5-02": {
+      "passed": true,
+      "tests": {
+        "tests/runtime_core/test_host.py::test_c5_02_c5_03_call_lease_delays_provider_resources": "passed",
+        "tests/runtime_core/test_host.py::test_s1_05_all_stops_before_provider_destruction": "passed"
+      }
+    },
+    "C5-03": {
+      "passed": true,
+      "tests": {
+        "tests/runtime_core/test_host.py::test_c5_02_c5_03_call_lease_delays_provider_resources": "passed",
+        "tests/runtime/test_execution_components.py::test_core_delivery_cancellation_records_unknown_before_storage_cleanup": "passed",
+        "tests/runtime/test_lifecycle.py::test_shutdown_waits_for_transaction_cleanup_before_disposing_pool": "passed"
+      }
+    },
+    "C5-04": {
+      "passed": true,
+      "tests": {
+        "tests/runtime_core/test_host.py::test_c5_04_s1_06_uncooperative_task_retains_dependencies": "passed",
+        "tests/runtime_core/test_host.py::test_s1_11_cleanup_failure_blocks_provider_and_prevents_automatic_rebind": "passed"
+      }
+    },
+    "C6-01": {
+      "passed": true,
+      "tests": {
+        "tests/runtime_core/test_host.py::test_c6_01_c6_02_c6_03_scoped_realms_and_intercepts": "passed"
+      }
+    },
+    "C6-02": {
+      "passed": true,
+      "tests": {
+        "tests/runtime_core/test_host.py::test_c6_01_c6_02_c6_03_scoped_realms_and_intercepts": "passed",
+        "tests/runtime_core/test_host.py::test_review_cross_realm_startup_wait_uses_public_provider": "passed"
+      }
+    },
+    "C6-03": {
+      "passed": true,
+      "tests": {
+        "tests/runtime_core/test_host.py::test_c6_03_inject_is_nearest_config_and_custom_merge_is_used": "passed"
+      }
+    },
+    "C6-04": {
+      "passed": true,
+      "tests": {
+        "tests/runtime_core/test_host.py::test_c6_04_scoped_children_remove_bindings_and_resource_owners": "passed"
+      }
+    },
+    "C7-01": {
+      "passed": true,
+      "tests": {
+        "tests/runtime_core/test_host.py::test_c7_01_c7_02_c7_04_shared_service_contributes_to_explicit_calling_owner": "passed"
+      }
+    },
+    "C7-02": {
+      "passed": true,
+      "tests": {
+        "tests/runtime_core/test_host.py::test_c7_01_c7_02_c7_04_shared_service_contributes_to_explicit_calling_owner": "passed"
+      }
+    },
+    "C7-03": {
+      "passed": true,
+      "tests": {
+        "tests/runtime_core/test_host.py::test_c7_01_c7_02_c7_03_children_resources_and_stale_owner": "passed",
+        "tests/runtime_core/test_host.py::test_c6_04_scoped_children_remove_bindings_and_resource_owners": "passed"
+      }
+    },
+    "C7-04": {
+      "passed": true,
+      "tests": {
+        "tests/runtime_core/test_host.py::test_c7_01_c7_02_c7_04_shared_service_contributes_to_explicit_calling_owner": "passed",
+        "tests/runtime_core/test_host.py::test_review_stale_context_scope_cannot_register_into_new_generation": "passed"
+      }
+    },
+    "C8-01": {
+      "passed": true,
+      "tests": {
+        "tests/runtime_core/test_events.py::test_listener_admission_owner_generation_and_unregister": "passed",
+        "tests/runtime_core/test_events.py::test_cross_listener_wait_is_rejected_and_new_listener_not_in_existing_snapshot": "passed"
+      }
+    },
+    "C8-02": {
+      "passed": true,
+      "tests": {
+        "tests/runtime_core/test_events.py::test_waterfall_around_order_and_short_circuit[False]": "passed",
+        "tests/runtime_core/test_events.py::test_waterfall_around_order_and_short_circuit[True]": "passed"
+      }
+    },
+    "C8-03": {
+      "passed": true,
+      "tests": {
+        "tests/runtime_core/test_events.py::test_parallel_waits_for_other_listener_before_aggregating_failure": "passed",
+        "tests/runtime_core/test_events.py::test_serial_short_circuit_releases_unused_pins_and_rejects_implicit_results": "passed"
+      }
+    },
+    "C8-04": {
+      "passed": true,
+      "tests": {
+        "tests/runtime_core/test_events.py::test_explicit_bail_results_do_not_use_python_truthiness[None]": "passed",
+        "tests/runtime_core/test_events.py::test_explicit_bail_results_do_not_use_python_truthiness[False]": "passed",
+        "tests/runtime_core/test_events.py::test_explicit_bail_results_do_not_use_python_truthiness[0]": "passed",
+        "tests/runtime_core/test_events.py::test_explicit_bail_results_do_not_use_python_truthiness[]": "passed"
+      }
+    },
+    "C8-05": {
+      "passed": true,
+      "tests": {
+        "tests/runtime_core/test_effects.py::test_shared_close_survives_cancelled_waiter_and_disposes_once": "passed",
+        "tests/runtime_core/test_events.py::test_cancel_waits_for_noncooperative_listener_before_releasing_pin": "passed",
+        "tests/runtime_core/test_host.py::test_task_failure_is_immediately_reported_and_isolated": "passed"
+      }
+    },
+    "S1-01": {
+      "passed": true,
+      "tests": {
+        "tests/runtime_core/test_host.py::test_c2_04_duplicate_and_cycle_readiness": "passed",
+        "tests/runtime_core/test_host.py::test_s1_01_parent_startup_wait_cycle_and_cancel_ready_waiter": "passed",
+        "tests/runtime_core/test_host.py::test_setup_failure_safely_releases_registered_resources_and_can_explicitly_restart": "passed",
+        "tests/runtime_core/test_host.py::test_readiness_propagates_current_dependency_failure_without_poisoning_healthy_provider": "passed",
+        "tests/runtime_core/test_host.py::test_readiness_ignores_retired_failure_while_replacement_is_loading": "passed"
+      }
+    },
+    "S1-02": {
+      "passed": true,
+      "tests": {
+        "tests/runtime_core/test_host.py::test_s1_02_loading_slots_and_whole_generation_publication": "passed",
+        "tests/runtime_core/test_host.py::test_review_manual_provider_close_drains_inherited_child_then_waits_for_reregistration": "passed",
+        "tests/runtime_core/test_host.py::test_review_inherited_selfprovide_never_exposes_loading_parent_generation": "passed"
+      }
+    },
+    "S1-03": {
+      "passed": true,
+      "tests": {
+        "tests/runtime_core/test_host.py::test_c4_03_s1_03_undeclared_inherited_and_isolated_reads": "passed"
+      }
+    },
+    "S1-04": {
+      "passed": true,
+      "tests": {
+        "tests/runtime_core/test_host.py::test_s1_04_get_does_not_check_and_value_update_keeps_old_reference": "passed",
+        "tests/runtime_core/test_host.py::test_s1_10_registration_identity_changes_without_stale_disposer_damage": "passed"
+      }
+    },
+    "S1-05": {
+      "passed": true,
+      "tests": {
+        "tests/runtime_core/test_host.py::test_s1_05_all_stops_before_provider_destruction": "passed",
+        "tests/runtime_core/test_host.py::test_c7_01_c7_02_c7_03_children_resources_and_stale_owner": "passed"
+      }
+    },
+    "S1-06": {
+      "passed": true,
+      "tests": {
+        "tests/runtime_core/test_host.py::test_s1_06_transitive_admission_is_closed_before_dependent_notification_awaits": "passed",
+        "tests/runtime/test_execution_components.py::test_core_delivery_cancellation_records_unknown_before_storage_cleanup": "passed"
+      }
+    },
+    "S1-07": {
+      "passed": true,
+      "tests": {
+        "tests/runtime_core/test_host.py::test_s1_07_cleanup_self_wait_and_shared_close_waiter_cancel": "passed",
+        "tests/runtime_core/test_effects.py::test_self_wait_is_rejected_and_other_resources_still_close": "passed",
+        "tests/runtime_core/test_host.py::test_s1_07_s1_08_serial_snapshot_protects_later_owner_and_its_pool": "passed",
+        "tests/runtime_core/test_effects.py::test_close_waits_for_setup_and_reclaims_late_disposer": "passed"
+      }
+    },
+    "S1-08": {
+      "passed": true,
+      "tests": {
+        "tests/runtime_core/test_host.py::test_s1_07_s1_08_serial_snapshot_protects_later_owner_and_its_pool": "passed",
+        "tests/runtime_core/test_events.py::test_serial_short_circuit_releases_unused_pins_and_rejects_implicit_results": "passed"
+      }
+    },
+    "S1-09": {
+      "passed": true,
+      "tests": {
+        "tests/runtime_core/test_host.py::test_s1_09_noncooperative_parallel_listener_keeps_pool_owned": "passed",
+        "tests/runtime_core/test_host.py::test_independent_cleanup_continues_while_dependent_resources_remain_blocked": "passed"
+      }
+    },
+    "S1-10": {
+      "passed": true,
+      "tests": {
+        "tests/runtime_core/test_host.py::test_c3_02_s1_10_loading_aba_and_config_revision_cannot_publish_stale_start": "passed",
+        "tests/runtime_core/test_host.py::test_c3_02_dependency_changes_during_loading_only_publish_final_generation": "passed",
+        "tests/runtime_core/test_host.py::test_s1_10_registration_identity_changes_without_stale_disposer_damage": "passed"
+      }
+    },
+    "S1-11": {
+      "passed": true,
+      "tests": {
+        "tests/runtime_core/test_host.py::test_c3_03_same_instance_generation_and_c3_04_unrelated": "passed",
+        "tests/runtime_core/test_host.py::test_c4_02_c4_04_s1_11_independent_provider_can_publish_while_old_cleanup_is_pinned": "passed",
+        "tests/runtime_core/test_host.py::test_s1_11_cleanup_failure_blocks_provider_and_prevents_automatic_rebind": "passed"
+      }
+    },
+    "S1-12": {
+      "passed": true,
+      "tests": {
+        "tests/integration/test_provider_limits.py::test_postgresql_pool_acquisition_is_bounded": "passed",
+        "tests/integration/test_provider_limits.py::test_redis_pool_exhaustion_and_recovery_are_explicit": "passed",
+        "tests/runtime/test_lifecycle.py::test_readiness_tracks_database_failure_and_recovery_without_leaking_details": "passed",
+        "tests/runtime/test_lifecycle.py::test_schema_mismatch_is_not_ready": "passed",
+        "tests/runtime/test_lifecycle.py::test_redis_unavailability_only_blocks_declared_required_dependency[False]": "passed",
+        "tests/runtime/test_lifecycle.py::test_redis_unavailability_only_blocks_declared_required_dependency[True]": "passed",
+        "tests/runtime/test_execution_components.py::test_delivery_poll_fault_is_observed_by_host_before_application_close": "passed",
+        "tests/runtime/test_lifecycle.py::test_shutdown_waits_for_transaction_cleanup_before_disposing_pool": "passed"
+      }
+    }
+  }
+}

@@ -1,16 +1,18 @@
 ---
 title: Stage 一期基座架构与验收
 status: design-proposal
-implementation_status: not-started
+implementation_status: p1a-complete-p1b-p1d-pending
 policy_effect: none
-revised_date: 2026-10-24
+revised_date: 2026-10-25
 ---
 
 # Stage 一期基座架构与验收
 
-本轮按用户“先把类 Cordis＋身份验证＋WASM 基座打好”的要求重排一期。内部命令/审计/outbox/delivery基座已经开始实现并有SQLite测试；RuntimeHost、真实身份、WASM、签名准入和HTTP接入仍未实现。完整任务业务规则已保留到[后续业务切片](business-slice-plan.md)，不删除，也不继续充当一期主要交付。
+一期按“类 Cordis＋身份验证＋WASM 基座优先”推进。P1a 已实现 RuntimeHost、资源/依赖/事件生命周期、PG/Redis provider、命令/投递组件和系统 HTTP 探针，并在云设备验证；真实身份、WASM、签名准入和业务 HTTP 留待 P1b～P1d。完整任务业务保留到[后续业务切片](business-slice-plan.md)。
 
 本文件是一期范围的权威入口。对象定义见[核心对象](core-object-contracts.md)，身份协议见[身份与授权](identity-and-authorization.md)，WASM 见[宿主设计](wasm-host-design.md)，历史表达修正与来源见[核对记录](design-review-2026-10-24.md)。
+
+2026-10-25 的[框架实施规格](framework-foundation.md)已完成 P1a.1～P1a.3：原 Core 34 个场景加 12 个 S1 边界场景映射验收 46/46，证据见[P1a 验证](reviews/p1a-validation-2026-10-25.md)。这些结果不替代后续身份、WASM 和联调验收。
 
 ## 1. 一期目标
 
@@ -18,7 +20,7 @@ revised_date: 2026-10-24
 
 交付范围：
 
-- 自研 Python async Core：声明依赖、provider、资源 owner、代次、就绪、租约、排空及失败报告；完成原定 34 个 Core 场景。
+- 自研 Python async Core：声明依赖、provider、资源 owner、代次、就绪、租约、排空及失败报告；完成原定 34 个 Core 场景和补充 12 个 S1 边界场景。
 - 能力、身份上下文、命令/结果、发布清单、runner 调用等共同契约；未来 WorkflowRun 的边界一并定义。
 - 至少一个真实认证协议 adapter 对本地测试 IdP 的集成路径；包含人和服务身份、租户成员、任职/服务授权、有限委托与撤销竞争。fixture 仅辅助隔离测试。
 - WASM 宿主与独立 runner 进程：固定标准 Core WASM / ABI、纯计算、有限输入输出、无任意宿主导入、受控编译与执行预算。
@@ -57,7 +59,7 @@ P1 在接口评审时定义后续 WorkflowDefinition/Run/Step/Wait 的引用关�
 
 | 阶段 | 主要交付 | 退出门槛 |
 |---|---|---|
-| P1a：Core 与共同契约 | 自研运行内核、provider/owner/generation/lease，storage provider，能力/身份/命令/manifest/runner 接口共同评审 | C1–C8 共 34 个场景、共享参考语义与公开差异、既有生命周期检查；此时不宣称 IAM 或 WASM 已验收 |
+| P1a：Core 与共同契约 | 按 P1a.1资源依赖 → P1a.2安全退出与组合 → P1a.3应用装配交付；Core 不依赖身份/业务类型 | C1–C8 共 34 项＋S1 共 12 项、共享语义与 D-01～D-09 证据、真实 provider 和既有回归；此时不宣称 IAM 或 WASM 已验收 |
 | P1b：真实身份与当前授权 | 实际协议 adapter、本地测试 IdP、可信身份映射、成员/任职/服务授权/委托、guard 与认证证据；绑定意图的批准验证 | 按身份规格分组完成P1b适用I1场景；签名/WASM联调项在P1c/P1d验收；fixture仅辅助 |
 | P1c：WASM 与制品准入 | 固定 ABI、独立受控 runner、原始模块验证编译、预算、IPC、批准签名清单、受控激活与撤销 | W1中准入/ABI/预算/IPC/生命周期场景通过，非法制品/权限/imports/预算均拒绝，真实签名验证而非mock allow；业务联调项在P1d完成 |
 | P1d：基座联调 | EvaluateQualification、提交前重验、幂等/审计/outbox、两公司并发、升级与故障恢复、运行手册 | W1-01～28、所选profile适用I1项、O1-01～07与F1-01～12通过；O1-08留P3。未选profile不可计通过；生产部署另验收 |
@@ -115,7 +117,9 @@ TrustState记录平台受控 `trust_config_revision / key_status_revision`，key
 
 业务结果、命令终态、审计与 outbox 同事务提交。outbox 至少一次投递，稳定去重键、租约、独立 attempt 和回执状态可核对；外部接收端不支持幂等或查询时，明确保留 unknown，不承诺 exactly-once。
 
-数据库继续以 MySQL 8.4 为既有默认验证目标，PostgreSQL 17 保留兼容门禁；SQLite 只做快速功能检查。P1 新增身份、发布和结果模型的迁移/锁/撤销竞争须在真实目标库验证。这里不改变数据库选型，也不宣称当前已跑过新增测试。
+2026-10-25 选型已确定为 PostgreSQL 17＋Redis 8：PostgreSQL 是唯一长期主库，MySQL 退出受支持配置与新门禁。SQLite 只做适用子集的快速检查。P1 新增身份、发布和结果模型的迁移/锁/撤销竞争须在 PostgreSQL 17 真库验证；现有迁移历史与验证 JSON 保留，不改写成当前已验收结论。
+
+Redis 只作可重建缓存、非权威短期协调和可丢失唤醒，不接替 PostgreSQL 中的授权 guard/epoch、幂等、outbox/attempt 或业务租约。清空 Redis 后业务事实和待办可从 PostgreSQL 恢复；缓存必须隔离 tenant、核验当前权限版本，不能绕过撤权。PostgreSQL 与 Redis 不承诺双写原子性，每项使用须验收超时、故障与回退/拒绝策略。当前 Redis 配置与客户端工厂不作为 `main` 的强制依赖，也不代表这些业务用途已接入，细则见[存储策略](storage-strategy.md)。
 
 ## 8. 持久模型最小范围
 
@@ -141,7 +145,7 @@ TrustState记录平台受控 `trust_config_revision / key_status_revision`，key
 | F1-08 | provider 换代和关闭期间拒绝新旧代次混用；不能在runner仍执行时报告已排空 |
 | F1-09 | 签名/摘要/环境/ABI/能力预算/前置revision不符即拒绝；未批准内容不能激活 |
 | F1-10 | DB已提交但响应丢失，原幂等查询得到结果；外部通知回执丢失保留unknown并对账 |
-| F1-11 | 真库迁移、授权guard锁序与竞争、版本条件更新验证；不拿SQLite结果代替两库证据 |
+| F1-11 | PostgreSQL 17 真库迁移、授权guard锁序与竞争、版本条件更新验证；不拿SQLite结果代替；Redis使用方另验不可用/清空/失效丢失，不丢业务事实或绕过撤权 |
 | F1-12 | 生产配置拒绝fixture、开发签名根和未验证runner配置；日志/错误/readiness不泄露秘密 |
 
 Core C1–C8、身份 I1、WASM W1、对象 O1 与本表分别记录执行环境和结果；O1-08 属 P3 未来通用流程，不混入本期完成声明。逐场景清单、精确依赖版本、命令与未覆盖平台作为验收证据保存。

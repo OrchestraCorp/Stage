@@ -1,0 +1,45 @@
+flowchart TB
+    HTTP["HTTP 客户端 / 运维探针"] --> API["FastAPI · app/main.py<br/>Request ID / 脱敏错误 / 静态路由"]
+    API --> PROBE["/health：进程存活<br/>/ready：必需组件与依赖就绪"]
+    API -->|lifespan| BOOT["ApplicationRuntime<br/>可信装配 / 必需与可选组件 / 启停"]
+
+    subgraph CORE["Runtime Core · Python 标准库 / 单事件循环"]
+        HOST["RuntimeHost<br/>依赖图 / 代次 / 状态 / 监督"]
+        CTX["ComponentContext<br/>require / provide / realm / inject"]
+        EFFECT["EffectScope<br/>资源 owner / cleanup / 失败报告"]
+        CALL["CallScope<br/>调用租约 / 旧绑定保活 / drain"]
+        EVENT["EventBus<br/>事件模式 / listener 调用保护"]
+        HOST --- CTX
+        HOST --- EFFECT
+        HOST --- CALL
+        HOST --- EVENT
+    end
+
+    BOOT --> HOST
+    PROBE -->|读取安全状态| BOOT
+    HOST -.管理.-> STORAGE["PostgreSQL provider<br/>连接池 / session factory / schema 与连接探测"]
+    HOST -.管理.-> CACHE["Redis provider · 配置后装配<br/>客户端 / 有限连接与超时 / PING"]
+    STORAGE --> PG[("PostgreSQL<br/>当前事实 / 命令结果 / 审计 / outbox / attempts")]
+    CACHE --> REDIS[("Redis<br/>辅助存储；业务缓存尚未接入")]
+
+    subgraph INTERNAL["已实现的内部执行组件 · 默认 HTTP 服务未装配"]
+        COMMAND["CommandService<br/>每次操作持有存储租约"]
+        KERNEL["CommandKernel / UnitOfWork<br/>幂等 / 版本 / 同事务结果＋审计＋outbox"]
+        AUTHZ["AuthorizationLoader 接口<br/>＋ RBAC / ReBAC / ABAC 纯判定"]
+        WORKER["OutboxWorker<br/>租约 / 去重 / unknown / 显式对账"]
+        COMMAND --> KERNEL
+        KERNEL --> AUTHZ
+    end
+
+    HOST -.显式装配与监督.-> COMMAND
+    HOST -.显式装配与监督.-> WORKER
+    KERNEL -->|独立事务| STORAGE
+    WORKER -->|领取 / 回执 / 状态| STORAGE
+    WORKER -->|事务外投递| SINK["显式注入的 sink<br/>当前集成测试使用受控测试实现"]
+
+    classDef core fill:#eaf2ff,stroke:#3565a8,color:#182b45;
+    classDef adapter fill:#edf8f2,stroke:#4d8a68,color:#203d2b;
+    classDef internal fill:#fff5e5,stroke:#b87b24,color:#51350d;
+    class HOST,CTX,EFFECT,CALL,EVENT core;
+    class BOOT,STORAGE,CACHE,PG,REDIS adapter;
+    class COMMAND,KERNEL,AUTHZ,WORKER,SINK internal;

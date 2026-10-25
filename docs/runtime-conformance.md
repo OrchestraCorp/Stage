@@ -2,9 +2,11 @@
 
 规格标识：`stage-runtime-core-v1`
 
-状态：设计稿；运行内核未实现；本规格一致性场景已通过 **0 项**
+状态：P1a 已实现；Python 行为场景映射 **C 34/34、S 12/12**，真实服务全套 323 项测试通过。证据见[P1a 验收](reviews/p1a-validation-2026-10-25.md)。
 
 核查日期：2026-10-23（Asia/Shanghai）
+
+规格修订：2026-10-25。按[一期框架实施规格](framework-foundation.md)完成 Core、生命周期与应用装配。固定参考源码已实际执行；35 组同描述操作结果一致、9 组预声明差异符合预期。参考片段与完整 Python 场景分别记录，不以片段冒充整体兼容认证。
 
 本文件规定 Stage 如何在 Python 中实现 Cordis 的组件组合思想，以及哪些行为可以对照参考实现验收。它是 Stage 自己的工程工作规格，不是 Cordis 官方标准、认证或跨语言兼容声明。已有 Stage 测试通过，不能计入本规格的一致性通过数量。
 
@@ -24,7 +26,7 @@
 
 正式来源入口为 [arXiv 论文](https://arxiv.org/abs/2608.25512)、[论文 PDF](https://arxiv.org/pdf/2608.25512)、[Cordis 上游仓库](https://github.com/cordiverse/cordis)。本文件不依赖访问兄弟目录才能理解规则；下文的源码路径以表中指定仓库为基准，均作为核查定位记录。
 
-本轮没有确认一个由 Cordis 官方发布的统一跨语言认证流程。对外只能声明经过验证的规格、参考提交、测试范围和偏差。例如：“通过 `stage-runtime-core-v1` 的指定场景；与固定 DSH Core 对照，存在 D-01 至 D-07 的有意差异。”不得简写为“完全兼容 Cordis”或“通过 Cordis 官方认证”。
+本轮没有确认一个由 Cordis 官方发布的统一跨语言认证流程。对外只能声明经过验证的规格、参考提交、测试范围和偏差。例如：“通过 `stage-runtime-core-v1` 的指定场景；与固定 DSH Core 对照，存在 D-01 至 D-09 的有意差异。”不得简写为“完全兼容 Cordis”或“通过 Cordis 官方认证”。
 
 ### 1.1 分层验收
 
@@ -39,23 +41,22 @@ Loader 的声明式配置、HMR 的代码替换、业务工作流持久化是不
 
 ## 2. Stage 保留的能力与新增边界
 
-当前 [应用入口](../app/main.py) 在 FastAPI lifespan 中创建 engine/session factory，并在退出时等待 engine 关闭；[数据库模块](../app/core/db.py) 为请求提供 session，事务提交由领域命令负责。P1 将这段资源管理迁入数据库 provider，应用入口通过 `RuntimeHost` 启动和关闭根组件树。已有 [生命周期测试](../tests/runtime/test_lifecycle.py) 继续覆盖应用和数据库的原有保证。
+当前 [应用入口](../app/main.py) 通过 ApplicationRuntime/RuntimeHost 管理组件；[数据库 provider](../app/providers/storage.py) 拥有 engine/session factory，请求 session 持有服务租约直到收尾，事务仍由领域命令负责。[生命周期测试](../tests/runtime/test_lifecycle.py)覆盖启动、故障、恢复、取消和关闭。
 
-新增运行内核建议放在 `app/runtime/`，不把框架代码散入领域模型。该目录是规划位置，当前未实现。首次公开对象为：
+运行内核位于 [app/runtime](../app/runtime/README.md)，registry/tasks 的协调逻辑合并在 host.py。公开对象的责任如下：
 
 | 对象 | 职责 |
 | --- | --- |
 | `RuntimeHost` | 宿主入口，拥有根组件树和 registry，协调启动、就绪、停止接入、drain 与关闭结果 |
 | `ComponentContext` | 组件生命周期的服务解析作用域；承载 realm/intercept 继承，以及插件与 effect 的归属 |
-| `ExecutionContext` | 单次业务请求/命令的执行信息及服务代次租约；不承担插件树或进程生命周期管理 |
-| `AuthorizationContext` | 现有授权判定投影，包含服务端加载的可信主体、组织、关系、属性和委托事实 |
+| `ServiceLease[T]` / `CallScope` | 不含业务身份的调用保活；固定 owner、binding/generation 和释放状态，由应用执行层持有 |
 | `ServiceKey[T]` / `ServiceBinding` | 有类型的服务标识、provider 身份、激活代次、所属 realm 和可用性 |
 | `PluginSpec` / `Fiber` | 声明依赖、配置、启动函数及实例状态；一个插件定义可有多个 Fiber |
 | `EffectScope` / `EffectHandle` | 建立资源、登记清理、等待清理结束、记录错误与归属 |
-| `RuntimeRegistry` | 活跃绑定、依赖索引、单个 Fiber 的转换协调和诊断 |
+| `RuntimeRegistry` | 内部活跃绑定、依赖索引、单个 Fiber 的转换协调；公开只读诊断，不公开可变 registry |
 | `EventKey` / `EventBus` | 明确模式和载荷的进程内扩展事件；监听器也是所属 effect |
 
-`ComponentContext`、`ExecutionContext` 与现有 [AuthorizationContext](../app/authz/context.py) 必须保持三个概念：组件决定依赖哪些能力，单次执行固定所用服务代次并携带业务请求信息，授权投影提供能力判定所需的可信事实。`ExecutionContext` 可以关联授权投影，不能由客户端声明替代服务端加载和事务内复核。realm 不能充当租户权限隔离，取得服务对象也不等于取得业务权限。
+`ComponentContext`、应用层 `ExecutionContext` 与现有 [AuthorizationContext](../app/authz/context.py) 必须保持三个概念：组件决定依赖哪些能力，单次执行携带业务请求信息并组合 Core 的 CallScope，授权投影提供能力判定所需的可信事实。后两者不属于 Core 公共类型，Core 不导入 execution/authz。`ExecutionContext` 不能由客户端声明替代服务端加载和事务内复核。realm 不能充当租户权限隔离，取得服务对象也不等于取得业务权限。
 
 本规格的 `ctx` API 均指 `ComponentContext`，除非明确标注为请求执行对象。业务请求不得以 `ExecutionContext` 冒充组件 owner 来挂载插件或登记长期服务；请求结束只释放本次执行拥有的 session、租约和其他请求资源。`RuntimeHost` 不保存每个请求的可变身份字段。
 
@@ -63,31 +64,31 @@ Loader 的声明式配置、HMR 的代码替换、业务工作流持久化是不
 
 ## 3. 基本术语与状态规则
 
-`provider identity` 指 provider Fiber 的稳定身份。`activation generation` 指该 Fiber 一次加载的代次。`binding` 指服务键、realm 与 provider/代次的关联，不是某个业务对象的完整副本。`committed view` 是消费者当前激活代次已接受的依赖绑定集合。`target view` 是按照当前可用服务重新计算、下一次应采用的依赖集合。
+`provider identity` 指 provider Fiber 的稳定身份。`activation generation` 指该 Fiber 一次加载的代次。每次登记另有不可复用的 `registration_id`，防止同代次注销/重登混淆旧句柄。`binding` 指服务键、realm、provider/代次及登记身份的关联，不是某个业务对象的完整副本。`committed view` 是消费者当前激活代次已接受的依赖绑定集合。`target view` 是按照当前可用服务重新计算、下一次应采用的依赖集合。
 
 状态至少包含 `PENDING`、`LOADING`、`ACTIVE`、`UNLOADING`、`FAILED`、`DISPOSED`。缺少必需服务时等待；加载中建立的服务在整个加载成功后才能对新消费者可用；目标变化不能把旧代次的异步结果直接发布为当前 ACTIVE。UNLOADING 完成前不得开始同一个 Fiber 的下一次加载。DISPOSED 不可重新激活，需要创建新实例。
 
-cleanup 发生错误时继续尝试其余清理，随后进入带 `phase=cleanup` 的 FAILED 并保存聚合报告；被撤销的绑定保持不可用，不自动进入下一次加载。不能只写日志后报告正常关闭、健康 DISPOSED 或新 ACTIVE。未完成的任务、租约和资源必须保留诊断记录；`RuntimeHost` 将失败/未完成结果交给宿主处置，不伪装成资源已经释放。
+cleanup 发生错误时继续尝试可安全释放的独立资源，随后进入带 `phase=cleanup` 的 FAILED 并保存聚合报告；仍被活任务/租约使用的依赖记为 blocked，不越过 drain 屏障。被撤销的绑定保持不可用，不自动进入下一次加载。不能只写日志后报告正常关闭、健康 DISPOSED 或新 ACTIVE。未完成的任务、租约和资源必须保留诊断记录；`RuntimeHost` 将失败/未完成结果交给宿主处置，不伪装成资源已经释放。
 
 转换使用每个 Fiber 的独占协调和代次校验。共享 registry 的绑定变更可串行化，但不得在持有全局互斥锁时等待任意插件启动、consumer 清理或业务请求，否则 provider 等 consumer、consumer 等 registry 会形成死锁。通知和执行分开；异步工作始终由明确 owner 跟踪。
 
-`await_ready()` 必须区分“已 ACTIVE”“因缺依赖仍 PENDING”“启动失败”，不能将“当前没有运行中的 Task”当作服务已可用。缺依赖或依赖环应返回可定位的诊断；不会收敛的组合不得作为健康实例接入请求。
+`await_ready(required, deadline)` 必须区分“已 ACTIVE”“因缺依赖仍 PENDING”“启动失败”和等待超时，不能将“当前没有运行中的 Task”当作服务已可用。required 由受信任组合入口声明，等待取消不取消共享加载。缺依赖、服务环或父子启动等待环应返回可定位的诊断；不会收敛的组合不得作为健康实例接入请求。固定参考的 `fiber.await()` 可以返回 PENDING，这些严格就绪/环诊断属于 D-09。
 
 ### 3.1 两条读取路径
 
 | 路径 | 语义 | 使用要求 |
 | --- | --- | --- |
-| 声明绑定读取，例如 `ctx.require(key)` | 检查 inject 声明和当前 committed view；在本代次清理结束前继续读取原绑定 | 组件实现依赖此路径；业务请求使用 `ExecutionContext` 持有的服务代次租约；未声明或未激活时显式失败 |
-| 公共 `ctx.get(key)` | 观察当前 registry 中在该 realm 可用的绑定；缺失返回明确的 absent 值 | 用于可选发现、组合与诊断，不自动取得生命周期租约，不改变 inject，也不保证下次调用仍可用 |
+| 声明绑定读取，例如 `ctx.require(key)` | 解析自身已 provide 项、当前 committed view，或沿相同服务 realm 的祖先自提供/已声明依赖绑定；在本代次清理结束前继续读取原绑定 | 组件依赖此路径；应用持有 Core 调用租约；无声明链或不可用时失败，不回退实时 registry |
+| 公共 `ctx.get(key)` | 观察当前 registry 中该 realm 的 ACTIVE provider；不执行其 availability predicate；缺失返回 absent | 用于发现与诊断，不取得调用租约，不改变 inject；对象存在不表示可以接新工作 |
 | 非 strict 的内部观察 | 可以检查 LOADING/UNLOADING 的注册信息 | 仅供受控运行时诊断；不得作为可调用服务提供给领域代码 |
 
 这是对参考实现两个不同机制的保留：`reflect.ts:233` 的 `get()` 绕过 inject，默认只返回 ACTIVE provider；`reflect.ts:153` 的代理属性读取检查声明并沿 Fiber 保存的绑定解析。不能写成“Cordis 所有读取都禁止未声明服务”，也不能以 `get()` 的成功作为长期持有依赖的依据。
 
-committed view 固定的是依赖绑定关系，不会深拷贝数据库连接、缓存或业务数据，也不是事务快照。参考实现 `reflect.ts:254` 允许当前 provider 修改自己的 `impl.value`，其 Fiber UID 不变且不会自动重启消费者。Stage 首期只允许同一 provider 的显式值更新；真正替换资源实现必须建立新激活代次并触发消费者重新绑定，不得用值更新绕过换代流程。
+committed view 固定的是依赖绑定关系，不会深拷贝数据库连接、缓存或业务数据，也不是事务快照。参考实现 `reflect.ts:254` 允许当前 provider 修改自己的 `impl.value`，其 Fiber UID 不变且不会自动 notify 或重启消费者。Stage 的 owner/generation 受检 `update_value()` 保留此可见性：重新 require 见新值，已取得的对象引用不改变。该接口限明确允许更新的值型服务；真正替换资源实现必须建立新激活代次并触发消费者重新绑定，不得用值更新绕过换代流程。派生 context 不产生新 Fiber，详见[实施规格](framework-foundation.md)。
 
 ## 4. P1 的 8 组必验语义
 
-下列场景是测试设计要求；表中列出的任何场景当前均未执行，不能作为已实现能力展示。测试 ID 在实现后保持稳定。新的失败路径可以追加 ID，不得删除原测试来掩盖不一致。
+下列场景是稳定的测试义务，已通过本轮 Python 映射验收；每项对应 nodeid 和结果见[机器证据](reviews/p1a-runtime-conformance-2026-10-25.json)。新的失败路径可追加 ID，不得删除原测试来掩盖不一致。固定 TS 的共享片段与差异另有原始 trace。
 
 ### C1：Effect ownership、建立失败与异步清理
 
@@ -99,15 +100,15 @@ P1 支持同步 setup 返回 disposer、异步 setup 返回 disposer，以及逐
 | --- | --- |
 | C1-01 | setup 获取 A、B 后失败：已登记资源各清理一次，保留启动错误，资源清单无遗漏 |
 | C1-02 | setup await 时调用父卸载：等待当前步骤收敛并回收该步骤登记的资源，不把旧加载发布为 ACTIVE |
-| C1-03 | 手工关闭 effect 后关闭 Fiber；并发多次关闭同一 effect：不重复运行逆操作，所有等待者都能等到同一清理结果 |
-| C1-04 | 一个 cleanup 抛错：其余 cleanup 继续；错误聚合进入报告，不能报告正常关闭 |
+| C1-03 | 手工关闭 effect 后关闭 Fiber；外部并发多次关闭同一 effect：不重复运行逆操作，等待同一清理结果；内部自等待按 S1-07 拒绝 |
+| C1-04 | 一个 cleanup 抛错：独立且安全的其余 cleanup 继续；错误聚合，被未收敛任务依赖的资源记 blocked，不能报告正常关闭 |
 | C1-05 | UNLOADING/DISPOSED 时注册新 effect、listener 或 child：显式拒绝；归属清单中没有逃逸项 |
 
 参考：`vendor/cordis/src/fiber.ts:418–560`、`:265–319`。重复关闭的等待结果和错误报告采用第 5 节 D-03/D-04 的 Stage 规则。
 
 ### C2：Reactive coeffects 与服务可用性
 
-依赖必须由 runtime 自动跟踪，业务调用方不负责反复调用 refresh。服务只有在 provider ACTIVE 且 availability predicate 满足时才可作为新激活依赖；predicate 抛错按不可用处理并报告，不静默当作可用。同一 `(realm, service key)` 不允许两个当前可用 provider 互相覆盖。
+依赖必须由 runtime 自动跟踪，业务调用方不负责反复调用 refresh。服务只有在 provider ACTIVE 且 availability predicate 满足时才可作为新激活依赖；predicate 为纯本地同步快照判断，抛错按不可用处理并报告，网络探测由 provider 的受管任务另行执行。同一 `(realm, service key)` 的登记槽不能重复占用，LOADING 预留和 check=false 均不允许另一 provider 覆盖。公开登记撤销后才可复用槽，旧 committed pins 独立保留。
 
 | 场景 | 操作与验收 |
 | --- | --- |
@@ -116,11 +117,13 @@ P1 支持同步 setup 返回 disposer、异步 setup 返回 disposer，以及逐
 | C2-03 | provider 仍在但 check 结果改变：显式可用性通知后只影响该服务及 realm 的消费者 |
 | C2-04 | 重复 provider 和必需依赖环：重复绑定拒绝；环返回组成成员与服务键，健康检查不把等待中的组合报告为已就绪 |
 
-参考：`reflect.ts:277–335`、`fiber.ts:597–623`。P1 不提供动态未声明依赖或“忽略不存在的必需服务”模式。
+参考：`reflect.ts:277–335`、`fiber.ts:597–623`。C2-04 的重复登记拒绝属于共享语义，环诊断属于 Stage D-09，差分结果分别记录。P1 不提供动态未声明依赖或“忽略不存在的必需服务”模式。启动服务按整代可见，ACTIVE 后单项登记不具有批次事务，见 S1-02。
 
 ### C3：Provider 代次与过期异步结果
 
-target 必须反映必需绑定的 provider 身份及激活代次，不是一个“所有键都存在”的布尔量。相同名称、相同配置甚至相同值的 provider 换代也必须触发重新绑定；与当前依赖无关的服务变化不得重启该消费者。
+target 必须反映必需绑定的 provider 身份、激活代次及 registration_id，不是一个“所有键都存在”的布尔量。相同名称、相同配置甚至相同值的 provider 换代也必须触发重新绑定；与当前依赖无关的服务变化不得重启该消费者。
+
+本实例的 change_revision 随目标、配置和关闭意图单调增加，不能只比较依赖 tuple；启动尝试另有 generation。S1-10 追加 A→B→A 和 LOADING 时修改自身配置，检查旧异步完成不会复活。
 
 | 场景 | 操作与验收 |
 | --- | --- |
@@ -138,7 +141,7 @@ target 必须反映必需绑定的 provider 身份及激活代次，不是一个
 | 场景 | 操作与验收 |
 | --- | --- |
 | C4-01 | P1 撤销后 consumer 清理中读取 db：仍得到 P1 的绑定；公共 `get(db)` 按实时可用性返回 absent 或新的可用 P2 |
-| C4-02 | 清理过程中 P2 已可用：旧 consumer 不混用 P1/P2，下一次加载才读取 P2 |
+| C4-02 | P1 公开登记撤销后，不同 Fiber 的 P2 独立登记并可用：旧 consumer cleanup 仍用 P1，成功结束旧代次后才绑定 P2；这不是默认 replace 的顺序 |
 | C4-03 | 未声明读取与 pending 读取：分别得到未声明/不可用错误；公共 get 不会使声明检查自动通过 |
 | C4-04 | 清理完成：旧 committed view 释放，后续读取不得继续使用已经撤销的作用域 |
 
@@ -146,9 +149,13 @@ target 必须反映必需绑定的 provider 身份及激活代次，不是一个
 
 ### C5：Provider 整体 drain 屏障与请求租约
 
-Stage 采用比当前 vendor 更明确的资源释放规则：**先停止依赖旧 provider 的新工作接入，再让依赖者结束旧代次，最后执行 provider 的资源清理**。`RuntimeHost` 协调停止接入；请求或事务通过 `ExecutionContext` 的显式租约记录所使用的 provider/代次；进入 drain 后不再分配该代次的新租约。
+Stage 采用比当前 vendor 更明确的资源释放规则：**先停止依赖旧 provider 的新工作接入，通知消费者/child/任务停止生产，再让旧调用和依赖者收敛，最后销毁 provider 资源**。`RuntimeHost` 协调停止接入；请求或事件通过无业务身份的 `CallScope/ServiceLease` 固定 provider/代次，应用 ExecutionContext 组合这些租约；进入 drain 后不再发新业务调用租约。
 
 consumer 的旧代次清理和旧请求租约全部释放后，provider 才能开始关闭连接池、消息连接等资源。等待的是旧绑定的释放，不能因消费者已在新代次运行而继续无限等待。不存在“卸载 provider 就默认业务事务已回滚”的规则。
+
+组件 dependency pin 与短期调用 lease 分别记录：旧 consumer/worker 的 cleanup 保持旧 committed binding，以完成事务回滚和取消记账，不需申请已禁止的新业务租约。关闭顺序、重入等待与失败屏障以[实施规格第 5 节](framework-foundation.md#5-关闭协议与失败结果)为准。stop 回调不能排在它所唤醒的 drain 之后。
+
+失效时在任何 await 前关闭受影响依赖闭包的调用 admission；CallScope 原子检查 binding/registration 及必要依赖可接入状态，再增加 pin。不能在 provider 已退役而 consumer 尚未收到异步通知的窗口继续接受新请求。已选 dispatch 内的全部 listener pins 也参与已知关闭等待环检查。
 
 | 场景 | 操作与验收 |
 | --- | --- |
@@ -162,6 +169,8 @@ consumer 的旧代次清理和旧请求租约全部释放后，provider 才能�
 ### C6：按服务键的 realm 与 intercept
 
 `ComponentContext` 是带继承关系的解析作用域，服务 store 按 `(realm, key)` 区分。`isolate(db)` 只改变 db 的 realm，仍能继承 logger 等未隔离服务。同一显式 realm label 可供兄弟组件作用域共享，不采用“每个 child 的全部服务都私有”的替代规则。
+
+isolate/intercept 视图继承同一个 owner/generation，不产生新 Fiber；只有 plugin 挂载产生结构 child。require 可继承同 realm 祖先的 committed 声明，自身 provide 可读取，不能将所有读取简单限制为当前 Fiber 的 inject 字典。
 
 intercept 是传递给服务消费/解析过程的配置层，不是偷偷替换业务授权结果。合并顺序为祖先到后代；显式 base 最低、head 最高；服务可声明自己的 merge 规则。未声明规则时使用浅层覆盖，不推断深合并。
 
@@ -193,6 +202,8 @@ DSH 使用 traceable Proxy 将服务内产生的 effect 归属到调用方 Conte
 
 每个事件用稳定 EventKey 声明载荷、返回类型和唯一 dispatch mode。进程内事件不是 durable domain event；要求持久化的事实由领域事务写入审计/outbox。事件监听注册归属 effect，卸载后不得参与新的 dispatch。
 
+公共事件 dispatch 只选择 ACTIVE 且 admission 未关闭的 owner，入口原子选定快照并取得 owner/generation/registration 调用 pin，包括 serial 尚未调用的监听。卸载撤销新可见性后等待已有 dispatch 收敛；短路释放未用 pin，取消必须等已启动回调实际结束。事件回调不能同步等待关闭当前 dispatch 保活的 owner，使用 request_close。激活门控和调用保护是 D-08，固定 vendor 的上下文过滤/快照/注销本身不提供它。
+
 | 模式 | P1 语义 |
 | --- | --- |
 | `emit` | 同步按登记顺序调用，不承担异步任务；注册异步 listener 明确拒绝，改用受管理的异步模式 |
@@ -211,7 +222,7 @@ DSH 的 bail 判断把 `null`、`undefined`、`false` 作为继续，其余值�
 | C8-04 | `None`、`False`、`0`、空字符串等映射：按显式 Continue/Stop 结果核对，避免 Python truthiness 漂移 |
 | C8-05 | 异步启动/关闭失败、调用者取消、重复 close：结构化记录结果；required dependency 未就绪不能被报告为健康 ACTIVE |
 
-参考：`events.ts:13`、`:183–242`、`:254–301`。错误聚合、emit 限制与显式返回类型归入 D-04/D-07。
+参考：`events.ts:13`、`:183–242`、`:254–301`。parallel 的 allSettled/聚合错误是共享语义；cleanup 失败报告属于 D-04，emit 限制和 Continue/Stop 属于 D-07，在途 listener 保护属于 D-08。
 
 ## 5. 与实际 vendor 的有意差异
 
@@ -228,12 +239,14 @@ Stage 以业务执行安全为优先，选择如下差异；它们不是已经�
 | ID | Stage 工作规则 | 相对参考实现的差异及原因 |
 | --- | --- | --- |
 | D-01 | provider 整体恢复前等待旧依赖者/请求租约释放 | 等待位置采用论文 Algorithm 5 第 25 行，区别于当前 vendor 的单个 provide disposer 内等待；请求租约是 Stage 扩展 |
-| D-02 | 同一 owner 的顶层清理默认反序串行，跨独立分支的并发须明确声明 | Stage 自身的顺序约束；论文第 63 页和当前 vendor 均允许顶层 effects 并发，不据此宣称论文要求全局 LIFO |
-| D-03 | 重复 await close 加入同一清理任务并得到同一终态 | vendor 公开 disposer 保留 single-shot 返回行为，只有内部 owner/effect 组合额外加入已开始的清理；Python 显式异步关闭统一等待语义 |
-| D-04 | cleanup 全部尝试后聚合报告；错误进入 `FAILED(phase=cleanup)`，拒绝新接入和自动重载 | vendor 常以 logger containment 处理 teardown 错误；Stage 的 `RuntimeHost` 必须向宿主返回失败/未完成状态，不能吞掉错误或报告资源已安全释放 |
-| D-05 | 显式 provider activation generation；换代和业务请求绑定关系可检查 | vendor epoch 使用 Fiber UID；Stage 额外防止同实例异步旧通知干扰新代次 |
+| D-02 | stop/join 前置条件满足后，同 owner 资源默认反序串行；独立分支并发须明确声明 | Stage 自身约束，不能仅按树 LIFO 等待依赖；论文与 vendor 允许顶层 effects 并发，不宣称论文要求全局 LIFO |
+| D-03 | 外部 close 等待者加入同一操作；取消不终止共享关闭；内部自等待拒绝，另设 request_close | vendor 公开 disposer 为 single-shot，内部组合可加入已开始清理；Stage 额外定义 Python 取消与等待环语义 |
+| D-04 | 安全独立清理继续，未收敛依赖记 blocked；错误聚合、拒绝自动重载 | vendor 常以 logger containment 处理 teardown 错误；Stage 不把清理失败或被阻塞资源报告为已释放，单 effect 内失败也不能隐去其他安全清理 |
+| D-05 | 显式 activation generation＋change_revision＋每次登记的 registration_id | vendor epoch 使用依赖 provider Fiber UID；Stage 追加配置/ABA 及同代次重登记防护 |
 | D-06 | caller ownership 通过显式 owner 或 ScopedService 传递 | 不提供 JS Proxy 表面语法兼容；只对资源归属、隔离和清理结果进行一致性检查 |
 | D-07 | emit 仅接受同步 listener；bail 使用 Continue/Stop 类型 | 不复制未等待 Promise 的调用方式和 JS 值类型；避免 Python coroutine 丢失及 truthiness 差异 |
+| D-08 | 公共 listener 按 owner 激活/接入门控；snapshot 持有调用 pin，卸载/取消等待在途回调 | vendor 仅上下文过滤、回调快照和列表注销，没有相应激活门控/调用 drain 保证 |
+| D-09 | 显式 required/deadline 的 readiness 和依赖/启动等待环诊断 | vendor fiber.await 可在 PENDING 返回；Stage 不能据此报告业务就绪，诊断仅覆盖受管理等待 |
 
 每个对照测试必须标注 `shared-semantics` 或关联具体 D-ID。Stage 的更强约束通过，不能把参考侧的不同输出改写为通过，也不能把所有未理解差异归入“Python 实现方式不同”。其他差异必须新增设计决策后才能纳入规格。
 
@@ -261,28 +274,29 @@ TS 插件依赖 Node、ESM/CJS、Cordis declaration merging 和平台能力，�
 
 1. 实现 Core 与 8 组场景，不先扩展 Loader/HMR。
 2. 数据库 provider 拥有 engine；会话工厂作为受声明依赖提供，清理受 D-01 屏障保护。
-3. 一个测试 consumer 为请求创建 `ExecutionContext`，取得服务代次租约并使用事务；覆盖正常完成、异常 rollback、请求取消和 provider drain。
+3. 一个测试 consumer 通过无业务身份的 CallScope 取得服务代次租约，应用层组合 ExecutionContext 并使用事务；覆盖正常完成、异常 rollback、请求取消和 provider drain。
 4. FastAPI lifespan 通过 `RuntimeHost` 等待必需插件就绪后才报告 ready；关闭等待根组件树的结构化清理结果。
-5. 授权判定继续由 `app.authz` 提供；将其作为应用服务注入不能改变可信事实来源。首个真实写命令落地时再接事务审计和 outbox，不以空结构冒充完成。
+5. 授权判定继续由 `app.authz` 提供；将其作为应用服务注入不能改变可信事实来源。已有内部 CommandKernel、审计/outbox 与投递实现继续复用，真实身份与 HTTP 接入分别验收。
 
-P1a / Core 完成条件是C1–C8的Stage断言全部通过、共享语义与TS对照一致、D-01至D-07有明确差分证据、首个数据库/请求切片及既有测试通过，且无未解释差异。整体一期还须完成[一期方案](phase-1.md)的P1b真实认证、P1c受控WASM/准入和P1d资格评估联调；原任务业务九类验收移到[后续业务切片](business-slice-plan.md)。性能、长期压力及多节点生产运行另验收，不能从Core完成推断整个平台或生产就绪。
+P1a / Core 完成条件是 C1–C8 的 34 个场景与[补充 S1 的 12 个边界场景](framework-foundation.md#8-分段交付与补充验收)全部通过、共享语义与 TS 对照一致、D-01 至 D-09 有对应证据、首个真实数据库/请求切片及既有测试通过，且无未解释差异。Stage-only 诊断不要求参考侧产生相同结果。整体一期还须完成[一期方案](phase-1.md)的P1b真实认证、P1c受控WASM/准入和P1d资格评估联调；原任务业务九类验收移到[后续业务切片](business-slice-plan.md)。性能、长期压力及多节点生产运行另验收，不能从Core完成推断整个平台或生产就绪。
 
 ### 7.3 当前证据状态
 
 | 项目 | 状态 |
 | --- | --- |
 | 参考论文与本地 vendor 源码核查 | 已读取；用于制定本工作规格 |
-| `stage-runtime-core-v1` 内核 | 未实现 |
-| TS/Python 共享场景适配器 | 未实现 |
-| C1–C8 已执行 / 已通过 | 0 / 0 |
-| 数据库 provider 与请求租约接入 | 未实现 |
+| `stage-runtime-core-v1` 内核 | P1a 已实现并验证 |
+| TS/Python 共享场景适配器 | 35/35 相同操作描述比较成功；9/9 预声明差异匹配，见[覆盖记录](reviews/runtime-reference-2026-10-25/coverage.json) |
+| C1–C8 已执行 / 已通过 | 34 / 34（Python 义务映射，非官方认证） |
+| S1-01～S1-12 已执行 / 已通过 | 12 / 12 |
+| 数据库 provider 与请求租约接入 | 真 PG/Redis、命令/worker 装配、取消收尾及设备故障恢复通过 |
 | Loader / HMR 验收 | 未开始，不属于 P1 完成声明 |
 
 ## 8. 验证记录格式
 
 每轮保留机器可读结果及简短人工报告，推荐在未来测试产物中按 run_id 保存 `manifest.json`、`trace.ts.jsonl`、`trace.python.jsonl`、`results.json`、`report.md`。这里的文件名是产物约定，当前没有生成这些证据文件。
 
-manifest 至少记录以下字段，不能用空白“通过”占位：
+manifest 至少记录以下字段；下文仍是未来运行的格式示例，实际结果以[P1a 证据](reviews/p1a-validation-2026-10-25.md)为准：
 
 ```json
 {
@@ -311,7 +325,7 @@ manifest 至少记录以下字段，不能用空白“通过”占位：
 }
 ```
 
-单个 trace 事件至少包含序号、scenario_id、operation、Fiber/owner 标识、activation generation、realm/key、effect 标识、状态和结构化结果。清理开始/完成必须分开记录；错误不能仅存在不可解析的日志字符串中。场景结果保存 TS 结果、Stage 结果、断言、关联 D-ID 和原始证据路径；`not_run`、阻塞、异常中断不得计入通过。
+单个 trace 事件至少包含序号、scenario_id、operation、Fiber/owner 标识、activation generation、change_revision、realm/key、registration/effect 标识、状态和结构化结果。清理开始/完成必须分开记录；错误不能仅存在不可解析的日志字符串中。场景结果保存 TS 结果、Stage 结果、断言、关联 D-ID 和原始证据路径；`not_run`、阻塞、异常中断不得计入通过。
 
 `reference_repository_dirty` 记录整个参考仓库，`reference_scope_dirty` 仅记录本次实际执行到的参考范围；后者为 false 不能推导整个 Maestro 工作区干净。正式执行须将实际触及的基础库和测试适配器加入 scope，并记录其 hash。
 
@@ -340,4 +354,4 @@ manifest 至少记录以下字段，不能用空白“通过”占位：
 | 版本和 DSH 补丁 | Maestro `vendor/README.md`，尤其生命周期加固与 Loader 非事务更新记录 |
 | Stage 应用与事务边界 | [app/main.py](../app/main.py)、[app/core/db.py](../app/core/db.py)、[AGENT.md](../AGENT.md) |
 
-本文件确定未来实现与验收要求。当前可描述为“已制定 Core 工作规格并固定参考证据”，不能描述为“Stage 已迁移到 Cordis 架构”。
+当前可描述为“Stage 已实现并验证自己的 P1a 组件 Core，按固定 Cordis 源码核对共享语义并记录差异”；不宣称官方 Cordis 认证、完整 TypeScript 生态兼容或生产验收完成。

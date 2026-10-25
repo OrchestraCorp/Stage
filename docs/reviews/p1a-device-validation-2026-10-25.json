@@ -1,0 +1,108 @@
+{
+  "checked_at": "2026-10-25T12:40:38.972964+08:00",
+  "url": "http://127.0.0.1:8080",
+  "initial": {
+    "status_code": 200,
+    "body": {
+      "status": "ready",
+      "components": {
+        "database": "ready",
+        "redis": "ready"
+      }
+    }
+  },
+  "redis_down": {
+    "status_code": 200,
+    "body": {
+      "status": "ready",
+      "components": {
+        "database": "ready",
+        "redis": "unavailable"
+      }
+    }
+  },
+  "redis_liveness": 200,
+  "redis_recovered": {
+    "status_code": 200,
+    "body": {
+      "status": "ready",
+      "components": {
+        "database": "ready",
+        "redis": "ready"
+      }
+    }
+  },
+  "postgres_down": {
+    "status_code": 503,
+    "body": {
+      "status": "not_ready",
+      "components": {
+        "database": "unavailable",
+        "redis": "ready"
+      }
+    }
+  },
+  "postgres_liveness": 200,
+  "postgres_recovered": {
+    "status_code": 200,
+    "body": {
+      "status": "ready",
+      "components": {
+        "database": "ready",
+        "redis": "ready"
+      }
+    }
+  },
+  "concurrent_http": {
+    "requests": 500,
+    "success": 500,
+    "concurrency": 25,
+    "max_seconds": 0.0542
+  },
+  "restarts": [
+    {
+      "status_code": 200,
+      "body": {
+        "status": "ready",
+        "components": {
+          "database": "ready",
+          "redis": "ready"
+        }
+      }
+    },
+    {
+      "status_code": 200,
+      "body": {
+        "status": "ready",
+        "components": {
+          "database": "ready",
+          "redis": "ready"
+        }
+      }
+    },
+    {
+      "status_code": 200,
+      "body": {
+        "status": "ready",
+        "components": {
+          "database": "ready",
+          "redis": "ready"
+        }
+      }
+    }
+  ],
+  "service_status": [
+    "MainPID=2197823",
+    "NRestarts=0",
+    "ActiveState=active"
+  ],
+  "core_sources": {
+    "app/runtime/__init__.py": "0c90bbb4cee45e44020dc7adbf1f1f11820cc30c8f5d8d10b5667e496a7ca6cf",
+    "app/runtime/context.py": "b67ebdfb36300c85f04ab9b6ab4d81959a0b65d0eb751fd49184cda995b56f9f",
+    "app/runtime/contracts.py": "740ed86ba0562f03a30b092aab3f882c0de59a10e984277ddb0efa60b9f8fd0a",
+    "app/runtime/effects.py": "72d7a4aab72d944b6ecb553b8bf8150cd06a8483916101685558b9b563cea77d",
+    "app/runtime/events.py": "8e55c822b08e77382c2f48bbea8af3311fd6d5471fadc64706cf9dff23f25537",
+    "app/runtime/host.py": "1277ab3e2711540c5cf8ca321a0971911013d3fa7dcec48a3ff216a0b15855cc",
+    "app/runtime/leases.py": "556fca86d7445d3dddee7cd52cd5e7941be8cfc7d1ad888688178b46debfd60f"
+  }
+}

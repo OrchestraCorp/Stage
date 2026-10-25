@@ -1,14 +1,18 @@
+import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
 from app.api.health import router as health_router
+from app.api.readiness import router as readiness_router
 from app.api.router import api_router
+from app.bootstrap.application import ApplicationRuntime
 from app.core.config import Settings, settings
-from app.core.db import create_engine, create_session_factory
 from app.core.errors import ERROR_RESPONSES, register_exception_handlers
 from app.core.middleware import RequestIdMiddleware
+
+logger = logging.getLogger(__name__)
 
 
 def create_app(config: Settings | None = None) -> FastAPI:
@@ -16,19 +20,28 @@ def create_app(config: Settings | None = None) -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncIterator[None]:
-        engine = create_engine(runtime_settings.database_url)
+        runtime = ApplicationRuntime(runtime_settings)
+        application.state.runtime = runtime
+        primary_failed = False
         try:
-            application.state.engine = engine
-            application.state.session_factory = create_session_factory(engine)
+            await runtime.start()
             yield
+        except BaseException:
+            primary_failed = True
+            raise
         finally:
+            closed = False
             try:
-                await engine.dispose()
+                try:
+                    await runtime.close()
+                    closed = True
+                except Exception as error:
+                    if not primary_failed:
+                        raise
+                    logger.error("runtime cleanup failed exception_type=%s", type(error).__name__)
             finally:
-                if hasattr(application.state, "session_factory"):
-                    del application.state.session_factory
-                if hasattr(application.state, "engine"):
-                    del application.state.engine
+                if closed:
+                    del application.state.runtime
 
     app = FastAPI(
         title="OrchestraCorp Stage",
@@ -44,6 +57,7 @@ def create_app(config: Settings | None = None) -> FastAPI:
     app.add_middleware(RequestIdMiddleware)
     register_exception_handlers(app)
     app.include_router(health_router)
+    app.include_router(readiness_router)
     app.include_router(api_router)
 
     return app

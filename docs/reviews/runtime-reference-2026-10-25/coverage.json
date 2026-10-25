@@ -1,0 +1,315 @@
+{
+  "scope": "Evidence links, not an additional acceptance count; Stage C/S assertions run separately",
+  "cases": [
+    {
+      "scenario_id": "C1-01",
+      "fixed_reference_observation": "setup failure cleans previously registered effects",
+      "shared_comparisons": [
+        "C1-01"
+      ],
+      "deviation_comparisons": []
+    },
+    {
+      "scenario_id": "C1-02",
+      "fixed_reference_observation": "unload waits for in-flight async setup and cleans its late disposer",
+      "shared_comparisons": [
+        "C1-02"
+      ],
+      "deviation_comparisons": []
+    },
+    {
+      "scenario_id": "C1-03",
+      "fixed_reference_observation": "effect inverse executes once across manual and owner close",
+      "shared_comparisons": [
+        "C1-03",
+        "C1-03.generator"
+      ],
+      "deviation_comparisons": [
+        "D-03"
+      ]
+    },
+    {
+      "scenario_id": "C1-04",
+      "fixed_reference_observation": "safe independent cleanup continues after another cleanup throws",
+      "shared_comparisons": [
+        "C1-04"
+      ],
+      "deviation_comparisons": [
+        "D-02",
+        "D-04"
+      ]
+    },
+    {
+      "scenario_id": "C1-05",
+      "fixed_reference_observation": "disposed owner rejects a new effect",
+      "shared_comparisons": [
+        "C1-05"
+      ],
+      "deviation_comparisons": []
+    },
+    {
+      "scenario_id": "C2-01",
+      "fixed_reference_observation": "consumer waits for provider then automatically activates",
+      "shared_comparisons": [
+        "C2-01"
+      ],
+      "deviation_comparisons": []
+    },
+    {
+      "scenario_id": "C2-02",
+      "fixed_reference_observation": "dependency removal and restoration unloads and reloads consumer",
+      "shared_comparisons": [
+        "C2-02"
+      ],
+      "deviation_comparisons": []
+    },
+    {
+      "scenario_id": "C2-03",
+      "fixed_reference_observation": "explicit check notification changes dependency availability",
+      "shared_comparisons": [
+        "C2-03"
+      ],
+      "deviation_comparisons": []
+    },
+    {
+      "scenario_id": "C2-04",
+      "fixed_reference_observation": "duplicate provider rejected; reference missing-service wait is pending",
+      "shared_comparisons": [
+        "C2-04"
+      ],
+      "deviation_comparisons": [
+        "D-09"
+      ]
+    },
+    {
+      "scenario_id": "C3-01",
+      "fixed_reference_observation": "equal provider values still rebind when provider identity changes",
+      "shared_comparisons": [
+        "C3-01"
+      ],
+      "deviation_comparisons": [
+        "D-05"
+      ]
+    },
+    {
+      "scenario_id": "C3-02",
+      "fixed_reference_observation": "late load result is cleaned; consumer ultimately binds latest independent provider",
+      "shared_comparisons": [
+        "C3-02"
+      ],
+      "deviation_comparisons": [
+        "D-05"
+      ]
+    },
+    {
+      "scenario_id": "C3-03",
+      "fixed_reference_observation": "same provider Fiber restart reruns its dependent",
+      "shared_comparisons": [
+        "C3-03"
+      ],
+      "deviation_comparisons": [
+        "D-05"
+      ]
+    },
+    {
+      "scenario_id": "C3-04",
+      "fixed_reference_observation": "unrelated service does not reload consumer",
+      "shared_comparisons": [
+        "C3-04"
+      ],
+      "deviation_comparisons": []
+    },
+    {
+      "scenario_id": "C4-01",
+      "fixed_reference_observation": "consumer cleanup retains old committed reference after public revocation",
+      "shared_comparisons": [
+        "C4-01"
+      ],
+      "deviation_comparisons": []
+    },
+    {
+      "scenario_id": "C4-02",
+      "fixed_reference_observation": "independent replacement can publish while old consumer cleanup retains old binding",
+      "shared_comparisons": [
+        "C4-02"
+      ],
+      "deviation_comparisons": []
+    },
+    {
+      "scenario_id": "C4-03",
+      "fixed_reference_observation": "undeclared property access rejected while public get observes service",
+      "shared_comparisons": [
+        "C4-03"
+      ],
+      "deviation_comparisons": []
+    },
+    {
+      "scenario_id": "C4-04",
+      "fixed_reference_observation": "committed service view released after owner disposal",
+      "shared_comparisons": [
+        "C4-04"
+      ],
+      "deviation_comparisons": []
+    },
+    {
+      "scenario_id": "C5-01",
+      "fixed_reference_observation": "reference allows pool cleanup before dependent cleanup finishes",
+      "shared_comparisons": [],
+      "deviation_comparisons": [
+        "D-01"
+      ]
+    },
+    {
+      "scenario_id": "C5-02",
+      "fixed_reference_observation": "multiple provider resource inverses run before dependent cleanup ends",
+      "shared_comparisons": [],
+      "deviation_comparisons": [
+        "D-01",
+        "D-02"
+      ]
+    },
+    {
+      "scenario_id": "C5-03",
+      "fixed_reference_observation": "reference does not pin arbitrary in-flight service calls during provider disposal",
+      "shared_comparisons": [],
+      "deviation_comparisons": [
+        "D-01.call"
+      ]
+    },
+    {
+      "scenario_id": "C5-04",
+      "fixed_reference_observation": "reference owner disposal remains pending while consumer inverse is pending",
+      "shared_comparisons": [
+        "C5-04"
+      ],
+      "deviation_comparisons": [
+        "D-04"
+      ]
+    },
+    {
+      "scenario_id": "C6-01",
+      "fixed_reference_observation": "per-key realm isolates db and inherits unrelated logger",
+      "shared_comparisons": [
+        "C6-01"
+      ],
+      "deviation_comparisons": []
+    },
+    {
+      "scenario_id": "C6-02",
+      "fixed_reference_observation": "same explicit realm label shares binding, different label remains independent",
+      "shared_comparisons": [
+        "C6-02"
+      ],
+      "deviation_comparisons": []
+    },
+    {
+      "scenario_id": "C6-03",
+      "fixed_reference_observation": "service intercept merges base ancestors inject and head in order",
+      "shared_comparisons": [
+        "C6-03",
+        "C6-03.merge"
+      ],
+      "deviation_comparisons": []
+    },
+    {
+      "scenario_id": "C6-04",
+      "fixed_reference_observation": "isolated provider and consumer disposal removes binding and listeners",
+      "shared_comparisons": [
+        "C6-04"
+      ],
+      "deviation_comparisons": []
+    },
+    {
+      "scenario_id": "C7-01",
+      "fixed_reference_observation": "caller-owned registrations isolated while common provider remains alive",
+      "shared_comparisons": [
+        "C7-01"
+      ],
+      "deviation_comparisons": [
+        "D-06"
+      ]
+    },
+    {
+      "scenario_id": "C7-02",
+      "fixed_reference_observation": "shared service effects are attributed to asynchronous caller contexts",
+      "shared_comparisons": [
+        "C7-02"
+      ],
+      "deviation_comparisons": [
+        "D-06"
+      ]
+    },
+    {
+      "scenario_id": "C7-03",
+      "fixed_reference_observation": "parent disposal owns nested child effects and removes listeners",
+      "shared_comparisons": [
+        "C7-03"
+      ],
+      "deviation_comparisons": []
+    },
+    {
+      "scenario_id": "C7-04",
+      "fixed_reference_observation": "stale caller context rejects new registration",
+      "shared_comparisons": [
+        "C7-04"
+      ],
+      "deviation_comparisons": []
+    },
+    {
+      "scenario_id": "C8-01",
+      "fixed_reference_observation": "listener removal does not change an existing callback snapshot",
+      "shared_comparisons": [
+        "C8-01"
+      ],
+      "deviation_comparisons": [
+        "D-08"
+      ]
+    },
+    {
+      "scenario_id": "C8-02",
+      "fixed_reference_observation": "around waterfall wraps downstream and can veto it",
+      "shared_comparisons": [
+        "C8-02"
+      ],
+      "deviation_comparisons": []
+    },
+    {
+      "scenario_id": "C8-03",
+      "fixed_reference_observation": "parallel waits all callbacks before aggregate failure; serial short circuits",
+      "shared_comparisons": [
+        "C8-03.parallel",
+        "C8-03.serial"
+      ],
+      "deviation_comparisons": []
+    },
+    {
+      "scenario_id": "C8-04",
+      "fixed_reference_observation": "null undefined false continue while zero and empty string bail",
+      "shared_comparisons": [
+        "C8-04"
+      ],
+      "deviation_comparisons": [
+        "D-07"
+      ]
+    },
+    {
+      "scenario_id": "C8-05",
+      "fixed_reference_observation": "reference await can settle PENDING; Stage strict readiness is separate",
+      "shared_comparisons": [
+        "C8-05"
+      ],
+      "deviation_comparisons": [
+        "D-03",
+        "D-04",
+        "D-09"
+      ]
+    }
+  ],
+  "remaining_boundaries": [
+    "C5-01/02/03: provider drain, inverse ordering and call leases intentionally differ from vendor",
+    "C2-04 cycles and C8-05 strict readiness, errors and cancellation require Stage assertions",
+    "C6-04 authz belongs to application tests; the shared case only checks resource isolation",
+    "ABA, admission, noncooperative tasks and lifecycle wait cycles require S1 assertions",
+    "Comparisons cover shared-cases.json operations, not every concurrency schedule"
+  ]
+}

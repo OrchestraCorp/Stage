@@ -4,6 +4,7 @@ status: design-proposal
 implementation_status: not-started
 policy_effect: none
 review_date: 2026-10-24
+revised_date: 2026-10-25
 ---
 
 # Stage 核心对象与契约对齐
@@ -26,11 +27,13 @@ review_date: 2026-10-24
 | 对象 | 关键字段 | 权威与生命周期 |
 |---|---|---|
 | `CapabilitySpec` | capability_id、interface_version、input/output_schema_digest、required_action、effect_kind、implementation_digest、resource_profile | 平台审核的不可变能力定义；声明执行什么，不授予调用权 |
-| `CapabilityBinding` | spec_digest、handler_ref、provider_identity、generation、realm、availability | Component Runtime 的当前绑定；激活后可租用，退役时禁止新租约 |
+| `CapabilityBinding` | spec_digest、handler_ref、provider_identity、generation、registration_id、realm、availability | 当前能力绑定；应用层注册借用 Core owner/登记身份，激活后可租用，退役时禁止新调用 |
 | `ServiceKey` | namespace、name、interface_version、value_contract | 组件依赖标识；可能提供数据库工厂等内部服务，不等同可授权业务命令 |
 | `PermissionAction` | action_id、resource_kind、scope_rule | 授权策略的稳定能力点；由可信授权模块解释 |
 
 命名避免歧义：某个 Python provider 提供服务对象、某个业务能力已注册、某个主体获准执行动作，是三个独立事实。realm 控制服务解析，tenant 控制业务归属，二者不可互换。
+
+2026-10-25 的[框架实施规格](framework-foundation.md)进一步规定：Core 的 ServiceLease/CallScope 不含身份，由应用 ExecutionContext 组合持有；每次登记另有 registration_id，旧句柄不得影响同 owner/generation 下重新登记的能力。命令注册和业务 schema 留在应用层，不进入通用 Core。
 
 `effect_kind` 草案至少区分 `pure`、`query`、`transactional_command`、`external_delivery`。重试规则、幂等和执行边界与类别关联；能力作者不能通过改标签绕过宿主检查。P1 WASM 仅承载 `pure` 计算，由固定可信 handler 组织输入与提交。
 

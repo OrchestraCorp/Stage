@@ -169,7 +169,7 @@ Stage 保存当前上下文与受限过程证据；正式 SOP、Skill 和知识�
 
 首版不实现完整 ERP、财务/合同账本、全行业流程库、薪酬自动结算、第三方 Agent 市场或全功能流程编排。贡献可先记录证据与责任，不从任务计数自动推导奖励。
 
-底板采用 Python 3.12、FastAPI、SQLAlchemy async 和 Alembic；MySQL 为默认生产目标，PostgreSQL 为另一生产目标，SQLite 用于开发测试，Redis 仅有依赖尚未接入。已补存储类型适配与双库 CI，实际数据库兼容以对应验收结果为准。业务结构优先保持模块化后端，队列、身份提供方、独立 worker 及部署形态仍待确定。Stage 是否必须自托管、哪些场景需离线、首版用户规模与保留期限也需要后续确定。
+底板采用 Python 3.12、FastAPI、SQLAlchemy async 和 Alembic。2026-10-25 用户确定 PostgreSQL＋Redis 长期组合，本轮工程基线为 PostgreSQL 17 与 Redis 8：PostgreSQL 是唯一主库，Redis 用于可重建缓存、非权威短期协调和可丢失唤醒；SQLite 仅快速开发测试，MySQL 退出受支持配置，历史迁移/双库评审原样保留。授权、幂等、outbox、业务租约和业务事实的权威留在 PostgreSQL；不承诺与 Redis 双写原子性，缓存须遵守 tenant 与当前权限版本。细则和实现边界见[存储策略](docs/storage-strategy.md)，实际代码与真库验证按本轮证据分别记录。业务结构保持模块化后端；Runtime Core、真实身份、WASM 和业务接入仍待建设。Stage 是否必须自托管、哪些场景需离线、首版用户规模与保留期限需要后续确定。
 
 ## 11. 来源、未决问题与复核
 

@@ -11,8 +11,7 @@ from sqlalchemy.dialects import mysql, postgresql, sqlite
 from sqlalchemy.engine import Dialect, make_url
 from sqlalchemy.exc import IntegrityError, StatementError
 from sqlalchemy.ext.asyncio import AsyncEngine
-from sqlalchemy.schema import CreateTable
-from sqlalchemy.sql.elements import quoted_name
+from sqlalchemy.schema import CreateTable, conv
 
 from app.core.db import create_engine
 from app.models.authorization import RelationTupleTable, RoleAssignmentTable
@@ -21,6 +20,7 @@ from app.models.identity import PrincipalTable
 from app.models.work import WorkItemTable
 from app.storage.types import ExactString, UTCDateTime
 
+# Retain historical MySQL DDL coverage without accepting MySQL runtime URLs.
 DIALECTS = (mysql.dialect(), postgresql.dialect(), sqlite.dialect())
 DATABASE_URLS = ["sqlite+aiosqlite:///:memory:"]
 if os.environ.get("TEST_DATABASE_URL"):
@@ -69,7 +69,7 @@ async def storage(request: pytest.FixtureRequest) -> AsyncIterator[tuple[AsyncEn
     # Never touch the application's tables or drop a database/schema. Even the
     # explicitly supplied integration URL only gets unique, test-owned tables.
     url = request.param
-    assert make_url(url).drivername in ("sqlite+aiosqlite", "mysql+aiomysql", "postgresql+asyncpg")
+    assert make_url(url).drivername in ("sqlite+aiosqlite", "postgresql+asyncpg")
     engine = create_engine(url)
     metadata = MetaData()
     prefix = "stage_probe_" + uuid4().hex[:12] + "_"
@@ -77,8 +77,15 @@ async def storage(request: pytest.FixtureRequest) -> AsyncIterator[tuple[AsyncEn
     for model in (PrincipalTable, RoleAssignmentTable, RelationTupleTable, WorkItemTable):
         original = cast(Table, model.__table__)
         table = original.to_metadata(metadata, name=prefix + original.name)
-        for index in table.indexes:
-            index.name = quoted_name(prefix + (index.name or "index"), quote=None)
+        # PostgreSQL unique constraints create schema-wide named indexes.
+        # Probe tables must coexist with tables created by Alembic above.
+        for constraint in table.constraints:
+            if isinstance(constraint.name, str):
+                constraint.name = conv(prefix + constraint.name)
+        for number, index in enumerate(table.indexes):
+            # to_metadata may already include the renamed table in index names;
+            # use one prefix and allow dialect-aware truncation for long names.
+            index.name = conv(f"{prefix}{original.name}_idx_{number}")
         tables[original.name] = table
     try:
         async with engine.begin() as connection:

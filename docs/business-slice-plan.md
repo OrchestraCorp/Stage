@@ -12,6 +12,8 @@ revised_date: 2026-10-24
 
 下列任务、容量、交付、独立验收规则仍为设计草案，不是企业已生效政策。实际身份适配和共同对象以[身份规范](identity-and-authorization.md)、[核心对象](core-object-contracts.md)为准；本文件只补充任务领域规则。安全与事务基础由一期提供，扩展任务业务时需重新验证新增并发路径。
 
+存储选型已于 2026-10-25 确定为唯一主库 PostgreSQL 17＋辅助 Redis 8，见[存储策略](storage-strategy.md)。任务、承诺、容量、幂等结果、当前授权、审计、outbox 和权威业务租约留在 PostgreSQL；Redis 缓存、短期提示或唤醒清空后不丢事实，也不提供替代撤权检查的允许结果。
+
 ## 1. 任务与容量的默认语义
 
 | 命令 | 前置条件 | 原子结果 |
@@ -132,7 +134,7 @@ COMMIT
 | `AuditEntry` / `DomainEvent` | 稳定 ID、actor / effective principal、action、target、before / after 或受限引用、对象版本、request / execution / decision / causation ID |
 | `OutboxMessage` | message_id 唯一、event / aggregate 引用、payload 版本、pending / processing / succeeded / failed / unknown、attempt、next_attempt_at、lease_until、last_error_code、dedupe_key |
 
-单有效承诺、active slot 和容量不变式分别由事务锁与可移植约束实现；需要基于数据库方言选择的约束写入迁移并通过两库门禁。
+单有效承诺、active slot 和容量不变式分别由 PostgreSQL 事务锁与相应数据库约束实现；新增约束写入迁移并通过 PostgreSQL 17 真库门禁，不再为 MySQL 保持同构实现。SQLite 快测的适用范围单独说明。
 受限正文与凭据不得写进普通审计 / 日志；审计、outbox 和命令结果继承来源读者边界。
 
 ## 5. API 草案与持久 outbox
@@ -154,6 +156,7 @@ COMMIT
 `pending` / `unknown` 的原因保留在结果类型中；只有已持久受理或已有稳定执行 ID 可追踪时才返回 202，未受理请求不可伪造查询承诺。
 
 outbox 必须与业务变更同一数据库事务写入，提交后 worker 才投递；通知失败不把已经确认的领取改成失败。
+Redis 可以在提交后发出可丢失唤醒，不能作为 outbox 的唯一保存或领取来源；遗漏唤醒由 PostgreSQL 扫描恢复，不承诺两种存储双写原子性。相关缓存按 tenant 与当前权限版本隔离，Redis 故障不能放宽领取、验收或结果读取授权。
 同进程 worker 也使用持久 lease / claim 记录，进程重启后恢复未完成消息；不能依赖内存队列作为唯一来源。
 投递为至少一次：稳定 message_id / dedupe_key、接收端去重或幂等；不承诺 exactly-once。
 业务切片通知 sink 是虚构、可控的测试接收端，覆盖成功、拒绝、超时和“已执行但回执丢失”。
@@ -173,10 +176,10 @@ runtime cleanup 负责停止订阅 / 定时器、排空 worker、释放连接；
 3. **权限与数据边界**：跨租户 / 部门拒绝，scope 不因组织成员身份扩大；未知分类、失效关系、未知策略、缺能力拒绝；查询、结果、审计和通知投影无侧漏。
 4. **授权撤销与时间竞争**：用两个真实数据库连接和屏障控制“命令先持 guard”与“撤销先提交”两种顺序，覆盖任职、关系、委托、主体状态；锁后到期、排队后撤销均重验；证明共同锁点和超时策略成立。
 5. **幂等与版本**：同 key 同 digest 一份事实；同 key 不同参数冲突；不同 actor / tenant 的 key 不串结果；旧版本、非法版本、事务回滚、响应丢失后查询、当前权限撤销后的重放均覆盖。
-6. **领取与容量并发**：不同申请者同时争一个名额仅一个成功；同主体争两个任务不能超容量；无半份承诺、负容量、重复占用；锁序 / 死锁重试经过 MySQL 与 PostgreSQL 真库测试。
+6. **领取与容量并发**：不同申请者同时争一个名额仅一个成功；同主体争两个任务不能超容量；无半份承诺、负容量、重复占用；锁序 / 死锁重试经过 PostgreSQL 17 真库测试。
 7. **完整业务与独立验收**：create → publish → claim → submit → accept 关闭并释放一次；reject 保留承诺 / 容量，返工重交后由独立人接受；提交者换任职或通过 Agent 仍不能自审，accept / reject 同样阻断。
 8. **outbox 与故障恢复**：事务失败零消息；事务成功消息可恢复；重复投递接收端去重；提交断连、worker 崩溃、lease 过期、外部已执行回执丢失分别验证 pending / unknown / 对账路径，不盲重放。
-9. **迁移、契约与可运营性**：MySQL 8.4 / PostgreSQL 17 从空库升级及前向升级、约束和 UTC / 标识符语义一致；OpenAPI 无漂移；请求 / 命令 / 决策 / 事件可追踪；脱敏、优雅关闭、备份恢复演练与运行局限有记录。
+9. **迁移、契约与可运营性**：PostgreSQL 17 从空库升级及前向升级、约束和 UTC / 标识符语义正确；Redis 使用方按故障策略验证超时、不可用、清空及失效/唤醒遗漏，不丢事实、不越权；OpenAPI 无漂移；请求 / 命令 / 决策 / 事件可追踪；脱敏、优雅关闭、备份恢复演练与运行局限有记录。
 
 每项记录环境、数据库版本、精确执行命令、结果、失败与剩余风险；通过 SQLite 或编译 DDL 不能替代真库证据。
 独立的授权、关系、属性、版本、事务与 runtime 边界测试必须保留；一次端到端演示不能代替上述门禁。

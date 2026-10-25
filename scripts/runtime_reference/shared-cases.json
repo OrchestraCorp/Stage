@@ -1,0 +1,2308 @@
+[
+  {
+    "id": "C2-01",
+    "scope": "required service arrival",
+    "actions": [
+      {
+        "op": "load",
+        "id": "consumer",
+        "requires": [
+          "db"
+        ]
+      },
+      {
+        "op": "pending",
+        "id": "consumer"
+      },
+      {
+        "op": "load",
+        "id": "provider",
+        "provide": "db",
+        "value": 1
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "provider",
+          "consumer"
+        ]
+      },
+      {
+        "op": "observe",
+        "id": "consumer"
+      }
+    ]
+  },
+  {
+    "id": "C2-02",
+    "scope": "service removal and recovery",
+    "actions": [
+      {
+        "op": "load",
+        "id": "consumer",
+        "requires": [
+          "db"
+        ]
+      },
+      {
+        "op": "load",
+        "id": "first",
+        "provide": "db",
+        "value": 1
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "first",
+          "consumer"
+        ]
+      },
+      {
+        "op": "retire",
+        "id": "first"
+      },
+      {
+        "op": "pending",
+        "id": "consumer"
+      },
+      {
+        "op": "load",
+        "id": "second",
+        "provide": "db",
+        "value": 2
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "second",
+          "consumer"
+        ]
+      },
+      {
+        "op": "observe",
+        "id": "consumer"
+      }
+    ]
+  },
+  {
+    "id": "C2-03",
+    "scope": "explicit availability notification",
+    "actions": [
+      {
+        "op": "load",
+        "id": "provider",
+        "provide": "db",
+        "value": 1,
+        "available": false
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "provider"
+        ]
+      },
+      {
+        "op": "load",
+        "id": "consumer",
+        "requires": [
+          "db"
+        ]
+      },
+      {
+        "op": "pending",
+        "id": "consumer"
+      },
+      {
+        "op": "availability",
+        "id": "provider",
+        "value": true
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "consumer"
+        ]
+      },
+      {
+        "op": "observe",
+        "id": "consumer"
+      }
+    ]
+  },
+  {
+    "id": "C3-01",
+    "scope": "equal service value with different provider identity",
+    "actions": [
+      {
+        "op": "load",
+        "id": "consumer",
+        "requires": [
+          "db"
+        ]
+      },
+      {
+        "op": "load",
+        "id": "first",
+        "provide": "db",
+        "value": 1
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "first",
+          "consumer"
+        ]
+      },
+      {
+        "op": "retire",
+        "id": "first"
+      },
+      {
+        "op": "load",
+        "id": "second",
+        "provide": "db",
+        "value": 1
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "second",
+          "consumer"
+        ]
+      },
+      {
+        "op": "observe",
+        "id": "consumer"
+      }
+    ]
+  },
+  {
+    "id": "C3-04",
+    "scope": "unrelated service changes",
+    "actions": [
+      {
+        "op": "load",
+        "id": "provider",
+        "provide": "db",
+        "value": 1
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "provider"
+        ]
+      },
+      {
+        "op": "load",
+        "id": "consumer",
+        "requires": [
+          "db"
+        ]
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "consumer"
+        ]
+      },
+      {
+        "op": "load",
+        "id": "other",
+        "provide": "other",
+        "value": 2
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "other"
+        ]
+      },
+      {
+        "op": "retire",
+        "id": "other"
+      },
+      {
+        "op": "observe",
+        "id": "consumer"
+      }
+    ]
+  },
+  {
+    "id": "C4-03",
+    "scope": "undeclared access versus public observation",
+    "actions": [
+      {
+        "op": "load",
+        "id": "provider",
+        "provide": "db",
+        "value": 1
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "provider"
+        ]
+      },
+      {
+        "op": "load",
+        "id": "reader",
+        "read": "db"
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "reader"
+        ]
+      },
+      {
+        "op": "observe",
+        "id": "reader"
+      }
+    ]
+  },
+  {
+    "id": "C6-01",
+    "scope": "isolation changes one service key",
+    "actions": [
+      {
+        "op": "scope",
+        "id": "child",
+        "key": "db",
+        "label": "private"
+      },
+      {
+        "op": "load",
+        "id": "parent-db",
+        "provide": "db",
+        "value": "parent"
+      },
+      {
+        "op": "load",
+        "id": "shared",
+        "provide": "shared",
+        "value": "same"
+      },
+      {
+        "op": "load",
+        "id": "child-db",
+        "scope": "child",
+        "provide": "db",
+        "value": "child"
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "parent-db",
+          "shared",
+          "child-db"
+        ]
+      },
+      {
+        "op": "get",
+        "key": "db"
+      },
+      {
+        "op": "get",
+        "scope": "child",
+        "key": "db"
+      },
+      {
+        "op": "get",
+        "scope": "child",
+        "key": "shared"
+      }
+    ]
+  },
+  {
+    "id": "C6-02",
+    "scope": "explicit realm labels share one key",
+    "actions": [
+      {
+        "op": "scope",
+        "id": "a",
+        "key": "db",
+        "label": "same"
+      },
+      {
+        "op": "scope",
+        "id": "b",
+        "key": "db",
+        "label": "same"
+      },
+      {
+        "op": "scope",
+        "id": "c",
+        "key": "db",
+        "label": "different"
+      },
+      {
+        "op": "load",
+        "id": "shared",
+        "scope": "a",
+        "provide": "db",
+        "value": "shared"
+      },
+      {
+        "op": "load",
+        "id": "private",
+        "scope": "c",
+        "provide": "db",
+        "value": "private"
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "shared",
+          "private"
+        ]
+      },
+      {
+        "op": "get",
+        "scope": "b",
+        "key": "db"
+      },
+      {
+        "op": "get",
+        "scope": "c",
+        "key": "db"
+      }
+    ]
+  },
+  {
+    "id": "C7-01",
+    "scope": "listener contributions belong to the caller owner",
+    "actions": [
+      {
+        "op": "load",
+        "id": "first",
+        "listen": true
+      },
+      {
+        "op": "load",
+        "id": "second",
+        "listen": true
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "first",
+          "second"
+        ]
+      },
+      {
+        "op": "emit"
+      },
+      {
+        "op": "retire",
+        "id": "first"
+      },
+      {
+        "op": "emit"
+      },
+      {
+        "op": "observe",
+        "id": "first"
+      },
+      {
+        "op": "observe",
+        "id": "second"
+      }
+    ]
+  },
+  {
+    "id": "C1-01",
+    "scope": "setup failure rolls back every reported resource",
+    "actions": [
+      {
+        "op": "load",
+        "id": "broken",
+        "effects": [
+          {
+            "label": "A"
+          },
+          {
+            "label": "B"
+          }
+        ],
+        "fail_setup": true
+      },
+      {
+        "op": "ready_failed",
+        "id": "broken"
+      },
+      {
+        "op": "retire",
+        "id": "broken",
+        "allow_failed": true
+      },
+      {
+        "op": "observe_log",
+        "sort": true
+      }
+    ],
+    "allow_final_failure": true
+  },
+  {
+    "id": "C1-02",
+    "scope": "late async setup disposer stays owned during unload",
+    "actions": [
+      {
+        "op": "load",
+        "id": "late",
+        "setup_entered": "entered",
+        "setup_release": "release",
+        "cleanup": {
+          "label": "late"
+        }
+      },
+      {
+        "op": "wait_gate",
+        "id": "entered"
+      },
+      {
+        "op": "retire_begin",
+        "id": "late"
+      },
+      {
+        "op": "release",
+        "id": "release"
+      },
+      {
+        "op": "join",
+        "task": "closing"
+      },
+      {
+        "op": "observe_log"
+      }
+    ]
+  },
+  {
+    "id": "C1-03",
+    "scope": "manual effect close followed by repeated and owner close is single-shot",
+    "actions": [
+      {
+        "op": "load",
+        "id": "owner",
+        "effects": [
+          {
+            "label": "A"
+          }
+        ]
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "owner"
+        ]
+      },
+      {
+        "op": "effect_close",
+        "effect": "owner:A"
+      },
+      {
+        "op": "effect_close",
+        "effect": "owner:A"
+      },
+      {
+        "op": "retire",
+        "id": "owner"
+      },
+      {
+        "op": "observe_log"
+      }
+    ]
+  },
+  {
+    "id": "C1-03.generator",
+    "scope": "generator resource inverses run in reverse within one effect",
+    "actions": [
+      {
+        "op": "load",
+        "id": "owner",
+        "generator": [
+          {
+            "label": "A"
+          },
+          {
+            "label": "B"
+          }
+        ]
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "owner"
+        ]
+      },
+      {
+        "op": "retire",
+        "id": "owner"
+      },
+      {
+        "op": "observe_log"
+      }
+    ]
+  },
+  {
+    "id": "C1-04",
+    "scope": "independent safe resource still cleans after another inverse fails",
+    "actions": [
+      {
+        "op": "load",
+        "id": "owner",
+        "effects": [
+          {
+            "label": "bad",
+            "error": true
+          },
+          {
+            "label": "good"
+          }
+        ]
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "owner"
+        ]
+      },
+      {
+        "op": "retire",
+        "id": "owner",
+        "allow_failed": true
+      },
+      {
+        "op": "observe_log",
+        "sort": true
+      }
+    ],
+    "allow_final_failure": true
+  },
+  {
+    "id": "C1-05",
+    "scope": "disposed owner rejects new effects",
+    "actions": [
+      {
+        "op": "load",
+        "id": "owner"
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "owner"
+        ]
+      },
+      {
+        "op": "retire",
+        "id": "owner"
+      },
+      {
+        "op": "stale_effect",
+        "id": "owner"
+      }
+    ]
+  },
+  {
+    "id": "C3-03",
+    "scope": "provider restart reloads its consumer",
+    "actions": [
+      {
+        "op": "load",
+        "id": "provider",
+        "provide": "db",
+        "value": 1
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "provider"
+        ]
+      },
+      {
+        "op": "load",
+        "id": "consumer",
+        "requires": [
+          "db"
+        ]
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "consumer"
+        ]
+      },
+      {
+        "op": "restart",
+        "id": "provider"
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "consumer"
+        ]
+      },
+      {
+        "op": "observe",
+        "id": "consumer"
+      }
+    ]
+  },
+  {
+    "id": "C4-01",
+    "scope": "cleanup uses old committed value after public revocation",
+    "actions": [
+      {
+        "op": "load",
+        "id": "provider",
+        "provide": "db",
+        "value": "old"
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "provider"
+        ]
+      },
+      {
+        "op": "load",
+        "id": "consumer",
+        "requires": [
+          "db"
+        ],
+        "cleanup": {
+          "read": "db",
+          "entered": "cleanup",
+          "release": "release"
+        }
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "consumer"
+        ]
+      },
+      {
+        "op": "retire_begin",
+        "id": "provider"
+      },
+      {
+        "op": "wait_gate",
+        "id": "cleanup"
+      },
+      {
+        "op": "observe_log"
+      },
+      {
+        "op": "release",
+        "id": "release"
+      },
+      {
+        "op": "join",
+        "task": "closing"
+      },
+      {
+        "op": "observe_log"
+      }
+    ]
+  },
+  {
+    "id": "C4-02",
+    "scope": "independent new provider cannot change old cleanup committed view",
+    "actions": [
+      {
+        "op": "load",
+        "id": "provider",
+        "provide": "db",
+        "value": "old"
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "provider"
+        ]
+      },
+      {
+        "op": "load",
+        "id": "consumer",
+        "requires": [
+          "db"
+        ],
+        "cleanup": {
+          "read": "db",
+          "entered": "cleanup",
+          "release": "release"
+        }
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "consumer"
+        ]
+      },
+      {
+        "op": "retire_begin",
+        "id": "provider"
+      },
+      {
+        "op": "wait_gate",
+        "id": "cleanup"
+      },
+      {
+        "op": "load",
+        "id": "next",
+        "provide": "db",
+        "value": "new"
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "next"
+        ]
+      },
+      {
+        "op": "get",
+        "key": "db"
+      },
+      {
+        "op": "release",
+        "id": "release"
+      },
+      {
+        "op": "join",
+        "task": "closing"
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "consumer"
+        ]
+      },
+      {
+        "op": "observe_log"
+      }
+    ]
+  },
+  {
+    "id": "C4-04",
+    "scope": "declared view cannot be read after its consumer is disposed",
+    "actions": [
+      {
+        "op": "load",
+        "id": "provider",
+        "provide": "db",
+        "value": 1
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "provider"
+        ]
+      },
+      {
+        "op": "load",
+        "id": "consumer",
+        "requires": [
+          "db"
+        ]
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "consumer"
+        ]
+      },
+      {
+        "op": "retire",
+        "id": "consumer"
+      },
+      {
+        "op": "stale_require",
+        "id": "consumer",
+        "key": "db"
+      }
+    ]
+  },
+  {
+    "id": "C6-03",
+    "scope": "base ancestor descendant inject head config merging",
+    "actions": [
+      {
+        "op": "intercept",
+        "id": "outer",
+        "key": "config",
+        "value": {
+          "outer": true,
+          "common": "outer"
+        }
+      },
+      {
+        "op": "intercept",
+        "id": "inner",
+        "base": "outer",
+        "key": "config",
+        "value": {
+          "inner": true,
+          "common": "inner"
+        }
+      },
+      {
+        "op": "load",
+        "id": "provider",
+        "provide": "config",
+        "value": {},
+        "service_type": "config",
+        "merge": false
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "provider"
+        ]
+      },
+      {
+        "op": "load",
+        "id": "consumer",
+        "scope": "inner",
+        "requires": [
+          "config"
+        ],
+        "inject": {
+          "config": {
+            "inject": true,
+            "common": "inject"
+          }
+        },
+        "config_for": {
+          "key": "config",
+          "base": {
+            "base": true,
+            "common": "base"
+          },
+          "head": {
+            "head": true,
+            "common": "head"
+          },
+          "merge": false
+        }
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "consumer"
+        ]
+      },
+      {
+        "op": "observe",
+        "id": "consumer"
+      }
+    ]
+  },
+  {
+    "id": "C6-03.merge",
+    "scope": "base ancestor descendant inject head config merging via service merge",
+    "actions": [
+      {
+        "op": "intercept",
+        "id": "outer",
+        "key": "config",
+        "value": {
+          "outer": true,
+          "common": "outer"
+        }
+      },
+      {
+        "op": "intercept",
+        "id": "inner",
+        "base": "outer",
+        "key": "config",
+        "value": {
+          "inner": true,
+          "common": "inner"
+        }
+      },
+      {
+        "op": "load",
+        "id": "provider",
+        "provide": "config",
+        "value": {},
+        "service_type": "config",
+        "merge": true
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "provider"
+        ]
+      },
+      {
+        "op": "load",
+        "id": "consumer",
+        "scope": "inner",
+        "requires": [
+          "config"
+        ],
+        "inject": {
+          "config": {
+            "inject": true,
+            "common": "inject"
+          }
+        },
+        "config_for": {
+          "key": "config",
+          "base": {
+            "base": true,
+            "common": "base"
+          },
+          "head": {
+            "head": true,
+            "common": "head"
+          },
+          "merge": true
+        }
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "consumer"
+        ]
+      },
+      {
+        "op": "observe",
+        "id": "consumer"
+      }
+    ]
+  },
+  {
+    "id": "C6-04",
+    "scope": "isolated provider and listeners leave no binding or callbacks",
+    "actions": [
+      {
+        "op": "scope",
+        "id": "isolated",
+        "key": "db",
+        "label": "private"
+      },
+      {
+        "op": "load",
+        "id": "provider",
+        "scope": "isolated",
+        "provide": "db",
+        "value": 1
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "provider"
+        ]
+      },
+      {
+        "op": "load",
+        "id": "consumer",
+        "scope": "isolated",
+        "requires": [
+          "db"
+        ],
+        "listen": true
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "consumer"
+        ]
+      },
+      {
+        "op": "emit"
+      },
+      {
+        "op": "retire",
+        "id": "consumer"
+      },
+      {
+        "op": "retire",
+        "id": "provider"
+      },
+      {
+        "op": "emit"
+      },
+      {
+        "op": "observe",
+        "id": "consumer"
+      },
+      {
+        "op": "get",
+        "scope": "isolated",
+        "key": "db"
+      }
+    ]
+  },
+  {
+    "id": "C7-02",
+    "scope": "shared service resources belong to async callers not the provider",
+    "actions": [
+      {
+        "op": "load",
+        "id": "provider",
+        "provide": "timer",
+        "value": {},
+        "service_type": "caller"
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "provider"
+        ]
+      },
+      {
+        "op": "load",
+        "id": "first",
+        "requires": [
+          "timer"
+        ],
+        "register_call": {
+          "service": "timer",
+          "label": "first"
+        }
+      },
+      {
+        "op": "load",
+        "id": "second",
+        "requires": [
+          "timer"
+        ],
+        "register_call": {
+          "service": "timer",
+          "label": "second"
+        }
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "first",
+          "second"
+        ]
+      },
+      {
+        "op": "retire",
+        "id": "first"
+      },
+      {
+        "op": "observe_log"
+      },
+      {
+        "op": "retire",
+        "id": "second"
+      },
+      {
+        "op": "observe_log"
+      }
+    ]
+  },
+  {
+    "id": "C7-03",
+    "scope": "nested child effects and listeners are owned by the parent generation",
+    "actions": [
+      {
+        "op": "load",
+        "id": "parent",
+        "children": [
+          {
+            "id": "child",
+            "listen": true,
+            "effects": [
+              {
+                "label": "child-resource"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "parent",
+          "child"
+        ]
+      },
+      {
+        "op": "emit"
+      },
+      {
+        "op": "retire",
+        "id": "parent"
+      },
+      {
+        "op": "emit"
+      },
+      {
+        "op": "observe",
+        "id": "child"
+      },
+      {
+        "op": "observe_log"
+      }
+    ]
+  },
+  {
+    "id": "C7-04",
+    "scope": "disposed caller cannot register listeners",
+    "actions": [
+      {
+        "op": "load",
+        "id": "owner"
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "owner"
+        ]
+      },
+      {
+        "op": "retire",
+        "id": "owner"
+      },
+      {
+        "op": "stale_listener",
+        "id": "owner"
+      }
+    ]
+  },
+  {
+    "id": "C8-01",
+    "scope": "dispatch snapshots selected callbacks before unregistration",
+    "actions": [
+      {
+        "op": "load",
+        "id": "owner",
+        "listeners": [
+          {
+            "event": "snapshot",
+            "label": "first",
+            "behavior": "remove",
+            "target": "second"
+          },
+          {
+            "event": "snapshot",
+            "id": "second",
+            "label": "second"
+          }
+        ]
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "owner"
+        ]
+      },
+      {
+        "op": "dispatch",
+        "mode": "emit",
+        "event": "snapshot"
+      },
+      {
+        "op": "dispatch",
+        "mode": "emit",
+        "event": "snapshot"
+      },
+      {
+        "op": "observe_log"
+      }
+    ]
+  },
+  {
+    "id": "C8-02",
+    "scope": "async around waterfall wraps downstream and supports veto",
+    "actions": [
+      {
+        "op": "load",
+        "id": "owner",
+        "listeners": [
+          {
+            "event": "around",
+            "mode": "waterfall",
+            "asynchronous": true,
+            "behavior": "around",
+            "label": "outer",
+            "add": 1
+          },
+          {
+            "event": "veto",
+            "mode": "waterfall",
+            "asynchronous": true,
+            "behavior": "around",
+            "label": "veto",
+            "veto": true,
+            "value": 5
+          }
+        ]
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "owner"
+        ]
+      },
+      {
+        "op": "dispatch",
+        "event": "around",
+        "mode": "waterfall",
+        "asynchronous": true,
+        "terminal": 2
+      },
+      {
+        "op": "dispatch",
+        "event": "veto",
+        "mode": "waterfall",
+        "asynchronous": true,
+        "terminal": 0
+      },
+      {
+        "op": "observe_log"
+      }
+    ]
+  },
+  {
+    "id": "C8-03.parallel",
+    "scope": "parallel awaits every callback before raising an aggregate",
+    "actions": [
+      {
+        "op": "load",
+        "id": "owner",
+        "listeners": [
+          {
+            "event": "parallel",
+            "mode": "parallel",
+            "behavior": "error",
+            "label": "failed"
+          },
+          {
+            "event": "parallel",
+            "mode": "parallel",
+            "behavior": "wait",
+            "label": "waiting",
+            "entered": "entered",
+            "release": "release"
+          }
+        ]
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "owner"
+        ]
+      },
+      {
+        "op": "dispatch_begin",
+        "event": "parallel",
+        "mode": "parallel",
+        "task": "dispatch"
+      },
+      {
+        "op": "wait_gate",
+        "id": "entered"
+      },
+      {
+        "op": "observe_log",
+        "sort": true
+      },
+      {
+        "op": "release",
+        "id": "release"
+      },
+      {
+        "op": "join",
+        "task": "dispatch",
+        "expect_error": true
+      },
+      {
+        "op": "observe_log",
+        "sort": true
+      }
+    ]
+  },
+  {
+    "id": "C8-03.serial",
+    "scope": "serial stops on explicit zero result",
+    "actions": [
+      {
+        "op": "load",
+        "id": "owner",
+        "listeners": [
+          {
+            "event": "serial",
+            "mode": "serial",
+            "behavior": "decision",
+            "label": "first",
+            "decision": "stop",
+            "value": 0
+          },
+          {
+            "event": "serial",
+            "mode": "serial",
+            "behavior": "decision",
+            "label": "second",
+            "decision": "stop",
+            "value": 1
+          }
+        ]
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "owner"
+        ]
+      },
+      {
+        "op": "dispatch",
+        "event": "serial",
+        "mode": "serial"
+      },
+      {
+        "op": "observe_log"
+      }
+    ]
+  },
+  {
+    "id": "C8-04",
+    "scope": "bail null false continue while zero and empty string stop",
+    "actions": [
+      {
+        "op": "load",
+        "id": "owner",
+        "listeners": [
+          {
+            "event": "bail0",
+            "mode": "bail",
+            "behavior": "decision",
+            "label": "bail0.first",
+            "decision": "continue",
+            "value": null
+          },
+          {
+            "event": "bail0",
+            "mode": "bail",
+            "behavior": "decision",
+            "label": "bail0.second",
+            "decision": "stop",
+            "value": 99
+          },
+          {
+            "event": "bail1",
+            "mode": "bail",
+            "behavior": "decision",
+            "label": "bail1.first",
+            "decision": "continue",
+            "value": false
+          },
+          {
+            "event": "bail1",
+            "mode": "bail",
+            "behavior": "decision",
+            "label": "bail1.second",
+            "decision": "stop",
+            "value": 99
+          },
+          {
+            "event": "bail2",
+            "mode": "bail",
+            "behavior": "decision",
+            "label": "bail2.first",
+            "decision": "stop",
+            "value": 0
+          },
+          {
+            "event": "bail2",
+            "mode": "bail",
+            "behavior": "decision",
+            "label": "bail2.second",
+            "decision": "stop",
+            "value": 99
+          },
+          {
+            "event": "bail3",
+            "mode": "bail",
+            "behavior": "decision",
+            "label": "bail3.first",
+            "decision": "stop",
+            "value": ""
+          },
+          {
+            "event": "bail3",
+            "mode": "bail",
+            "behavior": "decision",
+            "label": "bail3.second",
+            "decision": "stop",
+            "value": 99
+          }
+        ]
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "owner"
+        ]
+      },
+      {
+        "op": "dispatch",
+        "event": "bail0",
+        "mode": "bail"
+      },
+      {
+        "op": "dispatch",
+        "event": "bail1",
+        "mode": "bail"
+      },
+      {
+        "op": "dispatch",
+        "event": "bail2",
+        "mode": "bail"
+      },
+      {
+        "op": "dispatch",
+        "event": "bail3",
+        "mode": "bail"
+      },
+      {
+        "op": "observe_log"
+      }
+    ]
+  },
+  {
+    "id": "C8-05",
+    "scope": "async startup failure is observable without falsely invoking component",
+    "actions": [
+      {
+        "op": "load",
+        "id": "broken",
+        "fail_setup": true
+      },
+      {
+        "op": "ready_failed",
+        "id": "broken"
+      },
+      {
+        "op": "retire",
+        "id": "broken",
+        "allow_failed": true
+      }
+    ],
+    "allow_final_failure": true
+  },
+  {
+    "id": "C3-02",
+    "scope": "A to B to C during loading discards stale startup and converges to C",
+    "actions": [
+      {
+        "op": "load",
+        "id": "first",
+        "provide": "db",
+        "value": 1
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "first"
+        ]
+      },
+      {
+        "op": "load",
+        "id": "consumer",
+        "requires": [
+          "db"
+        ],
+        "capture_required": "db",
+        "setup_entered": "entered",
+        "setup_release": "release"
+      },
+      {
+        "op": "wait_gate",
+        "id": "entered"
+      },
+      {
+        "op": "retire_begin",
+        "id": "first",
+        "task": "first.close"
+      },
+      {
+        "op": "wait_absent",
+        "key": "db"
+      },
+      {
+        "op": "load",
+        "id": "second",
+        "provide": "db",
+        "value": 2
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "second"
+        ]
+      },
+      {
+        "op": "retire_begin",
+        "id": "second",
+        "task": "second.close"
+      },
+      {
+        "op": "wait_absent",
+        "key": "db"
+      },
+      {
+        "op": "load",
+        "id": "third",
+        "provide": "db",
+        "value": 3
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "third"
+        ]
+      },
+      {
+        "op": "release",
+        "id": "release"
+      },
+      {
+        "op": "join",
+        "task": "first.close"
+      },
+      {
+        "op": "join",
+        "task": "second.close"
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "consumer"
+        ]
+      },
+      {
+        "op": "observe",
+        "id": "consumer"
+      }
+    ]
+  },
+  {
+    "id": "C5-04",
+    "scope": "provider close waits until dependent cleanup actually ends",
+    "actions": [
+      {
+        "op": "load",
+        "id": "provider",
+        "provide": "db",
+        "value": 1
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "provider"
+        ]
+      },
+      {
+        "op": "load",
+        "id": "consumer",
+        "requires": [
+          "db"
+        ],
+        "cleanup": {
+          "label": "consumer",
+          "entered": "entered",
+          "release": "release"
+        }
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "consumer"
+        ]
+      },
+      {
+        "op": "retire_begin",
+        "id": "provider"
+      },
+      {
+        "op": "wait_gate",
+        "id": "entered"
+      },
+      {
+        "op": "observe_task",
+        "task": "closing"
+      },
+      {
+        "op": "release",
+        "id": "release"
+      },
+      {
+        "op": "join",
+        "task": "closing"
+      }
+    ]
+  },
+  {
+    "id": "D-01",
+    "scope": "whole-provider resource drain versus vendor parallel teardown",
+    "actions": [
+      {
+        "op": "load",
+        "id": "provider",
+        "provide": "db",
+        "value": 1,
+        "effects": [
+          {
+            "label": "pool.close"
+          }
+        ]
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "provider"
+        ]
+      },
+      {
+        "op": "load",
+        "id": "consumer",
+        "requires": [
+          "db"
+        ],
+        "cleanup": {
+          "label": "consumer",
+          "entered": "entered",
+          "release": "release"
+        }
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "consumer"
+        ]
+      },
+      {
+        "op": "retire_begin",
+        "id": "provider"
+      },
+      {
+        "op": "wait_gate",
+        "id": "entered"
+      },
+      {
+        "op": "observe_log"
+      },
+      {
+        "op": "release",
+        "id": "release"
+      },
+      {
+        "op": "join",
+        "task": "closing"
+      },
+      {
+        "op": "observe_log"
+      }
+    ],
+    "comparison": "expected-deviation",
+    "deviations": [
+      "D-01"
+    ],
+    "expected_observations": {
+      "ts": [
+        {
+          "log": [
+            "pool.close",
+            "consumer.enter"
+          ]
+        },
+        {
+          "log": [
+            "pool.close",
+            "consumer.enter",
+            "consumer.end"
+          ]
+        }
+      ],
+      "python": [
+        {
+          "log": [
+            "consumer.enter"
+          ]
+        },
+        {
+          "log": [
+            "consumer.enter",
+            "consumer.end",
+            "pool.close"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "D-02",
+    "scope": "serial top-level inverse waits versus vendor concurrent top-level cleanup",
+    "actions": [
+      {
+        "op": "load",
+        "id": "owner",
+        "effects": [
+          {
+            "label": "A"
+          },
+          {
+            "label": "B",
+            "entered": "entered",
+            "release": "release"
+          }
+        ]
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "owner"
+        ]
+      },
+      {
+        "op": "retire_begin",
+        "id": "owner"
+      },
+      {
+        "op": "wait_gate",
+        "id": "entered"
+      },
+      {
+        "op": "observe_log"
+      },
+      {
+        "op": "release",
+        "id": "release"
+      },
+      {
+        "op": "join",
+        "task": "closing"
+      },
+      {
+        "op": "observe_log"
+      }
+    ],
+    "comparison": "expected-deviation",
+    "deviations": [
+      "D-02"
+    ],
+    "expected_observations": {
+      "ts": [
+        {
+          "log": [
+            "B.enter",
+            "A"
+          ]
+        },
+        {
+          "log": [
+            "B.enter",
+            "A",
+            "B.end"
+          ]
+        }
+      ],
+      "python": [
+        {
+          "log": [
+            "B.enter"
+          ]
+        },
+        {
+          "log": [
+            "B.enter",
+            "B.end",
+            "A"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "D-03",
+    "scope": "repeat public effect close returns shared awaitable only in Stage",
+    "actions": [
+      {
+        "op": "load",
+        "id": "owner",
+        "effects": [
+          {
+            "label": "A",
+            "entered": "entered",
+            "release": "release"
+          }
+        ]
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "owner"
+        ]
+      },
+      {
+        "op": "effect_close_begin",
+        "effect": "owner:A",
+        "task": "first"
+      },
+      {
+        "op": "wait_gate",
+        "id": "entered"
+      },
+      {
+        "op": "effect_close_begin",
+        "effect": "owner:A",
+        "task": "second",
+        "observe_shape": true
+      },
+      {
+        "op": "release",
+        "id": "release"
+      },
+      {
+        "op": "join",
+        "task": "first"
+      },
+      {
+        "op": "join",
+        "task": "second"
+      }
+    ],
+    "comparison": "expected-deviation",
+    "deviations": [
+      "D-03"
+    ],
+    "expected_observations": {
+      "ts": [
+        {
+          "returns_awaitable": false
+        }
+      ],
+      "python": [
+        {
+          "returns_awaitable": true
+        }
+      ]
+    }
+  },
+  {
+    "id": "D-04",
+    "scope": "cleanup error is an explicit unsuccessful close outcome only in Stage",
+    "actions": [
+      {
+        "op": "load",
+        "id": "owner",
+        "effects": [
+          {
+            "label": "bad",
+            "error": true
+          }
+        ]
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "owner"
+        ]
+      },
+      {
+        "op": "retire",
+        "id": "owner",
+        "observe_failure": true
+      }
+    ],
+    "comparison": "expected-deviation",
+    "deviations": [
+      "D-04"
+    ],
+    "expected_observations": {
+      "ts": [
+        {
+          "cleanup_failed": false
+        }
+      ],
+      "python": [
+        {
+          "cleanup_failed": true
+        }
+      ]
+    },
+    "allow_final_failure": true
+  },
+  {
+    "id": "D-05",
+    "scope": "same Fiber restart increments explicit Stage activation identity",
+    "actions": [
+      {
+        "op": "load",
+        "id": "owner"
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "owner"
+        ]
+      },
+      {
+        "op": "restart",
+        "id": "owner",
+        "observe": true
+      }
+    ],
+    "comparison": "expected-deviation",
+    "deviations": [
+      "D-05"
+    ],
+    "expected_observations": {
+      "ts": [
+        {
+          "activation_identity_changed": false
+        }
+      ],
+      "python": [
+        {
+          "activation_identity_changed": true
+        }
+      ]
+    }
+  },
+  {
+    "id": "D-06",
+    "scope": "native caller-owner APIs preserve identical resource attribution",
+    "actions": [
+      {
+        "op": "load",
+        "id": "provider",
+        "provide": "timer",
+        "value": {},
+        "service_type": "caller"
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "provider"
+        ]
+      },
+      {
+        "op": "load",
+        "id": "first",
+        "requires": [
+          "timer"
+        ],
+        "register_call": {
+          "service": "timer",
+          "label": "first"
+        }
+      },
+      {
+        "op": "load",
+        "id": "second",
+        "requires": [
+          "timer"
+        ],
+        "register_call": {
+          "service": "timer",
+          "label": "second"
+        }
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "first",
+          "second"
+        ]
+      },
+      {
+        "op": "retire",
+        "id": "first"
+      },
+      {
+        "op": "observe_log"
+      },
+      {
+        "op": "retire",
+        "id": "second"
+      },
+      {
+        "op": "observe_log"
+      }
+    ],
+    "deviations": [
+      "D-06"
+    ],
+    "adaptation": "TS traceable Service.ctx versus Python explicit owner argument; outcome must remain equal"
+  },
+  {
+    "id": "D-07",
+    "scope": "bail explicit decision type versus raw vendor zero payload",
+    "actions": [
+      {
+        "op": "load",
+        "id": "owner",
+        "listeners": [
+          {
+            "event": "bail",
+            "mode": "bail",
+            "behavior": "decision",
+            "decision": "stop",
+            "label": "zero",
+            "value": 0
+          }
+        ]
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "owner"
+        ]
+      },
+      {
+        "op": "dispatch_shape",
+        "event": "bail",
+        "mode": "bail"
+      }
+    ],
+    "comparison": "expected-deviation",
+    "deviations": [
+      "D-07"
+    ],
+    "expected_observations": {
+      "ts": [
+        {
+          "returns_explicit_decision": false
+        }
+      ],
+      "python": [
+        {
+          "returns_explicit_decision": true
+        }
+      ]
+    }
+  },
+  {
+    "id": "D-08",
+    "scope": "business listeners are activation-gated only by Stage",
+    "actions": [
+      {
+        "op": "load",
+        "id": "owner",
+        "listen": true,
+        "setup_entered": "entered",
+        "setup_release": "release"
+      },
+      {
+        "op": "wait_gate",
+        "id": "entered"
+      },
+      {
+        "op": "emit"
+      },
+      {
+        "op": "observe",
+        "id": "owner"
+      },
+      {
+        "op": "release",
+        "id": "release"
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "owner"
+        ]
+      },
+      {
+        "op": "emit"
+      },
+      {
+        "op": "observe",
+        "id": "owner"
+      }
+    ],
+    "comparison": "expected-deviation",
+    "deviations": [
+      "D-08"
+    ],
+    "expected_observations": {
+      "ts": [
+        {
+          "id": "owner",
+          "runs": 1,
+          "cleaned": 0,
+          "calls": 1
+        },
+        {
+          "id": "owner",
+          "runs": 1,
+          "cleaned": 0,
+          "calls": 2
+        }
+      ],
+      "python": [
+        {
+          "id": "owner",
+          "runs": 1,
+          "cleaned": 0,
+          "calls": 0
+        },
+        {
+          "id": "owner",
+          "runs": 1,
+          "cleaned": 0,
+          "calls": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "D-09",
+    "scope": "strict Stage readiness times out instead of returning PENDING",
+    "actions": [
+      {
+        "op": "load",
+        "id": "consumer",
+        "requires": [
+          "missing"
+        ]
+      },
+      {
+        "op": "await_without_provider",
+        "id": "consumer"
+      }
+    ],
+    "comparison": "expected-deviation",
+    "deviations": [
+      "D-09"
+    ],
+    "expected_observations": {
+      "ts": [
+        {
+          "outcome": "pending"
+        }
+      ],
+      "python": [
+        {
+          "outcome": "timeout"
+        }
+      ]
+    }
+  },
+  {
+    "id": "C2-04",
+    "scope": "duplicate providers are rejected before being exposed as usable",
+    "allow_final_failure": true,
+    "actions": [
+      {
+        "op": "load",
+        "id": "first",
+        "provide": "db",
+        "value": 1
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "first"
+        ]
+      },
+      {
+        "op": "load",
+        "id": "duplicate",
+        "provide": "db",
+        "value": 2
+      },
+      {
+        "op": "duplicate_failed",
+        "id": "duplicate"
+      }
+    ]
+  },
+  {
+    "id": "D-01.call",
+    "scope": "in-flight invocation lease delays provider resource close only in Stage",
+    "comparison": "expected-deviation",
+    "deviations": [
+      "D-01"
+    ],
+    "actions": [
+      {
+        "op": "load",
+        "id": "provider",
+        "provide": "db",
+        "value": {},
+        "service_type": "query",
+        "effects": [
+          {
+            "label": "pool.close"
+          }
+        ]
+      },
+      {
+        "op": "ready",
+        "ids": [
+          "provider"
+        ]
+      },
+      {
+        "op": "call_begin",
+        "key": "db",
+        "task": "query"
+      },
+      {
+        "op": "wait_gate",
+        "id": "query.entered"
+      },
+      {
+        "op": "retire_begin",
+        "id": "provider"
+      },
+      {
+        "op": "wait_absent",
+        "key": "db"
+      },
+      {
+        "op": "await_task_timeout",
+        "task": "closing"
+      },
+      {
+        "op": "release",
+        "id": "query.release"
+      },
+      {
+        "op": "join",
+        "task": "query"
+      },
+      {
+        "op": "join",
+        "task": "closing"
+      },
+      {
+        "op": "observe_log"
+      }
+    ],
+    "expected_observations": {
+      "ts": [
+        {
+          "task_outcome": "done"
+        },
+        {
+          "log": [
+            "pool.close",
+            "query.end"
+          ]
+        }
+      ],
+      "python": [
+        {
+          "task_outcome": "timeout"
+        },
+        {
+          "log": [
+            "query.end",
+            "pool.close"
+          ]
+        }
+      ]
+    }
+  }
+]

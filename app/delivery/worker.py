@@ -31,6 +31,7 @@ from app.delivery.contracts import (
     DeliveryRunSummary,
     DeliverySink,
     DeliveryWorkerClosed,
+    DeliveryWorkerStatus,
     ReconciliationResult,
     ReconciliationStatus,
 )
@@ -123,6 +124,21 @@ class OutboxWorker:
         self._stopping = False
         self._operations: set[asyncio.Task[Any]] = set()
         self._loop_task: asyncio.Task[None] | None = None
+        self._run_started = False
+        self._failure: BaseException | None = None
+        self._active_operation: asyncio.Task[Any] | None = None
+        self._external_tasks: set[asyncio.Task[Any]] = set()
+
+    @property
+    def status(self) -> DeliveryWorkerStatus:
+        """Public supervision snapshot; exception messages may contain secrets."""
+        if self._failure is not None:
+            return DeliveryWorkerStatus("failed", type(self._failure).__name__)
+        if self._stopping:
+            active = any(not task.done() for task in self._operations)
+            active = active or (self._loop_task is not None and not self._loop_task.done())
+            return DeliveryWorkerStatus("stopping" if active else "stopped")
+        return DeliveryWorkerStatus("running" if self._loop_task is not None else "idle")
 
     def _now(self) -> datetime:
         value = self._clock()
@@ -394,9 +410,12 @@ class OutboxWorker:
             return True
 
     @staticmethod
-    def _receipt_matches(receipt: DeliveryReceipt, envelope: DeliveryEnvelope) -> bool:
+    def _receipt_matches(receipt: object, envelope: DeliveryEnvelope) -> bool:
         return (
             isinstance(receipt, DeliveryReceipt)
+            and type(receipt.message_id) is str
+            and type(receipt.dedupe_key) is str
+            and type(receipt.receipt_ref) is str
             and receipt.message_id == envelope.message_id
             and receipt.dedupe_key == envelope.dedupe_key
             and bool(receipt.receipt_ref and receipt.receipt_ref.strip())
@@ -407,16 +426,22 @@ class OutboxWorker:
         if self._stopping or claim.lease_until <= self._now():
             applied = await self._finish(claim, status="unknown", error_code="delivery.not_dispatched")
             return "unknown" if applied else "lost_lease"
+        io_task = asyncio.current_task()
+        assert io_task is not None
+        self._external_tasks.add(io_task)
         try:
-            async with asyncio.timeout(self._delivery_timeout):
-                receipt = await self._sinks[claim.envelope.destination].deliver(claim.envelope)
-        except asyncio.CancelledError as cancelled:
-            await self._finish_cancelled(claim, "delivery.cancelled", cancelled)
-            raise
-        except Exception as error:
-            code = "delivery.timeout" if isinstance(error, TimeoutError) else "delivery.unknown"
-            applied = await self._finish(claim, status="unknown", error_code=code)
-            return "unknown" if applied else "lost_lease"
+            try:
+                async with asyncio.timeout(self._delivery_timeout):
+                    receipt = await self._sinks[claim.envelope.destination].deliver(claim.envelope)
+            except asyncio.CancelledError as cancelled:
+                await self._finish_cancelled(claim, "delivery.cancelled", cancelled)
+                raise
+            except Exception as error:
+                code = "delivery.timeout" if isinstance(error, TimeoutError) else "delivery.unknown"
+                applied = await self._finish(claim, status="unknown", error_code=code)
+                return "unknown" if applied else "lost_lease"
+        finally:
+            self._external_tasks.discard(io_task)
         if not self._receipt_matches(receipt, claim.envelope):
             applied = await self._finish(claim, status="unknown", error_code="receipt.invalid")
             return "unknown" if applied else "lost_lease"
@@ -464,16 +489,22 @@ class OutboxWorker:
                 return "blocked"
             claim = selection.claim
             sink = self._sinks[claim.envelope.destination]
+            io_task = asyncio.current_task()
+            assert io_task is not None
+            self._external_tasks.add(io_task)
             try:
-                async with asyncio.timeout(self._delivery_timeout):
-                    result = await sink.reconcile(claim.envelope)
-            except asyncio.CancelledError as cancelled:
-                await self._finish_cancelled(claim, "reconcile.cancelled", cancelled)
-                raise
-            except Exception as error:
-                code = "reconcile.timeout" if isinstance(error, TimeoutError) else "reconcile.unknown"
-                applied = await self._finish(claim, status="unknown", error_code=code)
-                return "unknown" if applied else "lost_lease"
+                try:
+                    async with asyncio.timeout(self._delivery_timeout):
+                        result = await sink.reconcile(claim.envelope)
+                except asyncio.CancelledError as cancelled:
+                    await self._finish_cancelled(claim, "reconcile.cancelled", cancelled)
+                    raise
+                except Exception as error:
+                    code = "reconcile.timeout" if isinstance(error, TimeoutError) else "reconcile.unknown"
+                    applied = await self._finish(claim, status="unknown", error_code=code)
+                    return "unknown" if applied else "lost_lease"
+            finally:
+                self._external_tasks.discard(io_task)
             if not isinstance(result, ReconciliationResult):
                 applied = await self._finish(claim, status="unknown", error_code="reconcile.invalid")
                 return "unknown" if applied else "lost_lease"
@@ -538,7 +569,12 @@ class OutboxWorker:
             await uow._commit_by_owner()
             return "pending"
 
-    def start(self, tenant_refs: Sequence[str]) -> None:
+    def start(self, tenant_refs: Sequence[str]) -> asyncio.Task[None]:
+        """Start standalone polling and return its observable task.
+
+        A Core consumer should instead spawn ``run(tenant_refs)`` in its owner
+        task domain and register ``close`` for cancellation bookkeeping.
+        """
         if self._stopping:
             raise DeliveryWorkerClosed("delivery worker is stopping")
         if self._loop_task is not None:
@@ -546,16 +582,77 @@ class OutboxWorker:
         tenants = tuple(dict.fromkeys(tenant_refs))
         if not tenants:
             raise ValueError("explicit tenant references are required")
+        self._loop_task = asyncio.create_task(self.run(tenants), name="stage-outbox-worker")
+        return self._loop_task
 
-        async def poll() -> None:
+    async def run(self, tenant_refs: Sequence[str]) -> None:
+        """Poll until stopped; a fault stops intake and propagates to the owner.
+
+        No implicit restart is safe: a failed claim/receipt commit may have an
+        unknown outcome. Recovery uses persisted leases and reconciliation.
+        """
+        if self._stopping:
+            raise DeliveryWorkerClosed("delivery worker is stopping")
+        current = asyncio.current_task()
+        assert current is not None
+        if self._run_started or (self._loop_task is not None and self._loop_task is not current):
+            raise RuntimeError("delivery worker already started")
+        tenants = tuple(dict.fromkeys(tenant_refs))
+        if not tenants:
+            raise ValueError("explicit tenant references are required")
+        self._loop_task = current
+        self._run_started = True
+        try:
             while not self._stopping:
                 for tenant_ref in tenants:
                     if self._stopping:
                         return
-                    await self.run_once(tenant_ref)
+                    # Keep the current database operation alive while the
+                    # owner task receives the cooperative stop cancellation.
+                    # This lets managed_uow finish rollback/close before Core
+                    # disposes the storage provider.
+                    operation = asyncio.create_task(self.run_once(tenant_ref), name="stage-outbox-operation")
+                    self._active_operation = operation
+                    try:
+                        await asyncio.shield(operation)
+                    except asyncio.CancelledError:
+                        if not operation.done():
+                            await asyncio.shield(operation)
+                        raise
+                    finally:
+                        if self._active_operation is operation:
+                            self._active_operation = None
                 await asyncio.sleep(self._poll_interval)
+        except asyncio.CancelledError:
+            raise
+        except BaseException as error:
+            self._failure = error
+            raise
+        finally:
+            self._stopping = True
 
-        self._loop_task = asyncio.create_task(poll(), name="stage-outbox-worker")
+    def request_stop(self, *, cancel_operation: bool = False) -> None:
+        """Cooperatively stop intake and cancel only active operation tasks."""
+        self._stopping = True
+        current = asyncio.current_task()
+        if (
+            cancel_operation
+            and self._active_operation is not None
+            and self._active_operation is not current
+            and not self._active_operation.done()
+        ):
+            self._active_operation.cancel()
+        for task in tuple(self._external_tasks):
+            if task is not current and not task.done():
+                task.cancel()
+
+    async def wait(self) -> None:
+        """Observe polling completion/failure without cancelling its owner task."""
+        if self._loop_task is None:
+            raise RuntimeError("delivery worker has not started")
+        if self._loop_task is asyncio.current_task():
+            raise RuntimeError("delivery worker cannot wait for itself")
+        await asyncio.shield(self._loop_task)
 
     async def close(self) -> None:
         """Stop intake and await owned I/O and durable cancellation bookkeeping.
@@ -564,9 +661,15 @@ class OutboxWorker:
         tasks remain live this raises, retaining their ownership; the host must
         not dispose shared dependencies or claim a completed drain.
         """
-        self._stopping = True
+        self.request_stop(cancel_operation=True)
         current = asyncio.current_task()
         tasks = {task for task in self._operations if task is not current and not task.done()}
+        if (
+            self._active_operation is not None
+            and self._active_operation is not current
+            and not self._active_operation.done()
+        ):
+            tasks.add(self._active_operation)
         if self._loop_task is not None and self._loop_task is not current and not self._loop_task.done():
             tasks.add(self._loop_task)
         for task in tasks:

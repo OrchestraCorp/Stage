@@ -18,7 +18,9 @@
 4. 不让 Agent、连接器或配置蓝图直接写数据库；通过领域命令、outbox 和受控接口执行。
 5. 不把本地测试配置、凭据或真实企业数据提交到仓库。
 6. 修改 API 时同步更新 `contracts/openapi.yaml` 和契约测试。
+7. PostgreSQL 17 是唯一长期主库，Redis 8 仅作可重建缓存、非权威短期协调和可丢失唤醒；具体使用须定义故障策略。授权、幂等、outbox 与业务租约权威留在 PostgreSQL，不承诺 PostgreSQL/Redis 双写原子性。
+8. Redis 清空不能丢业务事实；缓存须隔离 tenant 并核验当前授权版本，不能绕过撤权。SQLite 仅快测，MySQL 已退出受支持配置；历史迁移与验证记录保留。存储细则见 [存储策略](docs/storage-strategy.md)。
 
 ## 当前状态
 
-这是第一版工程底板。RBAC/ReBAC/ABAC 目前是纯 Python 可测试内核，数据库模型、API、迁移和连接器只提供最小结构，尚未代表企业生效能力。
+P1a 已实现并在云开发设备验证：独立 Runtime Core、PG/Redis provider、可信注入的命令/投递组件及 `/health`、`/ready`。RBAC/ReBAC/ABAC 仍为纯判定，真实身份 loader、WASM、签名准入与业务 HTTP 尚待后续阶段。验收范围见 [P1a 记录](docs/reviews/p1a-validation-2026-10-25.md)，不据此声明真实企业制度生效或生产验收完成。

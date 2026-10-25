@@ -28,33 +28,32 @@ contract:
     - uv run python scripts/check_contract.py --check
 
 # These credentials are for disposable job-local databases only.
-database:mysql:
-  stage: database
-  services:
-    - name: mysql:8.4
-      alias: mysql
-  variables:
-    MYSQL_DATABASE: stage_ci
-    MYSQL_USER: stage
-    MYSQL_PASSWORD: stage-ci-test-only
-    MYSQL_ROOT_PASSWORD: stage-ci-root-test-only
-    TEST_DATABASE_URL: mysql+aiomysql://stage:stage-ci-test-only@mysql:3306/stage_ci
-    STAGE_ALLOW_TEST_DATABASE_RESET: "1"
-  script:
-    - uv run python scripts/check_database.py
-    - uv run pytest -q tests/storage tests/execution tests/delivery
-
 database:postgresql:
   stage: database
   services:
     - name: postgres:17
       alias: postgres
+    - name: redis:8
+      alias: redis
   variables:
     POSTGRES_DB: stage_ci
     POSTGRES_USER: stage
     POSTGRES_PASSWORD: stage-ci-test-only
     TEST_DATABASE_URL: postgresql+asyncpg://stage:stage-ci-test-only@postgres:5432/stage_ci
     STAGE_ALLOW_TEST_DATABASE_RESET: "1"
+    TEST_REDIS_URL: redis://redis:6379/0
   script:
     - uv run python scripts/check_database.py
-    - uv run pytest -q tests/storage tests/execution tests/delivery
+    - uv run python scripts/check_redis.py
+    - uv run pytest -q --junitxml=tmp/postgresql-tests.xml
+    - uv run python scripts/check_runtime_conformance.py --junit tmp/postgresql-tests.xml
+
+database:redis:
+  stage: database
+  services:
+    - name: redis:8
+      alias: redis
+  variables:
+    TEST_REDIS_URL: redis://redis:6379/0
+  script:
+    - uv run python scripts/check_redis.py

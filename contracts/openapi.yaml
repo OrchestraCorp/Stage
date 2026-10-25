@@ -47,6 +47,28 @@ components:
       - env
       title: HealthResponse
       type: object
+    ReadyResponse:
+      properties:
+        components:
+          additionalProperties:
+            enum:
+            - ready
+            - unavailable
+            - disabled
+            type: string
+          title: Components
+          type: object
+        status:
+          enum:
+          - ready
+          - not_ready
+          title: Status
+          type: string
+      required:
+      - status
+      - components
+      title: ReadyResponse
+      type: object
 info:
   description: 组织运行与热协作系统底板
   title: OrchestraCorp Stage
@@ -78,5 +100,38 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
           description: Unexpected server error
       summary: Liveness probe
+      tags:
+      - system
+  /ready:
+    get:
+      description: Check supervised dependency readiness without exposing credentials
+        or internal diagnostics.
+      operationId: runtime_readiness
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadyResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Request validation failed
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unexpected server error
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadyResponse'
+          description: Required components are unavailable
+      summary: Required component readiness
       tags:
       - system
