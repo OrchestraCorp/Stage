@@ -9,6 +9,8 @@ research_date: 2026-10-24
 
 # Stage P1 WASM 宿主与隔离执行规格
 
+本规格的 tenant/organization 引用均表示服务端唯一的组织授权根；根不等同法人公司，也不由 guest 或请求选择。组织单元、授权 scope 和跨实例身份的边界见[组织授权根语义](organization-root-semantics.md)。
+
 本文件把 WASM 整体基座前置到 P1：P1c 建设独立进程 runner、签名制品准入和受限 ABI，P1d 用 `EvaluateQualification` 验证真实认证、组件生命周期、隔离计算与领域提交之间的完整路径。P1a 的 Core 和 P1b 的真实协议认证是其前提；测试身份 fixture 不能代替认证链验收。
 
 这里是待实现的工程设计。没有新增依赖、运行器、签名服务、业务接口或测试结果；下文 W1 场景当前执行 **0 项**、通过 **0 项**。这套场景与 [Core 的 34 个场景](runtime-conformance.md)分别计数。它不表示通用流程 DSL、带外部副作用的 WASM 插件或完整企业发布治理已完成。
@@ -147,7 +149,7 @@ Store 的 memory/table 等限制不包含所有编译器、JIT code、Python对�
 
 ### 6.2 子进程生命周期与权限
 
-P1 使用独立、一次性执行 worker：每个 invocation 创建新 Store/Instance，执行结束销毁；不能把实例 pool 在不同租户间复用。编译可以在同一个受限的一次性进程内完成，或在单独受限编译进程中完成后经可信缓存交给执行进程。任何阶段都不在 Stage 的 ASGI event loop 内同步运行 guest/JIT。
+P1 使用独立、一次性执行 worker：每个 invocation 创建新 Store/Instance，执行结束销毁；不能在不同主体、任职或 invocation 间复用带状态实例。编译可以在同一个受限的一次性进程内完成，或在单独受限编译进程中完成后经可信缓存交给执行进程。任何阶段都不在 Stage 的 ASGI event loop 内同步运行 guest/JIT。
 
 启动采用清晰的 spawn/exec 模型，环境变量白名单和显式 FD 继承；不 fork 一个已持有数据库连接、认证 token 或发布私钥的 Stage 状态作为默认 runner。runner 不接收数据库 DSN/连接、IdP access/refresh token、用户 session cookie、签名私钥、云管理凭据或任意 Stage 管理 API 凭据。
 

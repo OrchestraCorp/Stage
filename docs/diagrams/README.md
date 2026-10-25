@@ -1,10 +1,10 @@
 # 架构图
 
-[当前代码架构与 Cordis 对照](../current-code-architecture.md) · [当前代码 Mermaid 源](stage-current-code.mmd)：按实际实现区分默认服务和显式装配的内部执行组件。
+[当前代码架构与 Cordis 对照](../current-code-architecture.md) · [当前代码 Mermaid 源](stage-current-code.mmd)：按实际实现区分默认服务和显式装配的内部执行组件；身份入口为 `/api/v1/identity/me`，组织授权根由服务端固定，部门/项目使用 scope。
 
 [主架构 PNG](stage-architecture.png) · [SVG 矢量版](stage-architecture.svg) · [Mermaid 可编辑源](stage-architecture.mmd)
 
-图对应本轮[基座架构](../architecture.md)、[一期方案](../phase-1.md)、[核心对象](../core-object-contracts.md)及[长期路线](../roadmap.md)。它是待实现目标图，不是当前代码部署图；真实协议、WASM与签名准入都尚未实现。
+图对应本轮[基座架构](../architecture.md)、[一期方案](../phase-1.md)、[核心对象](../core-object-contracts.md)及[长期路线](../roadmap.md)。SVG/PNG 是一期完整目标图；当前代码另用上方 `stage-current-code.mmd` 与文档内联图描述，P1b 首条认证/成员读取的实现与验证见[实施记录](../reviews/p1b-first-slice-2026-10-25.md)。WASM 与签名准入继续后续阶段，不能把目标图作为已部署证明。
 
 ## 图例与执行边界
 

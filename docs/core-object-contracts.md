@@ -1,7 +1,7 @@
 ---
 title: Stage 核心对象与契约对齐
 status: design-proposal
-implementation_status: not-started
+implementation_status: p1a-implemented-p1b-first-slice-implemented
 policy_effect: none
 review_date: 2026-10-24
 revised_date: 2026-10-25
@@ -9,16 +9,22 @@ revised_date: 2026-10-25
 
 # Stage 核心对象与契约对齐
 
-本文统一组件、身份、WASM、发布与后续流程的词汇和责任。字段为逻辑契约草案，不是已经实现的 Python 类、数据库 schema 或公开 API。先定义不可混用的对象与不变量，再逐项冻结 schema 和实现。
+当前采用企业私有化部署：一套数据库一个组织授权根和一个环境。以下 `tenant` / `TenantMembership` 等沿用内部存储命名，指服务端确定的组织根；不形成客户端选择组织的协议。集团、子公司、部门等业务组织单元以后按需建模；部门和项目使用 scope，scope 不自动等同组织树。HTTP `/api/v1` 对外使用 `organization_ref`。详见[组织授权根语义](organization-root-semantics.md)和[私有化部署与 API v1](private-deployment-api-v1.md)。
+
+本文统一组件、身份、WASM、发布与后续流程的词汇和责任。字段是完整目标的逻辑契约；P1a 与 P1b 首条认证/成员读取切片已实现，实际 Python 类、数据库 schema 和 API 以各阶段[实施记录](reviews/p1b-first-slice-2026-10-25.md)为准。不能从某个对象名称已有代码推导其全部合同已完成。运行时三层边界和能力组合的阶段决策见[运行时演进与能力组合决策](runtime-evolution-and-composition.md)。
 
 ## 1. 共同约定
 
-- 业务引用包含 `tenant_id + object_id`，由宿主验证所属关系。少数平台主体与信任配置在平台作用域，不能把其 ID 当作任意租户内权限。
+- 业务引用包含 `tenant_id + object_id`，保留为内部兼容引用，由宿主填入唯一部署组织并验证所属关系。主体与信任配置在部署级作用域，不能把其 ID 当作任意资源权限。
 - 标识与版本分开：稳定 ID 标识对象；revision 表示可变对象的乐观版本；digest 标识不可变字节；generation 表示组件一次激活。四者不得互相代替。
 - 定义使用稳定 ID 与 schema/接口版本，运行记录使用独立 ID 与因果引用。显示名称、邮箱、角色名称和画布坐标都不是安全标识。
-- 外部输入是请求选择项。身份、租户归属、任职、委托、资源属性、信任根与当前授权由服务端构造或从受信任来源验证。
+- 外部输入是请求选择项。身份、部署组织归属、任职、委托、资源属性、信任根与当前授权由服务端构造或从受信任来源验证。
 - 所有成功声明说明成功边界：计算返回、宿主验证、数据库提交、外部确认分别表达。时间统一保存 UTC，展示时另用用户时区。
 - P1 拒绝无法解释的额外字段、重复键、未登记版本与无限资源预算。确切序列化、最大长度和算法由各子规格冻结；“有一个 dict”不代表已有稳定协议。
+
+运行时对象与业务对象分层。`ComponentContext` 是后端组件的一次激活上下文，包含服务绑定、realm、资源 owner、generation、后台任务和关闭操作；它不是 Agent 会话、HTTP 请求、`ExecutionContext`、`AuthorizationContext` 或数据库事务。`owner_id` 和 `generation` 只保护进程内资源生命周期，不能被当作主体、组织、业务版本或授权 epoch。`ExecutionContext` 每次执行重新构造，`UnitOfWork` 只覆盖当前数据库事务，未来 `WorkflowRun` 则通过持久记录恢复；三者均不写回共享 `ComponentContext`。
+
+Stage 的三层运行边界是：Component Runtime 管 provider、连接器、WASM runner 与 Worker 的进程内生命周期；Execution Kernel 管身份、授权、命令、幂等、审计、outbox 和外部回执；Workflow Runtime（P3）管持久 run/step/attempt/wait/recovery。Core 的服务租约不等于业务权限，disposer 不会回滚已提交事实，进程内事件不替代 outbox。
 
 ## 2. 五组核心对象
 
@@ -31,7 +37,7 @@ revised_date: 2026-10-25
 | `ServiceKey` | namespace、name、interface_version、value_contract | 组件依赖标识；可能提供数据库工厂等内部服务，不等同可授权业务命令 |
 | `PermissionAction` | action_id、resource_kind、scope_rule | 授权策略的稳定能力点；由可信授权模块解释 |
 
-命名避免歧义：某个 Python provider 提供服务对象、某个业务能力已注册、某个主体获准执行动作，是三个独立事实。realm 控制服务解析，tenant 控制业务归属，二者不可互换。
+命名避免歧义：某个 Python provider 提供服务对象、某个业务能力已注册、某个主体获准执行动作，是三个独立事实。realm 控制服务解析，兼容字段 tenant 表示部署组织，scope 表示企业内授权范围，三者不可互换。
 
 2026-10-25 的[框架实施规格](framework-foundation.md)进一步规定：Core 的 ServiceLease/CallScope 不含身份，由应用 ExecutionContext 组合持有；每次登记另有 registration_id，旧句柄不得影响同 owner/generation 下重新登记的能力。命令注册和业务 schema 留在应用层，不进入通用 Core。
 
@@ -42,19 +48,25 @@ revised_date: 2026-10-25
 | 对象 | 内容 | 边界 |
 |---|---|---|
 | `Principal / ExternalIdentity` | 内部主体；受信任 issuer/subject 与主体的已验证关联 | 凭据身份与真实自然人关系不是同一保证；多账号关联需单独证据 |
-| `TenantMembership / RoleAssignment` | 公司成员资格、具体任职、范围、有效期、版本与状态 | 蓝图中的岗位定义不自动生成任职 |
-| `Delegation / ServiceGrant` | 谁授权谁、动作/资源范围、期限、状态、可否再委托 | 不自动合并岗位；Agent 委托与后台服务的组织授权分别表达 |
+| `TenantMembership / RoleAssignment` | 一次组织根内成员经历；固定该经历、角色版本和 scope 的具体任职 | 同根/principal 最多一条未终结成员经历，重入使用新 ref；新角色版本不自动迁移旧任职；蓝图岗位不自动生成任职 |
+| `AuthenticationProfile / TenantAuthenticationBinding` | 明确凭据验证语义；企业接受的 profile/version、环境及 client/assurance 条件 | 账号关联不扩大企业接受来源；同 provider/namespace 不跨版本重解释主体类型和映射语义 |
+| `AgentRegistration / AgentWorkloadBinding` | 固定 Agent 成员经历、责任方与实际 service/workload 成员经历、环境 | 重新加入或改责任方新建登记；binding、delegation 不通过稳定 agent_ref 自动跟随恢复 |
+| `Delegation / ServiceGrant` | 谁授权谁、逐条 action-target term、期限、状态、可否再委托 | 动作和目标成对、目标 resource/scope 二选一；不自动合并岗位；Agent 承载和自主服务授权分别表达 |
 | `AuthenticationEvidence` | principal_ref、凭据类型、issuer、audience、认证时间/强度、到期、验证来源 | 记录已验证认证证据，不携带业务 allow 结论；持久记录不保存原始 bearer token |
 | `ExecutionContext` | execution_id、actor、effective_subject、tenant、assignment/delegation/grant_refs、causation、deadline、plan/manifest_refs | 每次宿主执行重新构造，禁止客户端自填可信结果；runner 只获得必要子集 |
 | `AuthorizationContext / Decision` | 当前事实、动作、对象版本、关系、策略/撤销 epoch；allow/deny 与原因码 | 当前事务/动作内有效；历史 allow 不是可重放的授权令牌 |
 
 具体映射、凭据验证、撤销和 Passkey 规则见[身份与授权](identity-and-authorization.md)。已发布计划固定业务规则，运行时安全策略仍可收紧；当前撤销或平台禁用优先，不能靠旧包继续获取执行权。
 
+持久字段、复合租户外键、类型约束与角色版本见[身份表结构](identity-schema-design.md)。外部身份/成员/任职、资源 ACL 与领域关系各有唯一权威，ABAC 从可信领域字段读取。成员重入不得恢复历史授权，未映射旧行阻止后续 NOT NULL 收紧和完整角色 loader 切换；不从旧 scope 字符串猜测 tenant。
+
+平台初始化与身份变更分别保存 `BootstrapRecord` 和 `IdentityControlOperation`：配置摘要及初始授权、平台操作的幂等范围及受限证据/结果同事务保存，不使用假造 tenant。首次身份只读切片不产生业务执行或授予角色。
+
 ### 2.3 命令、执行与结果
 
 | 对象 | 关键字段 | 用途 |
 |---|---|---|
-| `CommandEnvelope` | command_type/version、tenant、target_ref、expected_version、idempotency_key、payload、payload_digest | 调用方的受检请求；身份由入口另行构造 |
+| `CommandEnvelope` | command_type/version、tenant、target_ref、expected_version、idempotency_key、payload、payload_digest | 调用方的受检请求；身份和部署组织由入口另行构造，公开 API 不接受 tenant 选择 |
 | `CommandExecution` | execution_id、已认证 actor、命令类型、幂等范围、输入摘要、计划摘要、状态、结果引用 | 稳定的一次逻辑业务动作及可查询结果 |
 | `ExecutionAttempt` | attempt_id、execution_id、worker/runner_identity、lease/fence、开始/结束、预算、错误 | 同一动作的具体尝试；重试新建 attempt，保留业务幂等身份 |
 | `FactSnapshot` | 受限输入、事实版本向量、QualificationFactSet revisions、查询/归一化版本、输入摘要、最早失效时间 | 在统一guard/revision锁下采样数据与版本；覆盖集合新增/删除和时间失效，不只记录已有行版本 |
@@ -107,7 +119,7 @@ P1 的 manifest 可直接覆盖固定 WASM 能力而不经过通用编译器；P
 
 P1 的 `EvaluateQualification` 是基座演示，不授予真实岗位或业务权限：
 
-1. 人或服务使用真实协议凭据进入 Stage，得到内部 Principal，加载目标租户的任职/授权。
+1. 人或服务使用真实协议凭据进入 Stage，得到内部 Principal，加载部署企业中的任职/授权。
 2. 校验评估能力、输入读取权和已激活的签名模块；创建稳定 CommandExecution 与 attempt。
 3. 按一期锁序短持相关guard/FactSet锁，一致读取最小FactSnapshot及revision后关闭事务；在租约和预算内送入独立WasmRunner。
 4. runner 返回带 invocation、attempt、模块/输入摘要的结构化计算回执；宿主验大小、类型、关联和状态。
@@ -137,7 +149,7 @@ P1 的 `EvaluateQualification` 是基座演示，不授予真实岗位或业务�
 | 场景 ID | 待实现验收 |
 |---|---|
 | O1-01 | 同一能力定义的编译引用、注册 handler、manifest 和执行回执一致；版本/摘要不符拒绝 |
-| O1-02 | 同主体的两个租户/任职并发请求互不串用上下文或数据 |
+| O1-02 | 同主体的两个任职/scope 并发请求互不串用上下文或数据 |
 | O1-03 | 同 key 同输入返回已提交结果；同 key 不同输入冲突；attempt 变化不更换业务幂等身份 |
 | O1-04 | 计划固定旧版本，provider 换代不混用绑定；当前撤销仍阻止后续动作 |
 | O1-05 | 规则计算期间相关行或集合变化，提交前检测到；不能存过期结论 |

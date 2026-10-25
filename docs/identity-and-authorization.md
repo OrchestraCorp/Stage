@@ -1,7 +1,7 @@
 ---
 title: Stage 身份、认证与授权契约
-status: design-proposal
-implementation_status: not-started
+status: accepted-design
+implementation_status: p1b-first-slice-implemented-rest-pending
 policy_effect: none
 decision_date: 2026-10-24
 source_checked_at: 2026-10-24
@@ -10,7 +10,9 @@ conformance_suite: stage-identity-v1-draft
 
 # Stage 身份、认证与授权契约
 
-本文定义多公司环境下可复用的身份与授权基座，以及蓝图批准所需的身份依据。它是待实现规格，不表示已接入 IdP、实现 Passkey、完成企业身份核验或通过生产安全验收。
+产品约束：**一套 Stage 对应一个组织授权根、一套专属数据库、一个部署环境**。组织根由服务端单例记录决定，是信任、治理、授权 epoch 和审计边界，不等同于一个法人公司；集团、子公司、部门等业务组织单元以后按需建模。当前不提供公司/组织切换或 SaaS 租户管理。下文保留的 `tenant_*` 类型/字段表示兼容存储中的组织根；部门/项目边界用 scope 表达，scope 不自动等同组织树。当前身份 HTTP 合同为 `GET /api/v1/identity/me`，query 仅 `profile_ref/profile_version`，响应为 `organization_ref`；API 大版本、认证 profile 版本与行版本分别管理。详见[组织授权根语义](organization-root-semantics.md)和[私有化部署与 API v1](private-deployment-api-v1.md)。
+
+本文定义企业私有化部署中的身份与授权基座，以及蓝图批准所需的身份依据。2026-10-25 已确认[表结构与生命周期设计](identity-schema-design.md)，并实现首条认证与成员读取切片；真实 IdP、PG17 和当前 API 的证据见[实施记录](reviews/p1b-first-slice-2026-10-25.md)。本文覆盖的完整任职/服务授权/委托、Passkey、WASM 和生产身份验收仍按阶段交付。
 
 本轮一期先建设组件、真实认证协议、当前授权、隔离 WASM 与签名准入，再做基座联调；完整任务业务闭环后置。身份部分通过最小 `EvaluateQualification` 命令验证，不创建真实企业成员、发放岗位或自动授予权限。具体阶段以[一期方案](phase-1.md)为准，产品边界见[愿景与运行时方向](vision-and-runtime-direction.md)及 [AGENT.md](../AGENT.md)。
 
@@ -18,20 +20,20 @@ conformance_suite: stage-identity-v1-draft
 
 采用成熟的 OIDC / OAuth 身份提供方与协议实现。IdP 负责登录凭据、认证会话、MFA / Passkey 和账户恢复；Stage 负责把认证结果映射到内部主体，并核验公司成员、任职、委托、资源关系和业务政策。生产 IdP 品牌不阻塞接口与本地协议验收。
 
-统一认证来源与授权语义，不要求把所有产品、租户或协议强行放进一个 IdP realm，也不要求一期拆出 IAM 微服务。Maestro / Virtuoso 保持独立产品与客户端注册；Stage 是独立受保护 API。不同公司可在受控信任配置下使用不同 issuer，不能由请求临时指定一个发行方就被信任。
+统一认证来源与授权语义，不要求把所有产品或协议强行放进一个 IdP realm，也不要求一期拆出 IAM 微服务。Maestro / Virtuoso 保持独立产品与客户端注册；Stage 是独立受保护 API。部署企业可在受控信任配置下接受多个 issuer，不能由请求临时指定一个发行方就被信任。
 
 | 责任方 | 权威内容 | 不由它自动决定的内容 |
 |---|---|---|
-| IdP / 授权服务器 | 登录、凭据、会话、token 签发与自身撤销状态 | 某公司当前岗位、对象读权、独立验收和本次业务批准 |
-| Stage Identity | 主体映射、租户成员、任职、委托、服务授权及状态版本 | 替用户保存 IdP 密码，或凭客户端传来的角色建立任职 |
+| IdP / 授权服务器 | 登录、凭据、会话、token 签发与自身撤销状态 | 组织根内当前岗位、对象读权、独立验收和本次业务批准 |
+| Stage Identity | 主体映射、企业成员、任职、委托、服务授权及状态版本 | 替用户保存 IdP 密码，或凭客户端传来的角色建立任职 |
 | Stage Authorization | 基于当前可信事实计算能力与资源判定 | 直接产生业务副作用，或把一次允许判定变成永久通行证 |
 | Command Kernel / 各领域 | 强制授权、版本与业务不变式；持久执行、审计和结果 | 通过角色名称或“管理员 UI”绕过统一授权入口 |
 | Maestro / Virtuoso | 登录交互、上下文选择、受权 API、结果展示 | 自行断言企业管理员，或在客户端复制一套服务端授权规则 |
 | Blueprint / Release | 不可变批准对象、批准证据、签名、准入与激活记录 | 用发布批准代替后续每次业务动作的当前授权 |
 
-现有源码的 `PrincipalType` 已区分 `human / agent / service`；`app/authz/context.py` 提供可信输入结构，`app/authz/decision.py` 提供纯判定及委托缩权。真实认证、持久身份模型、可信 loader、授权撤销事务、发布批准与本文新增字段仍待实现。不能将已存在的 dataclass 或枚举算作对应生产能力已经完成。
+现有源码的 `PrincipalType` 已区分 `human / agent / service`；`app/authz/context.py` 提供可信输入结构，`app/authz/decision.py` 提供纯判定及委托缩权。首条切片落实真实 API 凭据验证、持久主体映射、组织根/membership 与当前身份读取；完整角色版本 loader、服务与委托分支、组织 IAM 写命令及发布批准继续后续实施。不能将已存在的 dataclass、枚举或空表算作对应生产能力已经完成。
 
-## 2. 主体、账号、公司与岗位分别建模
+## 2. 主体、账号、组织根与岗位分别建模
 
 ### 2.1 主体与外部登录标识
 
@@ -41,10 +43,10 @@ conformance_suite: stage-identity-v1-draft
 |---|---|---|
 | `Principal` | `principal_ref`、`kind: human / agent / service`、`status`、`identity_epoch`、`version` | Stage 内部主体；`service` 在本文也称 workload 主体，复用现有枚举，不另造同义类型 |
 | `ExternalIdentity` | `identity_ref`、`provider_ref`、精确 `issuer` / `subject`、`subject_kind`、`principal_ref`、关联依据、状态与版本 | 经过受信任 adapter 验证后建立；OIDC 身份以 `(issuer, subject)` 识别，[S1] |
-| `TenantMembership` | `tenant_ref`、`principal_ref`、状态、有效期、版本；二者唯一 | 加入某公司的事实；不自动赋予公司所有数据的读写权 |
+| `TenantMembership` | `tenant_ref`（组织根兼容引用）、`membership_ref`、`principal_ref`、状态、有效期、版本；同根/principal 最多一条未终结经历 | 一次加入该部署组织根的经历；left/revoked/expired 后重入创建新 ref，旧任职/委托不自动恢复；不自动赋予根下所有组织单元或资源的读写权 |
 | `HumanIdentityLink` | 受限的人类主体关联、核验来源、可信等级、状态与版本 | 在确有依据时防止同一人换账号绕过独立批准；不是默认收集真实身份证明的许可 |
 | `WorkloadRegistration` | `service_principal_ref`、凭据注册引用、允许 issuer / client / 环境、状态、版本 | 将后台服务认证绑定到明确服务；client credentials 不是人类登录，[S7] |
-| `AgentRegistration` | `agent_principal_ref`、所属租户、受控执行器引用、责任方、状态与版本 | Agent 身份与运行它的 workload 区分；创建者身份不自动转成 Agent 权限 |
+| `AgentRegistration` | `registration_ref`、`agent_principal_ref`、所属组织根、固定成员经历/责任方成员引用、状态与版本 | Agent 身份与运行它的 workload 区分；binding/delegation 固定登记引用，重入或责任方变更创建新登记；创建者身份不自动转成 Agent 权限 |
 
 OIDC 只保证 `sub` 在其 issuer 内稳定且不重新分配；email、用户名与同名 `sub` 不能跨 issuer 合并。[S1] 因发行方迁移而建立新映射，必须有受权的关联与复核记录，不直接修改历史审计中的原始来源。
 
@@ -52,7 +54,9 @@ OIDC 只保证 `sub` 在其 issuer 内稳定且不重新分配；email、用户�
 
 支持 pairwise subject 的 IdP 可能对不同客户端 / sector 给同一个人不同 `sub`。因此 Maestro、Virtuoso 和 Stage 不能靠比较客户端看到的 `sub` 判断是否同一人。[S1] 一期选定受信任 broker / 授权服务器的 Stage API 主体命名空间，adapter 明确 token profile 与映射规则；需要关联其他客户端账号时采用有证明的关联流程。两个 issuer 返回相同 email，即使都声称 `email_verified=true`，也不足以自动合并主体或转移企业权限。
 
-同一主体属于多个公司时，成员关系分别存在、分别撤销。跨公司关联属于受限平台事实，普通公司 API 只返回本公司所需引用与投影，不提供全局人员画像或“此人还在哪些公司”的查询。
+同一主体在多个独立 Stage 实例中时，各实例的成员关系分别存在、分别撤销。跨实例关联属于客户端或受控集成边界，普通 Stage API 只返回本实例所需引用与投影，不提供跨实例全局人员画像、角色或 token 查询。
+
+部署组织根通过 `TenantAuthenticationBinding` 明确接受本次 profile/version、环境及 client/assurance 条件。同一 Principal 关联多个登录账号不扩大根的认证来源范围；有效 membership 不能让未经本根接受的低保障来源进入。provider/subject_namespace 的主体类型、subject 来源与映射语义跨 profile 版本保持一致，变更语义须新 namespace 及受控关联。
 
 独立审批的保证以已核验的主体关联范围为限。两枚 Passkey、两个账号或两个 Agent 不等于两个自然人；无法确定高影响批准要求的身份独立性时，应拒绝满足该要求或转交受控核验，不能用账号数量冒充独立性证明。
 
@@ -60,8 +64,9 @@ OIDC 只保证 `sub` 在其 issuer 内稳定且不重新分配；email、用户�
 
 | 概念 | 定义 | 设计规则 |
 |---|---|---|
-| `PositionDefinition` | 某公司批准的岗位 / 职责定义及来源版本 | 职责说明是政策依据；文本不直接执行成授权代码 |
-| `RoleAssignment` | 某主体在某范围内的具体任职 | 含岗位引用、版本化能力角色、scope、有效期、状态与版本；是否允许替补有独立记录 |
+| `PositionDefinition` | 组织根内批准的岗位 / 职责定义及来源版本 | 职责说明是政策依据；文本不直接执行成授权代码 |
+| `RoleAssignment` | 某主体在某范围内的具体任职 | 固定 tenant、membership、主体、role/revision、scope、有效期、状态与版本；是否允许替补有独立记录 |
+| `RoleDefinition / RoleVersion` | 稳定角色定义与不可变能力版本 | 任职固定准确版本；发布新版本不自动迁移旧任职，版本撤销由当前 loader 重验 |
 | `CapabilitySpec` | 版本化操作契约，如 `qualification.evaluate.v1` | 与[核心对象](core-object-contracts.md)同名；有输入输出、执行预算与所需权限，注册能力不等于给任何人授权 |
 | `PermissionGrant` / policy | 在指定任职、服务授权及条件下允许什么操作 | 使用稳定能力 / action 标识，业务 handler 不判断“经理”等名称 |
 | `RelationTuple` | 主体与具体资源的权威关系 | 包含 tenant、关系、来源、有效期、撤销状态及版本；拥有部门岗位不推导所有资源关系 |
@@ -70,9 +75,11 @@ OIDC 只保证 `sub` 在其 issuer 内稳定且不重新分配；email、用户�
 
 现有内置 `RoleCode → Permission` 映射属于待版本化的政策实现。它可以作为初始可信映射，但不应演化为散落在路由和客户端中的角色名称分支。
 
+关系只有一个事实权威：member_of 来自 membership，delegated_by 来自 delegation，任务 assignee_of/reviewer_of 来自对应领域分派；`RelationTuple` 只允许直接维护明确分配给它的 ACL。角色/action 表的新行本身不会生成代码能力；可信 loader 只接纳受支持 ActionPolicy 版本下的能力，平台部署组织约束、scope 边界、主体类型和当前撤销等硬约束不由企业自定义角色覆盖。
+
 ### 2.3 有限委托与服务授权
 
-`Delegation` 至少绑定：`delegation_ref`、tenant、Agent、委托人、任职引用、允许 action 与资源 / scope、有效期、是否可转委托、预算引用、状态、撤销时间与版本。P1 只允许直接、不可转委托的有限委托；多级链以后单独验收。
+`Delegation` 至少绑定：`delegation_ref`、tenant、固定 Agent 登记经历、委托人、任职引用、逐条 action-target term、有效期、是否可转委托、预算引用、状态、撤销时间与版本。每个 term 只选精确 resource 或明确 scope 匹配规则；禁止将动作数组与资源数组组合成笛卡尔积。ServiceGrant 采用相同配对结构。P1 只允许直接、不可转委托的有限委托；多级链以后单独验收。
 
 代理动作的有效权限必须同时满足：
 
@@ -138,13 +145,15 @@ JWKS、introspection 和元数据地址来自受控 provider 配置。禁止跟�
 | 字段组 | 逻辑字段 | 来源与寿命 |
 |---|---|---|
 | 证据身份 | `evidence_ref`、`adapter_profile_ref/version`、`credential_kind` | Stage 生成关联引用；profile 来自安全配置 |
-| 主体来源 | `external_identity_ref`、`issuer`、`subject`、`subject_kind`、已映射 `principal_ref/kind` | 签名 / introspection 结果与受控映射共同确定；未知主体不自动加入公司 |
+| 主体来源 | `external_identity_ref`、`issuer`、`subject`、`subject_kind`、已映射 `principal_ref/kind` | 签名 / introspection 结果与受控映射共同确定；未知主体不自动加入组织根 |
 | 调用对象 | `audiences`、`client_ref`、`sender_binding_ref`、`token_scope` | 仅记录实际验证到的信息；未采用发送者约束时不能声称具备它 |
 | 时间 | `validated_at`、`credential_expires_at`、`evidence_valid_until`、可空 `authenticated_at` | 有效截止取凭据、profile 新鲜度和必要在线检查的严格上界；不是延长原凭据 |
 | 认证强度 | `assurance_profile_ref/version`、可空 `acr/amr`、`user_verification`、`recovery_epoch` | 只用可核验来源及已登记映射；普通 access token 不当然含 WebAuthn UV 证据 |
-| 当前性引用 | `identity_epoch`、`credential_state_ref`、`revocation_checked_at` | 记录本次实际查询到的版本和时间；没有即时撤销通道时明确窗口 |
+| 当前性引用 | `identity_epoch`、external identity/workload registration 版本、trust 配置/key revision、组织根 binding/version、`revocation_checked_at` | 记录本次实际查询到的版本和时间；没有即时撤销通道时明确窗口 |
 
 原 token 仅在入口验证需要的最短期间使用。持久审计记录证据引用、经筛选的事实和验证 profile；需要诊断关联时用受限不可逆引用，不记录 bearer token 或 refresh token。完整 WebAuthn 批准断言另存受限证据库，不进入普通业务日志。
+
+证据首先是请求内存对象，未创建持久证据行时 evidence_ref 只作关联引用。提交前同时重验映射/registration、主体、租户来源准入及有效截止；只检查 principal.active 不足以证明认证来源仍有效。租户写入的受限证据摘要与业务结果同事务保存；平台身份写入使用独立 `IdentityControlOperation` 的幂等结果/审计，不能虚构 system tenant。
 
 ### 4.2 `ExecutionContext` 与可信加载
 
@@ -153,10 +162,10 @@ JWKS、introspection 和元数据地址来自受控 provider 配置。禁止跟�
 | 执行身份 | `execution_ref`、`request_ref`、`attempt_ref`、`causation_ref`、`deadline` | 服务端建立；重试 attempt 可变，逻辑命令及幂等身份保持稳定 |
 | 认证引用 | `authentication_evidence_ref`、`authenticated_principal_ref`、可空 `authenticated_workload_ref` | 从 adapter 证据与受控运行器得出，不从 body 复制 |
 | 业务主体 | `actor_principal_ref`、`effective_principal_ref`、`responsible_principal_ref` | loader 根据直接调用、有效 Agent 委托或 service grant 明确推导 |
-| 选择范围 | `tenant_ref`、`membership_ref`、`assignment_ref`、`delegation_ref/service_grant_ref` | 请求可申请选择引用；Stage 验证归属、有效性、范围与版本后接受 |
+| 执行范围 | 服务端组织根（内部 `tenant_ref`）、`membership_ref`、`assignment_ref`、`delegation_ref/service_grant_ref` | 组织根由服务端唯一记录决定；请求只可申请任职/委托等业务引用，Stage 验证归属、有效性、范围与版本后接受 |
 | 执行来源 | `command_ref/version`、可空 `workflow_run_ref`、`release_ref/digest`、`capability_ref/version`、provider generation | 由命令 / 运行实例绑定，供追踪和一致性验证；不授予业务权限 |
 
-生命周期为一次受控命令 / 消息 attempt。`ComponentContext` 不保存共享“当前用户 / 当前公司”；`ContextVar` 可传 trace，不作为授权权威。进入后台队列、重试或新流程步骤时重新建立上下文。
+生命周期为一次受控命令 / 消息 attempt。`ComponentContext` 不保存共享“当前用户 / 当前组织”；`ContextVar` 可传 trace，不作为授权权威。进入后台队列、重试或新流程步骤时重新建立上下文。
 
 `TrustedContextLoader` 在当前受控事务中读取成员、任职、关系、委托、主体状态、资源归属、版本、策略与必要资格，生成 `AuthorizationContext`。认证证据说明谁进入系统，当前加载说明这次还能做什么。loader 只读取判定需要的最小权威事实，不应默认加载用户完整档案。
 
@@ -164,7 +173,7 @@ JWKS、introspection 和元数据地址来自受控 provider 配置。禁止跟�
 
 现有 `AuthorizationContext` 的 subject / action / resource / organization / assignment / relations / attributes / policy / now 保留语义；扩展时追加受控服务授权、事实版本与认证要求，不能把它公开为客户端可提交的“完整可信上下文”。
 
-`AuthorizationDecision` 建议保留现有 outcome、action、subject、resource、policy、evaluated_at、decision_id、request、assignment、delegation，并增加：tenant、effective principal、evidence 引用、授权 epoch、资源与事实版本摘要、必要义务 / 数据投影、稳定原因码及使用边界。
+`AuthorizationDecision` 建议保留现有 outcome、action、subject、resource、policy、evaluated_at、decision_id、request、assignment、delegation，并增加：组织根引用、effective principal、evidence 引用、授权 epoch、资源与事实版本摘要、必要义务 / 数据投影、稳定原因码及使用边界。
 
 判定只解释指定动作、资源、输入和评估时点。`allowed` 既不预留容量，也不证明业务提交，不是下一请求可重用的 token。`needs_approval / needs_delegation / expired / denied / unavailable` 要分别处理；未知政策、未知认证强度或缺必要事实不能默认允许。
 
@@ -183,7 +192,7 @@ Maestro / Virtuoso 共享版本化 API schema、生成 typed client 的来源、
 该命令只生成受权资格评估记录。WASM 返回的数据是有限规则的计算结果，不是 `AuthorizationDecision`，不能自行建立成员、任职、委托或批准发布。
 
 ```text
-入口验证真实凭据，映射主体，核验租户选择
+入口验证真实凭据，映射主体，加载唯一部署组织与当前成员
 → 固定可信 command handler 确定评估对象、规则包及输入 schema
 → 短事务：按一期锁序持guard与FactSet锁，一致读取当前权限、最小事实与revision/digest
 → 结束事务，交独立 WASM runner 做有预算的纯计算
@@ -216,11 +225,11 @@ Maestro / Virtuoso 共享版本化 API schema、生成 typed client 的来源、
 
 ### 6.2 当前授权缓存与并发
 
-沿用一期每租户 `AuthorizationGuard` 协议：成员、任职、关系、委托、服务授权、相关主体状态和有效策略变更与受控业务写按共同锁顺序串行化，增加 epoch。资源版本、幂等和领域锁仍保留。最终授权时间点在取得必要锁后、业务写之前；命令 deadline 与当前凭据时效同样重验。
+沿用一期部署组织 `AuthorizationGuard` 协议：成员、任职、关系、委托、服务授权、相关主体状态和有效策略变更与受控业务写按共同锁顺序串行化，增加 epoch。资源版本、幂等和领域锁仍保留。最终授权时间点在取得必要锁后、业务写之前；命令 deadline 与当前凭据时效同样重验。
 
 写命令不复用跨命令的正向授权结果。若查询引入缓存，key 至少包含 tenant、主体及有效主体、任职 / 委托、action、资源 / 投影、策略版本与 epoch，另有过期与失效机制；缓存命中不免除入口认证。负向缓存也要有界，避免新授权长期无法生效。
 
-全局主体禁用、账号重新关联或平台共享策略变更可能影响多个租户。必须明确受影响集合并按稳定顺序锁定全部 guard，或采用单独已经验收的全局身份撤销协议；P1 若不能建立完整集合就拒绝该全局变更，不声称只锁一个公司即完成全局撤销。
+主体禁用、账号重新关联或平台策略变更可能影响多个任职、委托与并发请求。本轮采用[统一锁序](phase-1.md#transaction-protocol)下的全局共享/独占锁协议：身份读取持相关 trust/principal 行 `FOR SHARE`，对应离线身份/信任撤销持 `FOR UPDATE`，再按序取得 tenant guard。当前身份读取及 principal/tenant/membership/profile 撤销已通过 PG17 多连接竞争验证。旧 CommandKernel、未来任职/委托和平台共享策略 writer 尚未全面接入，不能复用本轮证明；新增路径须完成共同锁点，当前产品只有一个部署组织 guard，仍需覆盖全部相关主体和信任锁点。无法确定完整依赖集合或共同锁点时拒绝该类变更。
 
 排队动作、长期人工等待和恢复后的步骤都重新判定当前权限。历史批准是一项事实，执行时是否继续认可它由明确发布 / 业务政策决定；离职人员旧批准的法律效力不由本技术规格推断。对正在进行的外部 I/O，本地撤销只能记录取消意图与实际结果，不能宣称原子收回已经发出的请求。
 
@@ -292,7 +301,7 @@ IdP trust、认证 adapter 配置、组织根 key、验签开关、可签用途�
 
 ## 8. 隐私、最小输入与可追责
 
-“重新加载当前身份”指获取当前判定必需且可信的状态，不是每步获取完整个人资料。普通资格评估可只需本租户主体引用、有效成员、某项资格证明、委托范围和版本；不必取得私人会话、全部任职、出生信息或其他公司关系。
+“重新加载当前身份”指获取当前判定必需且可信的状态，不是每步获取完整个人资料。普通资格评估可只需本租户主体引用、有效成员、某项资格证明、委托范围和版本；不必取得私人会话、全部任职、出生信息或无关成员关系。
 
 对外投影采用 tenant 范围内的必要标识；用于防自批的内部主体关联由受限服务比较，向一般审批 UI 可只返回“独立性满足 / 不满足 / 无法确认”及受权原因。审计既要能定位责任，也要有读者范围和数据保留政策，不默认公开全局身份映射。
 
@@ -307,7 +316,7 @@ WASM 输入采用 capability schema 规定的最小投影，宿主在输入前�
 | 阶段 | 本文承担的交付 | 退出门槛 |
 |---|---|---|
 | P1a 共同契约 | 主体、外部身份、成员、任职、委托、服务授权；三类上下文与 decision schema；组件与身份 provider 边界 | 语义、来源、失效及与 Command Kernel 的使用约束通过评审 |
-| P1b 真实协议与当前授权 | 至少一个成熟本地测试 IdP；真实授权码 / API token 验证；JWT 与 opaque adapter 合同；当前 loader、tenant 隔离、撤销及 fixture 门禁 | 实际协议请求与固定错误输入可复现；不能仅用 fixture 构造 `AuthenticatedPrincipal` 代替 |
+| P1b 真实协议与当前授权 | 至少一个成熟本地测试 IdP；真实授权码 / API token 验证；JWT 与 opaque adapter 合同；当前 loader、部署根/scope/主体边界、撤销及 fixture 门禁 | 实际协议请求与固定错误输入可复现；不能仅用 fixture 构造 `AuthenticatedPrincipal` 代替 |
 | P1c WASM / 发布接口 | workload 到 runner 的身份边界；批准意图、开发签名 key 分离及准入所需身份 / 审批证据接口 | token 不进入 WASM；有限发布对象通过有效批准与签名准入；不建设通用蓝图编辑器 |
 | P1d 基座联调 | 真实 token → tenant scope → `EvaluateQualification` → 纯计算 → 当前重验 → 结果 / 审计 / outbox；最小 Passkey ceremony | 正负场景分别留存证据；虚构主体及开发 key；生产 IAM 验收单独记录 |
 
@@ -317,7 +326,7 @@ Passkey P1 可使用浏览器虚拟认证器验证 RP 注册、challenge 绑定�
 
 ### 9.2 `I1` 验收场景
 
-以下 **36 个待实现场景，已执行 0、已通过 0**。每项分别记录正向与反向证据、运行 profile、数据库 / 浏览器 / IdP 版本和未覆盖范围；不与已有 Runtime Core 的场景数量相加冒充已通过测试。场景 ID 在后续拆分时保留映射。
+以下是 2026-10-24 建立的 **36 个目标场景**，建档时已执行 0、已通过 0。2026-10-25 首条切片的局部用例、PG17 竞争和真实 IdP/API 验证另记[实施证据](reviews/p1b-first-slice-2026-10-25.md)，不据局部通过将某个包含多项义务的 I1 场景整体标为完成。后续按原 ID 逐项补正反向证据、运行 profile、数据库/浏览器/IdP 版本及未覆盖范围；不与 Runtime Core 的数量相加冒充通过数。
 
 | ID | 场景与正向预期 | 反向 / 并发预期 |
 |---|---|---|
@@ -330,7 +339,7 @@ Passkey P1 可使用浏览器虚拟认证器验证 RP 注册、challenge 绑定�
 | I1-07 | 已登记代理链转发后能校验固定 origin 和原始请求边界 | 伪造身份 / forwarded 头、直连绕过、额外代理跳不建立可信身份 |
 | I1-08 | 同一已核验 issuer/sub 稳定映射一个主体 | 同 email 或同 sub 不同 issuer 不合并；未验证账号关联不迁移权限 |
 | I1-09 | pairwise 标识通过受控 broker / 明确关联映射到相应主体 | 不同 client 的 sub 不盲并；伪造关联或未证明同人不满足独立性要求 |
-| I1-10 | 一个主体的 A / B 公司成员关系分别有效 | A 请求使用 B 资源、成员引用或作用域拒绝；全局 ID 不替代 tenant 过滤 |
+| I1-10 | 一个部署组织下部门/项目 scope 与各主体成员关系明确 | 第二组织根被拒绝；成员主体错配或未授权 scope/资源拒绝；唯一组织不等于全员有权 |
 | I1-11 | 同一人选择明确任职执行该范围能力 | 客户端自报 role、切换岗位自动并权、岗位过期或越 scope 拒绝 |
 | I1-12 | 当前资源关系与任职能力共同满足才允许 | 仅有公司成员身份、旧关系或别人的资源关系不能获得权限 |
 | I1-13 | 有效有限委托允许 Agent 在范围内代表人执行 | 改 Agent、委托人、任职、资源、动作、预算或到期范围拒绝；不可转委托 |
@@ -344,7 +353,7 @@ Passkey P1 可使用浏览器虚拟认证器验证 RP 注册、challenge 绑定�
 | I1-21 | 命令先持 guard 并提交，审计顺序清楚 | 撤销先提交时随后命令必须拒绝；两个数据库连接覆盖真实锁竞争 |
 | I1-22 | 队列消息由当前 workload 认证并重载有限委托 | 入队后离职、委托撤销、deadline / token 到期均阻断；不使用保存的用户 token |
 | I1-23 | 缓存命中仍受 epoch、profile 时效与 token exp 限制 | 更换政策 / key / 成员状态后旧缓存不越权；网络失败不延长证据有效期 |
-| I1-24 | 全局主体变更覆盖完整受影响租户并按稳定锁序处理 | 只锁单租户或无法确定影响集合时拒绝全局禁用 / 关联变更的提交 |
+| I1-24 | 主体变更与企业内多主体/任职请求按共同锁序协调 | 绕过信任/主体锁或无法确定依赖集合时拒绝禁用 / 关联变更的提交 |
 | I1-25 | IdP / Stage 凭据恢复后仍需当前任职与适用认证强度 | 恢复登录不复活旧委托 / 已撤销岗位；email 转移不转移历史主体 |
 | I1-26 | Stage RP 注册凭据绑定已认证主体并验证注册 ceremony | 攻击者替换 credential / 主体、origin 或 RP ID 拒绝；IdP RP 凭据不默认复用 |
 | I1-27 | Passkey 对冻结 intent 的一次性 challenge 产生有效批准证据 | digest、tenant、环境、动作、前置版本变化或 intent 过期必须重批 |
@@ -353,7 +362,7 @@ Passkey P1 可使用浏览器虚拟认证器验证 RP 注册、challenge 绑定�
 | I1-30 | 固定批准政策被正确执行，P1采用一个有权批准人 | 重复证据不增加次数，不能降低政策或让无权主体批准；双人正向留后续，不计P1通过 |
 | I1-31 | 独立发布服务复核批准后用 runner 外开发 key 签清单 | WASM、普通 handler 或凭单一登录态不能直接调用无限制签名接口 |
 | I1-32 | 可信配置明确轮换 key、发布撤销及受权回滚 | 业务包自换根 key / 关闭验签 / 降低自己的批准要求 / 重放旧发布序号拒绝 |
-| I1-33 | 资格评估只向 WASM 提供受权最小投影并接纳符合 schema 的结果 | token、完整身份、跨租户事实不能进入 guest；guest 声称 allow 不授予业务权 |
+| I1-33 | 资格评估只向 WASM 提供受权最小投影并接纳符合 schema 的结果 | token、完整身份、未授权 scope/主体事实不能进入 guest；guest 声称 allow 不授予业务权 |
 | I1-34 | 纯计算后当前事实与权限未变，原子保存评估和审计 / outbox | 计算间撤销、事实版本变化、包撤销或认证过期，提交拒绝 / 冲突且不泄露旧结果 |
 | I1-35 | fixture 显式启用时仍走真实 loader / policy，协议集成单独记录 | prod 装配 fixture 拒绝；fixture 通过不能代替 IdP / Passkey 协议通过 |
 | I1-36 | 只加载判定必要状态与资格证明，受限审计可定位责任 | 不取私人会话、全局公司关系或无关档案；最小披露不被全量重载抵消 |
@@ -390,4 +399,4 @@ Passkey P1 可使用浏览器虚拟认证器验证 RP 注册、challenge 绑定�
 | S7 | [RFC 6749 — The OAuth 2.0 Authorization Framework](https://www.rfc-editor.org/rfc/rfc6749.html)，2012-10 | §1.4 / §1.5 access 与 refresh token，§2.1 client 类型，§4.4 client credentials；使用时同时遵循 S6 的后续安全修订 |
 | S8 | [Web Authentication Level 3](https://www.w3.org/TR/2026/REC-webauthn-3-20260825/)，W3C Recommendation，2026-08-25 | §6.1 / §6.1.1 authenticator data 与计数，§7.1 / §7.2 注册与断言校验，§13.4.3 随机 challenge。Stage 的 intent digest 编码、多方批准、组织签名及治理政策另行定义 |
 
-本文件是设计落档：没有新增认证 / 业务代码、API、数据库迁移、真实账号、IdP 设置或依赖；没有运行 I1 场景。下一步实现需同时更新协议 schema、契约测试与上述逐项证据。
+本文件保留完整目标契约和原始 I1 场景清单。2026-10-25 首条切片已实现，协议、迁移及验证范围单独记入[实施记录](reviews/p1b-first-slice-2026-10-25.md)；没有逐项完整证据的 I1 场景继续保持未验收。开发虚构身份不代表真实企业账号或治理规则已生效。

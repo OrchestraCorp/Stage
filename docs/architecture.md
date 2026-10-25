@@ -9,6 +9,8 @@ specification: stage-runtime-core-v1
 
 # Stage 可组合运行时与业务执行架构
 
+企业私有化部署是当前产品边界：一套实例一个组织授权根、专属数据库和固定环境。根是信任与治理边界，不等同于一个法人公司；现有 tenant 类型保留为组织根的内部兼容名称。没有多租户控制面、组织选择或 SaaS 共享数据库目标；集团、子公司、部门等业务组织单元以后按需建模。HTTP 业务合同使用 `/api/v1`，见[组织授权根语义](organization-root-semantics.md)和[部署与版本约定](private-deployment-api-v1.md)。
+
 ## 1. 目标与现状
 
 Stage 使用 Python 实现可组合的组织协作服务。组件通过声明依赖取得能力，运行时记录资源归属、协调启停与依赖替换；业务命令通过可信身份、组织范围、授权和事务改变持久事实。两类机制各有验证标准，不相互替代。
@@ -36,7 +38,7 @@ P1a 的接口、两张运行图、关闭阶段、事件调用 pin 和 readiness 
 | 层 | 第一期开出的接口与职责 | 生命周期 |
 |---|---|---|
 | 入口适配 | HTTP 输入校验、CLI 请求、受管 worker 的服务身份；将外部请求转换为命令 envelope | 宿主或请求 |
-| 可信上下文 | 验证认证证据，加载租户成员、选定任职、委托与读者范围；生成 ExecutionContext | 每请求 / 每消息尝试 |
+| 可信上下文 | 验证认证证据，加载企业成员、选定任职、委托与读者范围；生成 ExecutionContext | 每请求 / 每消息尝试 |
 | 命令注册与执行 | 注册带版本的命令；获取当前有效 handler/provider 租约；事务内重验并执行领域不变式 | 注册属组件，执行属请求 |
 | 领域能力 | 一期提供身份/授权、制品批准与资格评估演示；任务、承诺、容量、交付与验收在后续切片扩展 | 组件提供能力，数据长期存在 |
 | WASM 宿主与准入 | 固定签名模块、能力与ABI、预算、独立runner、输入输出与回执核验 | provider 管runner；每次调用独立实例 |
@@ -63,7 +65,7 @@ ExecutionContext 中的引用用于定位权威记录，写命令在事务内重
 
 `ContextVar` 只用于 trace ID、日志相关信息等隐式诊断数据，不作为授权来源。创建异步任务可能复制调用时的上下文，不能借它实现跨任务权限同步；worker 每次执行都要重新构造 ExecutionContext。[S5]
 
-服务 realm 决定“这个组件拿到哪个 db/logger/adapter”；tenant 过滤决定“这次动作能读写哪些记录”。第一期两个虚构组织共用同一组领域组件，在每次请求上隔离租户。后续独立数据库 provider 可以进一步隔离部署，但不会替代授权检查。
+服务 realm 决定“这个组件拿到哪个 db/logger/adapter”；主体、任职和 scope 决定“这次动作能读写哪些记录”。当前产品一套 Stage/数据库只服务一个组织授权根与环境，内部 tenant 字段由服务端唯一根填入。根下的组织单元、部门与项目通过领域模型和 scope 隔离，不创建第二根；独立部署仍不能替代根内授权检查。
 
 ## 4. Runtime Core 的职责
 
@@ -117,7 +119,7 @@ Stage 采用 provider 整体 drain 屏障及满足停止/依赖前置条件后�
 
 CommandKernel 为每个并发命令创建独立 UoW / AsyncSession。组件只发布 factory，不共享单个 AsyncSession。业务事务明确控制 commit / rollback，请求依赖不会自动提交。[S6][L1]
 
-第一期采用每租户持久 AuthorizationGuard 协调授权/准入撤销、资格事实revision和受控结果提交。该方案主动牺牲租户内写并行度，换取可验证顺序；不是生产规模吞吐承诺。WASM计算在事务外进行，提交时检测事实行与集合变化。锁序、授权时间点和全局禁用规则见[一期事务协议](phase-1.md#transaction-protocol)；任务名额与容量竞争以后按[业务切片](business-slice-plan.md)另验收。
+第一期采用部署组织持久 AuthorizationGuard 协调授权/准入撤销、资格事实revision和受控结果提交。该方案主动牺牲企业内写并行度，换取可验证顺序；不是生产规模吞吐承诺。WASM计算在事务外进行，提交时检测事实行与集合变化。锁序、授权时间点和全局禁用规则见[一期事务协议](phase-1.md#transaction-protocol)；任务名额与容量竞争以后按[业务切片](business-slice-plan.md)另验收。
 
 ```text
 认证、输入读取授权、取得固定 handler/module/provider 绑定
@@ -149,7 +151,7 @@ CommandKernel 为每个并发命令创建独立 UoW / AsyncSession。组件只�
 
 PostgreSQL 17 保存 Stage 当前组织协作事实，是唯一长期主库；新增模型、约束、迁移、锁、并发和 UTC / 标识符语义以 PostgreSQL 真库验收，SQLite 只承担适用子集的快速测试。MySQL 退出受支持配置；历史迁移方言分支与评审证据保留，不能据此推断仍有双库门禁。
 
-Redis 8 只提供可重建缓存、非权威短期协调和可丢失唤醒。当前授权与撤销版本、幂等结果、outbox/attempt、业务租约及 fencing 权威留在 PostgreSQL；清空 Redis 不得丢业务事实。缓存键隔离 tenant 及必要身份/权限版本，命中仍受当前授权约束。PostgreSQL 事务与 Redis 写入不组成原子提交，通知遗漏由权威版本检查和数据库扫描恢复。每个 Redis 使用方须明确超时、不可用和降级/拒绝策略，见[存储策略](storage-strategy.md)。
+Redis 8 只提供可重建缓存、非权威短期协调和可丢失唤醒。当前授权与撤销版本、幂等结果、outbox/attempt、业务租约及 fencing 权威留在 PostgreSQL；清空 Redis 不得丢业务事实。缓存键隔离部署环境、组织及必要主体/scope/权限版本，命中仍受当前授权约束。PostgreSQL 事务与 Redis 写入不组成原子提交，通知遗漏由权威版本检查和数据库扫描恢复。每个 Redis 使用方须明确超时、不可用和降级/拒绝策略，见[存储策略](storage-strategy.md)。
 
 | 系统 | 权威内容 | Stage 的使用方式 |
 |---|---|---|

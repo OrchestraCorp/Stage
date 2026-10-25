@@ -8,6 +8,8 @@ research_date: 2026-10-23
 
 # Stage 长期目标与阶段路线
 
+当前私有化部署以一实例一个组织授权根为边界；根不等同法人公司，组织单元、scope 和跨实例身份分别建模。本文保留的 tenant 字段指兼容的组织根引用，长期多节点不是 SaaS 多租户。详见[组织授权根语义](organization-root-semantics.md)。
+
 ## 1. 长期目标
 
 Stage 最终提供一个可审阅、可组合、可恢复的组织协作后端。同一套任务、审批、记录、通知和连接能力可以通过受控配置服务于不同组织；Maestro 提出配置与执行计划，Stage 核验授权、执行确定性规则并保存事实，Virtuoso 使用同一事实完成个人工作。
@@ -15,6 +17,8 @@ Stage 最终提供一个可审阅、可组合、可恢复的组织协作后端�
 2026-10-24 确定的上位愿景是 **AI 驱动、安全可靠的分布式工作协作平台**。Stage 自研组件运行时与业务流程运行器，Graphon / Dify 仅作为研究参考。可验证的分布式组织不以区块链为前提，跨地点协作、跨组织治理和多节点部署分别推进，见[愿景与自研方向](vision-and-runtime-direction.md)。
 
 本轮进一步明确一期基座优先：Core、真实身份认证、受控WASM与最小签名准入先联调，完整任务业务随后扩展。对应对象与阶段以[核心对象](core-object-contracts.md)、[一期方案](phase-1.md)为准。长期保持可信身份、明确任职、有限委托、对象版本、读者范围、持久事务与可追踪外部结果。
+
+运行时与能力组合的统一决策入口是[运行时演进与能力组合决策](runtime-evolution-and-composition.md)，其中明确 Component Runtime、Execution Kernel、Workflow Runtime 的边界，以及 Cordis/Dify 仅作机制研究参考。
 
 ## 2. 阶段划分
 
@@ -31,6 +35,12 @@ P1a 已按证据完成，其余阶段仍为设计目标；没有承诺日历工�
 P3 的单个能力可以在其依赖满足后与 P2 局部并行；P4 不能绕过 P1 的事务和退出协议。拆微服务由隔离、容量与运维证据驱动，不按能力列表机械拆进程。
 
 P1a 按[框架实施规格](framework-foundation.md)完成资源/依赖内核、安全退出/组合、真实 provider/应用装配；原 C、补充 S 和 D-01～D-09 的证据见[P1a 验证](reviews/p1a-validation-2026-10-25.md)。接下来推进真实身份和 WASM。
+
+运行时演进以真实后端故障场景为验收目标，不以 Cordis API 相似度为目标。当前 `ComponentContext` 只管理后端组件激活代次、依赖、资源 owner、进程内任务和调用租约；`ExecutionContext`/`AuthorizationContext` 负责业务身份与授权，PostgreSQL 负责持久事实和结果。后续每增加一层能力，都必须先说明重启是否要保留状态、是否跨越外部副作用、未知结果如何查询、撤销/版本何时重验，以及停止时怎样停接入、排空和释放。
+
+P1 完成身份、受控 WASM、签名准入和 `EvaluateQualification` 纵向闭环后，优先建设一个真实连接器与 Durable Worker：连接器提供 health/invoke/query/close 等受控边界，调用带 deadline 和稳定幂等键；Worker 从 PostgreSQL outbox/attempt 领取持久工作，停止时先停止新领取再排空在途调用，外部超时保留 `unknown`。这一步验证 Runtime 对连接器和 Worker 的实际价值；`ctx.spawn()` 仍只承担进程内监督。
+
+P2 继续使用统一 Execution Kernel 建设业务切片、能力目录和蓝图发布，不提前建设通用 DSL、插件市场或任意代码热插拔。P3 再建设持久 Workflow Runtime；人工等待释放事务和组件租约，恢复时重新验证当前授权、定义版本和对象版本。P4 只有在容量或故障证据成立后才扩展多进程、多节点、fencing 和滚动升级；P5 只有在有真实消费者和威胁模型时才扩展 WASM hostcall/WIT/隐私能力。
 
 ## 3. P2：业务切片与声明式装配
 
@@ -84,7 +94,7 @@ P2业务切片暂定单名额、单位容量仅用于验证原子承诺机制。
 
 滚动升级优先采用版本化 worker / 进程：新实例通过 readiness 后接新流量，旧实例停止接入并排空。数据库迁移采用与旧新版本共存兼容的前向变更；二进制回退不等于数据库和外部副作用回退。
 
-无停机、性能提升、热替换开销和多租户规模都需要与固定组合基线做可复现测量，当前不提供未经测量的吞吐或可用性承诺。故障注入至少覆盖某 worker 停在旧 revision、broker 路由旧实例、outbox 重复投递和 drain 永不完成。
+无停机、性能提升、热替换开销和企业内并发规模都需要与固定组合基线做可复现测量，当前不提供未经测量的吞吐或可用性承诺。故障注入至少覆盖某 worker 停在旧 revision、broker 路由旧实例、outbox 重复投递和 drain 永不完成。
 
 ## 6. P5：代码替换与不可信扩展
 

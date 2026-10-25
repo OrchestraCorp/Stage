@@ -19,8 +19,11 @@
 5. 不把本地测试配置、凭据或真实企业数据提交到仓库。
 6. 修改 API 时同步更新 `contracts/openapi.yaml` 和契约测试。
 7. PostgreSQL 17 是唯一长期主库，Redis 8 仅作可重建缓存、非权威短期协调和可丢失唤醒；具体使用须定义故障策略。授权、幂等、outbox 与业务租约权威留在 PostgreSQL，不承诺 PostgreSQL/Redis 双写原子性。
-8. Redis 清空不能丢业务事实；缓存须隔离 tenant 并核验当前授权版本，不能绕过撤权。SQLite 仅快测，MySQL 已退出受支持配置；历史迁移与验证记录保留。存储细则见 [存储策略](docs/storage-strategy.md)。
+8. Redis 清空不能丢业务事实；缓存须隔离部署环境、组织与主体/作用域并核验当前授权版本，不能绕过撤权。SQLite 仅快测，MySQL 已退出受支持配置；历史迁移与验证记录保留。存储细则见 [存储策略](docs/storage-strategy.md)。
+
+9. 产品采用企业私有化部署：每套 Stage 一个组织授权根、一套专属数据库、一个部署环境。组织授权根是信任、治理、授权 epoch 和审计边界，不等同于一个法人公司。集团、子公司、部门等业务组织单元以后按需建模；scope 是授权范围，不自动等同组织树。现有 `tenant_*` 表/字段保留兼容，表示服务端固定的组织根；禁止客户端选择组织或新增 SaaS 租户管理入口。详见 [组织授权根语义](docs/organization-root-semantics.md)。
+10. 公开业务 API 使用 `/api/v1`，`/health`、`/ready` 保留根路径；HTTP 大版本、认证 profile 版本、数据行版本分别管理。修改时同步实现、OpenAPI、测试及运行手册。
 
 ## 当前状态
 
-P1a 已实现并在云开发设备验证：独立 Runtime Core、PG/Redis provider、可信注入的命令/投递组件及 `/health`、`/ready`。RBAC/ReBAC/ABAC 仍为纯判定，真实身份 loader、WASM、签名准入与业务 HTTP 尚待后续阶段。验收范围见 [P1a 记录](docs/reviews/p1a-validation-2026-10-25.md)，不据此声明真实企业制度生效或生产验收完成。
+P1a 已实现并在云开发设备验证：独立 Runtime Core、PG/Redis provider、可信注入的命令/投递组件及 `/health`、`/ready`。P1b 首条真实认证→映射→部署组织/membership→最小只读 API 与受控 bootstrap 已实现并通过 PG17/真实测试 IdP 验证；模型/生命周期约束见[身份表结构设计](docs/identity-schema-design.md)，结果见[实施记录](docs/reviews/p1b-first-slice-2026-10-25.md)。完整角色版本/资源 loader、ServiceGrant、Agent/Delegation、WASM、签名准入及业务写 HTTP 继续后续切片。全局 trust/principal 锁结论只覆盖当前身份读取/离线撤销，旧 CommandKernel 尚未接入。保留 [P1a 验收](docs/reviews/p1a-validation-2026-10-25.md)原范围，不据此声明完整 IAM、真实企业制度生效或生产验收完成。

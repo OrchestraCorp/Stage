@@ -10,6 +10,8 @@ specification: stage-runtime-core-v1
 
 一期采用 **Python 原生组件 Core＋可信应用服务＋PostgreSQL/Redis provider＋受控 WASM runner**。Core 保留 Cordis 的 effect/coeffect、资源 owner、响应式依赖、committed view、按服务键隔离及事件组合语义；应用层定义身份、授权、事务、发布和持久结果。Graphon/Dify 只作参考。
 
+Cordis 在这里是工程机制的参考，不是 Stage 要追求的兼容目标。Stage 的自研运行时必须首先解决后端的连接器超时、Worker 重启、组件换代、授权撤销、外部结果未知和持久恢复问题。`ComponentContext` 的准确语义是**后端组件运行上下文**：它描述一个组件激活代次能解析哪些服务、拥有哪些资源以及怎样停止收尾；它不包含 Agent 会话、当前 HTTP 请求、登录主体、身份授权结论或数据库事务。完整演进决策见[运行时演进与能力组合决策](runtime-evolution-and-composition.md)。
+
 本文件细化 [Core 一致性规格](runtime-conformance.md)的实施接口和并发边界，作为 P1a 的实施依据；整个一期范围仍由 [phase-1](phase-1.md)定义。2026-10-25 已实现 P1a.1～P1a.3，并完成 Python 46 场景映射、真实 PG/Redis 与云设备验收，见[P1a 记录](reviews/p1a-validation-2026-10-25.md)。归属、状态和失败语义不能静默改变。
 
 ## 1. 参考与分层
@@ -42,6 +44,14 @@ Core 不导入 FastAPI、ORM、角色名、授权投影或业务 ExecutionContex
 | Execution / IAM / Release | 真实认证、可信事实加载、授权、准入、稳定幂等、命令分段和提交 | PostgreSQL 中的权威业务与治理记录 |
 | WASM Host / Runner | 受控输入、预算、隔离进程、结构化回执 | 计算尝试；输出经宿主重验才能提交 |
 | Future Workflow | 固定定义、分支、等待和恢复 | 后续 P3 持久实例，不能存成 Fiber 的内存状态 |
+
+三层边界必须保持稳定：
+
+1. **Component Runtime** 管理 provider、连接器、WASM runner 和 Worker 的进程内资源与生命周期；`ctx.spawn()` 产生的任务随进程退出，不能冒充持久队列。
+2. **Execution Kernel** 管理一次受控命令或消息，包括 `ExecutionContext`、授权、Unit of Work、对象版本、幂等、审计、outbox 和外部回执；它不能把业务身份放回 Core 的组件上下文。
+3. **Workflow Runtime** 在 P3 才管理持久 run、step、attempt、等待、恢复和迁移；等待人工输入时释放事务与 provider 租约，实例只保留可恢复的持久引用。
+
+三层共享能力定义、版本绑定和结果契约，但各自拥有状态。Core 的服务租约不是业务授权，Core 的 disposer 不能撤销已提交事务，进程内 EventBus 不能替代 PostgreSQL outbox，Redis 不能成为事实来源。
 
 ## 2. 两张图与三类状态
 
@@ -118,6 +128,8 @@ effect 记录在执行 setup 前已归 owner。卸载开始后拒绝新 effect�
 
 ReadyReport 至少包含 outcome（ready/pending/failed/timeout/stopping）、缺少的服务键/实例、已解析 generation 和失败引用；ready 同时要求 required 实例及必要依赖 ACTIVE、可用且接入未关闭。即时 snapshot 可以返回 pending；await_ready 持续等待就绪、失败、停止或 deadline，超时/调用者取消只结束等待，不取消组件加载。必需服务环与“父 setup 等待依赖父 ACTIVE 的 child”应诊断并阻止假就绪；参考 Cordis 的 `fiber.await()` 可以返回 PENDING，严格 readiness/等待环诊断属于 D-09。
 
+当前 provider 健康探测变化可触发 RuntimeHost reconcile，使受影响 consumer 停止发放新调用并在恢复后重新装配。这个策略优先保证依赖安全，但健康瞬时抖动与真正实现/配置换代还没有完全分离；后续必须为 readiness、拒绝新调用、有限重试/退避和 `replace` 分别定义验收，不能把一次恢复通知当作全局换代完成。
+
 ## 7. P1a 的实际装配
 
 | Provider / 消费者 | 接入与退出要求 |
@@ -126,6 +138,7 @@ ReadyReport 至少包含 outcome（ready/pending/failed/timeout/stopping）、�
 | Redis | 复用 `create_redis_client`；显式配置池上限、获取/命令预算和用途故障策略，禁止 URL 绕过限制。没有业务消费者时可不装配；接入后只有依赖入口受其可用性影响 |
 | 命令注册 | 应用层 owner 登记带版本的 handler，能力摘要与当前 provider generation 分开。统一租约覆盖一次受控调用，结束后释放；不按请求创建一棵组件树 |
 | Outbox worker | 注册受管任务、运行故障通知、stop 与 close；取消后的 unknown/回执记账通过旧 DB 依赖完成。drain 失败阻止 storage 退役；原审查 R1/R2 在装配前修复 |
+| Connector / durable worker | 连接器调用使用稳定幂等键、截止时间、回执查询和 `unknown`；Worker 从 PostgreSQL outbox/attempt 领取持久工作并保存 lease/fencing，重启后先对账再重试。停止顺序是停止新领取、排空在途调用、释放客户端；不在数据库事务中等待外部网络 |
 | FastAPI / CLI | HTTP 路由静态定义，lifespan 管 RuntimeHost；CLI 复用组合与执行服务。启动失败清理已成功启动部分；不在组件启停时修改路由/OpenAPI |
 | P1a 验收 consumer | 使用虚构数据和内部可信 fixture 验证事务、取消及关闭，不开放临时业务 HTTP。真实 IAM 在 P1b 验收 |
 

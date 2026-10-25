@@ -69,12 +69,118 @@ components:
       - components
       title: ReadyResponse
       type: object
+    SelfIdentity:
+      properties:
+        authenticated_workload_ref:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authenticated Workload Ref
+        authentication_valid_until:
+          format: date-time
+          title: Authentication Valid Until
+          type: string
+        membership_ref:
+          title: Membership Ref
+          type: string
+        membership_version:
+          title: Membership Version
+          type: integer
+        organization_ref:
+          description: This deployment's authorization root; not a legal-entity identifier.
+          title: Organization Ref
+          type: string
+        principal_ref:
+          title: Principal Ref
+          type: string
+        principal_type:
+          enum:
+          - human
+          - service
+          title: Principal Type
+          type: string
+      required:
+      - principal_ref
+      - principal_type
+      - organization_ref
+      - membership_ref
+      - membership_version
+      - authenticated_workload_ref
+      - authentication_valid_until
+      title: SelfIdentity
+      type: object
+  securitySchemes:
+    HTTPBearer:
+      scheme: bearer
+      type: http
 info:
   description: 组织运行与热协作系统底板
   title: OrchestraCorp Stage
-  version: 0.1.0
+  version: 1.0.0
 openapi: 3.1.0
 paths:
+  /api/v1/identity/me:
+    get:
+      operationId: identity_get_self
+      parameters:
+      - in: query
+        name: profile_ref
+        required: true
+        schema:
+          maxLength: 128
+          minLength: 1
+          title: Profile Ref
+          type: string
+      - in: query
+        name: profile_version
+        required: true
+        schema:
+          maximum: 9223372036854775807
+          minimum: 1
+          title: Profile Version
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SelfIdentity'
+          description: Successful Response
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: A valid Stage access token is required
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Current identity or organization admission is unavailable
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Request validation failed
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unexpected server error
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Identity verification is temporarily unavailable
+      security:
+      - HTTPBearer: []
+      summary: Read Self Identity
+      tags:
+      - Identity
   /health:
     get:
       description: Returns application process metadata. This endpoint does not probe

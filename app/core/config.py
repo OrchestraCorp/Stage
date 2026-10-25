@@ -73,6 +73,7 @@ class Settings(BaseSettings):
     dependency_probe_interval_seconds: float = Field(default=2.0, gt=0, le=60, allow_inf_nan=False)
     runtime_startup_timeout_seconds: float = Field(default=10.0, gt=0, le=120, allow_inf_nan=False)
     runtime_shutdown_timeout_seconds: float = Field(default=10.0, gt=0, le=120, allow_inf_nan=False)
+    identity_request_timeout_seconds: float = Field(default=10.0, gt=0, le=60, allow_inf_nan=False)
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
 
     @field_validator("database_url")

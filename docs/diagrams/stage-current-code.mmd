@@ -1,6 +1,7 @@
 flowchart TB
     HTTP["HTTP 客户端 / 运维探针"] --> API["FastAPI · app/main.py<br/>Request ID / 脱敏错误 / 静态路由"]
     API --> PROBE["/health：进程存活<br/>/ready：必需组件与依赖就绪"]
+    API --> IDENTITY["GET /api/v1/identity/me<br/>身份 provider / 本组织根最小自身投影"]
     API -->|lifespan| BOOT["ApplicationRuntime<br/>可信装配 / 必需与可选组件 / 启停"]
 
     subgraph CORE["Runtime Core · Python 标准库 / 单事件循环"]
@@ -19,6 +20,11 @@ flowchart TB
     PROBE -->|读取安全状态| BOOT
     HOST -.管理.-> STORAGE["PostgreSQL provider<br/>连接池 / session factory / schema 与连接探测"]
     HOST -.管理.-> CACHE["Redis provider · 配置后装配<br/>客户端 / 有限连接与超时 / PING"]
+    HOST -.管理.-> IDENTITY
+    IDENTITY --> AUTHN["Keycloak access-token adapter<br/>事务外验签 / 有界 JWKS"]
+    AUTHN --> IDP["明确登记的测试 IdP<br/>human / workload 分开验证"]
+    IDENTITY -->|锁后重验映射 / 来源 / 成员| STORAGE
+    ADMIN["离线 dev/test 管理 CLI<br/>bootstrap / 撤销 / 幂等结果查询"] -->|共同锁序 / 同事务 journal| STORAGE
     STORAGE --> PG[("PostgreSQL<br/>当前事实 / 命令结果 / 审计 / outbox / attempts")]
     CACHE --> REDIS[("Redis<br/>辅助存储；业务缓存尚未接入")]
 
@@ -41,5 +47,5 @@ flowchart TB
     classDef adapter fill:#edf8f2,stroke:#4d8a68,color:#203d2b;
     classDef internal fill:#fff5e5,stroke:#b87b24,color:#51350d;
     class HOST,CTX,EFFECT,CALL,EVENT core;
-    class BOOT,STORAGE,CACHE,PG,REDIS adapter;
+    class BOOT,STORAGE,CACHE,PG,REDIS,IDENTITY,AUTHN,IDP,ADMIN adapter;
     class COMMAND,KERNEL,AUTHZ,WORKER,SINK internal;

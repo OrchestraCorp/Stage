@@ -1,0 +1,24 @@
+[Unit]
+Description=Orchestra Stage local Keycloak protocol fixture
+After=network.target
+
+[Service]
+Type=simple
+User=orchidp
+Group=orchidp
+EnvironmentFile=/etc/orchestra-stage-idp-dev.env
+Environment=JAVA_OPTS_APPEND=-Xms128m -Xmx512m
+WorkingDirectory=/opt/orchestra-keycloak
+ExecStart=/opt/orchestra-keycloak/bin/kc.sh start --optimized --cache=local --http-enabled=true --http-host=127.0.0.1 --http-port=18080 --hostname=http://127.0.0.1:18080 --http-management-host=127.0.0.1 --http-management-port=19000
+Restart=on-failure
+RestartSec=5
+TimeoutStartSec=120
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/orchestra-keycloak/data
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

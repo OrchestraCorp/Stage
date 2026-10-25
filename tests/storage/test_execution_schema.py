@@ -154,6 +154,7 @@ def test_execution_migration_cycle_preserves_existing_data_and_has_no_model_drif
             ("human:existing", "human", "active"),
         )
     _migrate(database, "upgrade", REVISION)
+    _migrate(database, "upgrade", "head")
     _migrate(database, "check")
     _migrate(database, "downgrade", PREVIOUS_REVISION)
     with sqlite3.connect(database) as connection:
@@ -161,6 +162,7 @@ def test_execution_migration_cycle_preserves_existing_data_and_has_no_model_drif
         assert not NEW_TABLES.intersection(tables)
         assert connection.execute("SELECT principal_ref FROM principal").fetchall() == [("human:existing",)]
     _migrate(database, "upgrade", REVISION)
+    _migrate(database, "upgrade", "head")
     _migrate(database, "check")
 
 

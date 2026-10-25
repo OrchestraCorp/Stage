@@ -12,6 +12,10 @@ research_date: 2026-10-24
 
 2026-10-24 用户进一步明确：Stage 从初期自研与 Cordis 组件思想配合的运行时和工作规范，Graphon / Dify 只作为研究参考，不作为产品依赖。本文保留源码事实，后续建议按[自研方向](vision-and-runtime-direction.md)执行。
 
+2026-10-25 再次确认：Dify Workflow DSL 不作为 Stage 原生执行协议。Stage 可以借鉴其草稿/发布/运行快照分层；未来如提供导入，只做单向适配到 Stage 自己的 `BlueprintSource`，再编译为经过能力、授权、scope、预算、版本和签名检查的 `CompiledPlan`/`ReleaseManifest`。不直接复用 Dify 的插件、凭据、多租户应用或 Graphon 执行语义。
+
+这条限制由[运行时演进与能力组合决策](runtime-evolution-and-composition.md)统一维护：Dify DSL 只用于研究和发现工作流规格边界，不能直接作为 Stage 的执行、授权、发布或恢复协议，也不能把 Dify/Graphon 加入 Stage 的生产依赖。任何未来导入都必须是单向、可拒绝的适配，并重新生成 Stage 自己的能力版本、`CompositionPlan`、`Release` 和 `Activation`。
+
 ## 1. 固定研究基线
 
 | 对象 | 本次读取版本与位置 |

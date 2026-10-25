@@ -6,6 +6,7 @@ import asyncio
 from typing import Any
 
 from app.core.config import Settings
+from app.providers.identity import identity_plugin
 from app.providers.storage import REDIS, STORAGE, DependencyHealth, database_plugin, redis_plugin
 from app.runtime import CloseReport, PluginHandle, PluginSpec, RuntimeHost, ServiceKey
 
@@ -40,6 +41,7 @@ class ApplicationRuntime:
                 self.host.load(database_plugin(self.config, self.database_health))
                 if self.config.redis_url is not None:
                     self.host.load(redis_plugin(self.config, self.redis_health))
+                self._required.append(self.host.load(identity_plugin(self.config)))
                 for plugin in self._plugins:
                     self._required.append(self.host.load(plugin))
                 for plugin in self._optional_plugins:

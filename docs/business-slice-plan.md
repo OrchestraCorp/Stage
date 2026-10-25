@@ -12,6 +12,8 @@ revised_date: 2026-10-24
 
 下列任务、容量、交付、独立验收规则仍为设计草案，不是企业已生效政策。实际身份适配和共同对象以[身份规范](identity-and-authorization.md)、[核心对象](core-object-contracts.md)为准；本文件只补充任务领域规则。安全与事务基础由一期提供，扩展任务业务时需重新验证新增并发路径。
 
+本文的 `tenant_ref` 和 guard 沿用内部执行层的兼容名称，均指单个部署实例的组织授权根。业务样例中的多个组织是根下的业务组织单元/范围，不是第二授权根；组织单元和 scope 不自动等同。跨独立 Stage 的主体与 token 分别管理，见[组织授权根语义](organization-root-semantics.md)。
+
 存储选型已于 2026-10-25 确定为唯一主库 PostgreSQL 17＋辅助 Redis 8，见[存储策略](storage-strategy.md)。任务、承诺、容量、幂等结果、当前授权、审计、outbox 和权威业务租约留在 PostgreSQL；Redis 缓存、短期提示或唤醒清空后不丢事实，也不提供替代撤权检查的允许结果。
 
 ## 1. 任务与容量的默认语义
@@ -79,11 +81,11 @@ digest 基于版本化的规范化输入，包含目标、业务参数、预期�
 
 ## 3. 事务、并发与撤销协议
 
-业务切片以清楚、可测的协议换取较小的并发面：每租户建立持久 `AuthorizationGuard` 行，全部受控业务写和授权变更先锁此行。
+业务切片以清楚、可测的协议换取较小的并发面：唯一组织根建立持久 `AuthorizationGuard` 行，全部受控业务写和授权变更先锁此行。
 任职、关系、资格、主体状态、委托、分类上限及有效策略的授予 / 撤销都必须走受控命令并锁同一 guard。
 不允许旁路 SQL / 插件直接修改这些权威事实；否则下面的串行化保证不成立。
-全局主体禁用或共享策略变更若影响多个租户，按租户稳定 ID 顺序锁全部受影响 guard，再修改共享事实。
-业务切片不能完整确定受影响租户的共享授权变更应被拒绝；不能只锁发起租户却宣称完成全局撤销。
+当前私有化部署仅有一个组织授权根。主体禁用或共享策略变更遵循 TrustState → Principal → 部署组织 guard 的共同锁序，锁后重验全部受影响主体/任职；部门和项目使用 scope。根不等同法人公司，组织单元与 scope 的边界见[组织授权根语义](organization-root-semantics.md)。详情见[一期事务协议](phase-1.md#transaction-protocol)。
+业务切片不能完整确定受影响主体、信任配置和授权事实依赖的共享变更应被拒绝；不能只锁组织 guard 却跳过前序主体/信任锁而宣称完成全局撤销。
 
 遵循[一期全局锁序](phase-1.md#transaction-protocol)，跨对象集合按稳定ID排序；以下仅列任务域的具体锁对象，省略不涉及的批准/激活行：
 
@@ -117,11 +119,11 @@ COMMIT
 ## 4. 最小持久模型草案
 
 下表是业务切片待加字段 / 表，不是现有 schema 的描述。租户内业务表具有稳定引用、`tenant_ref`、UTC 时间与必要索引；外键或等价检查禁止跨租户关联。
-全局身份与租户成员关系分表，主体引用带来源命名空间；全局身份本身不授予任一租户的业务读取权。
+部署级主体与组织根成员经历分表，主体引用带来源命名空间；主体本身不授予根下任一组织单元或资源的业务读取权。
 
 | 对象 | 业务切片最小字段与约束 |
 |---|---|
-| `Principal` / `TenantMembership` | principal_ref、principal_type、issuer_subject_ref、status；tenant_ref + principal_ref 唯一、成员状态 / version |
+| `Principal` / `TenantMembership` | principal_ref、principal_type、issuer_subject_ref、status；同组织根/principal 最多一条未终结经历、历史成员 ref 不复用、成员状态 / version |
 | `AuthorizationGuard` | tenant_ref 唯一、epoch；每次有效授权变更在锁内增加 epoch，记录审计 |
 | `RoleAssignment` / `RelationTuple` | 现有字段加租户归属、稳定 ref、version；任职记录组织 / scope，关系记录 authoritative source、有效期与撤销状态 |
 | `Delegation` | agent_ref、delegator_ref、assignment_ref、动作 / 资源范围、valid_from / expires_at、status / revoked_at、version |
@@ -172,8 +174,8 @@ runtime cleanup 负责停止订阅 / 定时器、排空 worker、释放连接；
 ## 6. 九类验收与证据
 
 1. **Core 生命周期**：声明依赖等待 / 恢复、接口不兼容、重复注册、失败清理、停机排空、在途命令不被卸载中断；全套对应 Runtime 规范。
-2. **可信身份与上下文隔离**：fixture 只在 dev / test，prod 启动拒绝；HTTP / CLI / worker 同路径；并行租户请求无共享主体、任职或 Session 泄漏；IdP 契约测试与真实部署集成分开记录。
-3. **权限与数据边界**：跨租户 / 部门拒绝，scope 不因组织成员身份扩大；未知分类、失效关系、未知策略、缺能力拒绝；查询、结果、审计和通知投影无侧漏。
+2. **可信身份与上下文隔离**：fixture 只在 dev / test，prod 启动拒绝；HTTP / CLI / worker 同路径；并行主体/任职请求无共享主体、任职或 Session 泄漏；IdP 契约测试与真实部署集成分开记录。
+3. **权限与数据边界**：伪造组织根、跨 scope 或部门未授权访问拒绝，scope 不因组织根成员身份扩大；未知分类、失效关系、未知策略、缺能力拒绝；查询、结果、审计和通知投影无侧漏。
 4. **授权撤销与时间竞争**：用两个真实数据库连接和屏障控制“命令先持 guard”与“撤销先提交”两种顺序，覆盖任职、关系、委托、主体状态；锁后到期、排队后撤销均重验；证明共同锁点和超时策略成立。
 5. **幂等与版本**：同 key 同 digest 一份事实；同 key 不同参数冲突；不同 actor / tenant 的 key 不串结果；旧版本、非法版本、事务回滚、响应丢失后查询、当前权限撤销后的重放均覆盖。
 6. **领取与容量并发**：不同申请者同时争一个名额仅一个成功；同主体争两个任务不能超容量；无半份承诺、负容量、重复占用；锁序 / 死锁重试经过 PostgreSQL 17 真库测试。

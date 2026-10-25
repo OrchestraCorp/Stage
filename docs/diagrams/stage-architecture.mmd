@@ -9,7 +9,7 @@ flowchart TB
   subgraph HOST["P1 · Stage 可信宿主 · 单 ASGI worker / 事件循环 · 待实现"]
     direction TB
     RT["自研 RuntimeHost / ComponentContext<br/>owner · generation · 声明依赖<br/>lease · drain · 清理结果"]
-    AUTH["认证与可信上下文<br/>主体 · 租户 · 任职 / 服务授权 / 委托<br/>当前 authz · 非客户端自报"]
+    AUTH["认证与可信上下文<br/>主体 · 组织根 · 任职 / 服务授权 / 委托<br/>当前 authz · 非客户端自报"]
     RELEASE["制品准入与 Activation<br/>摘要 / 签名 / 批准 / 环境 / ABI / 预算<br/>当前撤销状态 · 条件版本更新"]
     CMD["CommandKernel / EvaluateQualification<br/>幂等身份 · 固定能力绑定<br/>资格结果不自动授予权限"]
     FACT["输入准备<br/>短锁一致采样最小 FactSnapshot<br/>行 + 集合 revision · 结束读取事务"]

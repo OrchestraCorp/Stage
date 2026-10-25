@@ -11,6 +11,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from app.core.db import create_engine, create_session_factory  # noqa: E402
+from app.models import identity_foundation  # noqa: E402, F401
 from app.models.authorization import RelationTupleTable, RoleAssignmentTable  # noqa: E402, F401
 from app.models.base import Base  # noqa: E402
 from app.models.execution import (  # noqa: E402, F401
