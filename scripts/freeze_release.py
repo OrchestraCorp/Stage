@@ -75,7 +75,16 @@ def main() -> int:
         with tarfile.open(archive) as package:
             package.extractall(source, filter="data")
         subprocess.run(
-            ["uv", "build", "--no-sources", "--directory", str(source), "--out-dir", str(destination / "dist")],
+            [
+                "uv",
+                "build",
+                "--wheel",
+                "--no-sources",
+                "--directory",
+                str(source),
+                "--out-dir",
+                str(destination / "dist"),
+            ],
             env={**os.environ, "SOURCE_DATE_EPOCH": timestamp},
             check=True,
         )

@@ -333,7 +333,11 @@
     "positive_independent_import": "passed",
     "packaged_migration_head": "c6f3a19d820b",
     "negative_missing_migrations": "rejected",
-    "dirty_release_freeze": "rejected_without_creating_output"
+    "dirty_release_freeze": "rejected_without_creating_output",
+    "release_formats": [
+      "deterministic Git source archive",
+      "wheel"
+    ]
   },
   "capacity": {
     "report": "docs/reviews/p2p3-capacity-2026-10-26.json",
@@ -496,7 +500,7 @@
     "scripts/check_redis.py": "32be0f5d0cc3fad664031c5228e2bf1b1c0808604abc30e3689d01342cc8d990",
     "scripts/check_runtime_conformance.py": "a53b1a5886912fc3044ce9f17be10c90afdb563ff6a32a9a32c0770fc76c7904",
     "scripts/export_contract.py": "17b980660cf5122693bd5782d808c6f90fb0c468c16fe9a3939d0c88226c5cda",
-    "scripts/freeze_release.py": "9d88c43e2bd4b5c637db3c11f726784691e71a22bf50d6e67612ad07c57a72ac",
+    "scripts/freeze_release.py": "284e63f1935828311cba893a0c1797b3a9c69be132d74ddd3802365de9cd751d",
     "scripts/identity_admin.py": "4cc9bac607053c645cba2b71ac334cc91dfdd45def3135dbd27b3389226b4048",
     "scripts/identity_idp_prepare.py": "53fad9a0a350a07c124aba47b3de4242398592c7dae1133288ff537e67af5e77",
     "scripts/identity_idp_smoke.py": "27dd89d91abbc7972372f59929fc156ee36a176fc9f4e4fcffcc847dea8668eb",
