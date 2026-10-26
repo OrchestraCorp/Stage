@@ -1,5 +1,9 @@
 # 本地真实 OIDC 协议验收环境
 
+> 现行人员认证方向见[原生认证运行手册](native-authentication.md)。下文保留 Keycloak 测试 fixture 的历史部署与兼容说明；native-only 组织策略启用后，其旧 human profile 不再获得人员入口准入。
+
+2026-10-26 常驻 `stage-development` 已保留原人员 subject/密码/issuer/client 并启用密码＋TOTP，Stage 组织 policy 已设 required。下文准备脚本描述原始环境构建；新增 MFA 的受控升级及回退另见[MFA 升级方案](MFA-standing-upgrade.md)和[实际验收记录](../../docs/reviews/p1b4-assignments-mfa-2026-10-26.md)。原协议 smoke 已支持真实 OTP 页，测试种子只在私有 fixture 文件中，不是 Stage 数据。
+
 这套 fixture 使用 **Keycloak 26.4.7 + OpenJDK 21**，与 Stage 的 PostgreSQL/Redis 分开。Keycloak 的本地 H2 数据仅保存可丢弃的测试账号；它不是 Stage 主库，也不表示采用 H2 或该版本作为生产 IdP 方案。所有账号都是虚构的本机测试身份，不授予真实企业权限。
 
 服务名 `orchestra-stage-idp-dev.service`，独立非登录用户 `orchidp`，HTTP 仅监听 `127.0.0.1:18080`。`--cache=local` 禁止启动集群监听，管理接口也绑定 loopback。安装目录 `/opt/orchestra-keycloak`；只有其中的 `data` 可由服务写入。unit 的环境文件 `/etc/orchestra-stage-idp-dev.env` 是 root:root 0600。该 fixture 不通过公网反向代理暴露。

@@ -16,8 +16,9 @@ from app.identity.service import IdentityDenied, IdentityService
 from app.models.execution import TenantGuardTable
 from app.models.identity import PrincipalTable
 from app.models.identity_foundation import BootstrapRecordTable, TrustStateTable
-from tests.identity.test_authentication import jwks, token
-from tests.identity.test_service import read, seed
+from tests.support.identity_service import read, seed
+from tests.support.identity_tokens import jwks, token
+from tests.support.postgres import wait_until_blocked_by as _wait_until_blocked_by
 
 RevocationKind = Literal["principal", "organization", "membership", "profile"]
 
@@ -59,20 +60,6 @@ async def _prepare(sessions: async_sessionmaker[AsyncSession]) -> None:
                 completed_at=datetime.now(UTC),
             )
         )
-
-
-async def _wait_until_blocked_by(sessions: async_sessionmaker[AsyncSession], blocker_pid: int) -> None:
-    # The deadline only limits a broken test. Success requires PostgreSQL to
-    # report a real blocking edge, so scheduler delays cannot simulate a race.
-    async with asyncio.timeout(10):
-        async with sessions() as observer:
-            while not await observer.scalar(
-                text(
-                    "SELECT EXISTS (SELECT 1 FROM pg_locks WHERE NOT granted AND :blocker = ANY(pg_blocking_pids(pid)))"
-                ),
-                {"blocker": blocker_pid},
-            ):
-                await asyncio.sleep(0.01)
 
 
 async def _assert_epoch_advanced_once(sessions: async_sessionmaker[AsyncSession], kind: RevocationKind) -> None:

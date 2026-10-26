@@ -1,0 +1,534 @@
+{
+  "spec_id": "stage-runtime-core-v1",
+  "scope": "fixed TS reference shared fragments and intentional deviation observations, not Stage acceptance",
+  "checked_at": "2026-10-26T03:30:32.936227+00:00",
+  "reference_commit": "6f7124baabca582d43ce84fd59d2f48e4b790763",
+  "reference_worktree_modified": false,
+  "reference_repository_dirty": false,
+  "reference_scope_paths": [
+    "vendor/cordis",
+    "vendor/cosmokit"
+  ],
+  "reference_scope_dirty": false,
+  "reference_source_sha256": {
+    "vendor/cordis/LICENSE": "034fb52b1d57360ecbae6cb1632a88f86fd7c3d3f5631a5f082710203dda0be7",
+    "vendor/cordis/README.md": "4ed860307750b172e1176e476302174acacae2b0bb2b46479b4b9f6b336ecdcf",
+    "vendor/cordis/bin.js": "cf84978c7e4165bf090b0d50c34c1986d06577f2ada27c902660783a142c3f81",
+    "vendor/cordis/package.json": "b2426a9e1970d1b4a1702544e74d23a750fbebcfa132fbb8980549d2f484eee8",
+    "vendor/cordis/src/context.ts": "96b388162d6013c1898de61e35f28917abb93809de24174980f2a1a348d0b115",
+    "vendor/cordis/src/events.ts": "9aff93dcfcad98aebb692c19c36d3bf034a96f9085bc66900a997cda3f79e6fe",
+    "vendor/cordis/src/fiber.ts": "b7661d6c19be76cef6b97d88719a8112c0f8b5abe65bd9e7d5947773fd4b96d4",
+    "vendor/cordis/src/index.ts": "071fb226e9a21556625e4391b28e6641b9b34b1cd402155246e0437993d8b740",
+    "vendor/cordis/src/logger.ts": "05cb6be3e4cf8d078185b5d10c87e536c7d2b2b3ad43c270a0dbafaa28f41fef",
+    "vendor/cordis/src/reflect.ts": "6847b9781044023d65aebb5896a873b9f0a3d777eaf7fa0dd2a7a408eb6b74a6",
+    "vendor/cordis/src/registry.ts": "34bbd60ae502b4f85201c204afb52a9acabde6878d9278493478c1b2183debd3",
+    "vendor/cordis/src/service.ts": "614205c6ce7cf1a057b8b352e96aa4fcd734c967a3d2283a126c9c61f268e3be",
+    "vendor/cordis/src/utils.ts": "8fe273424583d21267ef13f248840e97454d09d836a0ac08323a9482c2069263",
+    "vendor/cordis/tsconfig.json": "ca3c3312e5e28d31777f8863037da2e342b587f524aed8a376d2f096dbda57a9",
+    "vendor/cosmokit/LICENSE": "034fb52b1d57360ecbae6cb1632a88f86fd7c3d3f5631a5f082710203dda0be7",
+    "vendor/cosmokit/README.md": "fa0a17f50f83cda52ce623c9d42afb4eec1b33689285a0b9d2f655acbca13286",
+    "vendor/cosmokit/package.json": "ccd99887312b5c025651dfa8ab113f627770be4f631f5f13b9cdfbdcbf511ddb",
+    "vendor/cosmokit/src/array.ts": "cf4de899ecffd66a90d8cef6f4c7d127d31f77f776d8e173d41c30d2d7632cf7",
+    "vendor/cosmokit/src/index.ts": "1087da74b9c461984e547d524ee766eebcf329a78e4720bff5b60a004ccf6e8c",
+    "vendor/cosmokit/src/misc.ts": "117617943074ea57c15f216905dacd2f6d1c4c2ff16586f97a7a7a87dbf2141f",
+    "vendor/cosmokit/src/string.ts": "5564272b3e15e49235cbe3a8b453f27306baf282d23a893982841670f65d3c04",
+    "vendor/cosmokit/src/time.ts": "49957c4608465a1fbd738186a92c47fffcd1fc4ba59dbf89524f8a773fe16fe2",
+    "vendor/cosmokit/src/types.ts": "cc49c12e4a637f7b0754ff78a8299e9c42fa40ee8c678550af0c538a80146a92",
+    "vendor/cosmokit/src/volatile.ts": "937433215595f89da249ec7cabb89e331ff4135a40c6686a95666d2095315e55",
+    "vendor/cosmokit/tsconfig.json": "a747d0d38c24a5efc4d4db7750e62c0d10f62ee951b5b8cde156ca50cdbbc402"
+  },
+  "adapter_sha256": "5883c26599104943e29c5e868b6bca9aa21a8c0a4bdee1e8ff665623ccc182a5",
+  "shared_adapter_sha256": {
+    "shared.mjs": "006c990aca2e993834ab71f55c4f13f2c40df780ebb18ae8b8cb41df50b04eac",
+    "shared_python.py": "2ca1df6721aec313cdf8c197028709885907d98d5ea8653e985b0b58fe162f03",
+    "shared-cases.json": "175a15d12ed3c68b84e3505cf7b42c784d0157269ae4ff2b50add04376b81691"
+  },
+  "stage_commit": "80447174c2acdccfb17455cbf28727b10ee2c6cf",
+  "stage_dirty": true,
+  "stage_patch_sha256": "62a45da0e7ec409fd453a4403c45ad80c400827151e30203eb3ca1d7186d8eb2",
+  "stage_runtime_source_sha256": {
+    "app/runtime/__init__.py": "0c90bbb4cee45e44020dc7adbf1f1f11820cc30c8f5d8d10b5667e496a7ca6cf",
+    "app/runtime/context.py": "b67ebdfb36300c85f04ab9b6ab4d81959a0b65d0eb751fd49184cda995b56f9f",
+    "app/runtime/contracts.py": "740ed86ba0562f03a30b092aab3f882c0de59a10e984277ddb0efa60b9f8fd0a",
+    "app/runtime/effects.py": "72d7a4aab72d944b6ecb553b8bf8150cd06a8483916101685558b9b563cea77d",
+    "app/runtime/events.py": "8e55c822b08e77382c2f48bbea8af3311fd6d5471fadc64706cf9dff23f25537",
+    "app/runtime/host.py": "949706f5ed758b19045580ed9ebdb9c5b8a9156fbc7a499908631d63f4ba0e16",
+    "app/runtime/leases.py": "556fca86d7445d3dddee7cd52cd5e7941be8cfc7d1ad888688178b46debfd60f"
+  },
+  "python_version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+  "node_version": "v25.5.0",
+  "command": [
+    "node",
+    "--experimental-transform-types",
+    "/root/OrchestraCorp/Stage/scripts/runtime_reference/reference.mjs",
+    "<isolated-fixed-source>"
+  ],
+  "reference_observations_passed": 34,
+  "failed": 0,
+  "stage_acceptance_passed": 0,
+  "shared_fragments_equal": 35,
+  "shared_fragment_count": 35,
+  "expected_deviation_comparisons": 9,
+  "deviation_comparison_count": 9,
+  "comparison_failures": 0,
+  "deviations_observed": [
+    "D-01",
+    "D-02",
+    "D-03",
+    "D-04",
+    "D-05",
+    "D-06",
+    "D-07",
+    "D-08",
+    "D-09"
+  ],
+  "exit_code": 0,
+  "results": [
+    {
+      "scenario_id": "C1-01",
+      "event": "result",
+      "outcome": "observed",
+      "coverage": "setup failure cleans previously registered effects",
+      "deviations": [
+        "D-04"
+      ],
+      "data": {
+        "cleaned": [
+          "B",
+          "A"
+        ]
+      }
+    },
+    {
+      "scenario_id": "C1-02",
+      "event": "result",
+      "outcome": "observed",
+      "coverage": "unload waits for in-flight async setup and cleans its late disposer",
+      "deviations": [],
+      "data": {
+        "cleaned": true
+      }
+    },
+    {
+      "scenario_id": "C1-03",
+      "event": "result",
+      "outcome": "observed",
+      "coverage": "effect inverse executes once across manual and owner close",
+      "deviations": [
+        "D-03"
+      ],
+      "data": {
+        "cleaned": 1
+      }
+    },
+    {
+      "scenario_id": "C1-04",
+      "event": "result",
+      "outcome": "observed",
+      "coverage": "safe independent cleanup continues after another cleanup throws",
+      "deviations": [
+        "D-02",
+        "D-04"
+      ],
+      "data": {
+        "errors_propagate": false,
+        "other_cleanup_runs": true
+      }
+    },
+    {
+      "scenario_id": "C1-05",
+      "event": "result",
+      "outcome": "observed",
+      "coverage": "disposed owner rejects a new effect",
+      "deviations": [],
+      "data": {
+        "rejected": true
+      }
+    },
+    {
+      "scenario_id": "C2-01",
+      "event": "result",
+      "outcome": "observed",
+      "coverage": "consumer waits for provider then automatically activates",
+      "deviations": [],
+      "data": {
+        "runs": 1
+      }
+    },
+    {
+      "scenario_id": "C2-02",
+      "event": "result",
+      "outcome": "observed",
+      "coverage": "dependency removal and restoration unloads and reloads consumer",
+      "deviations": [],
+      "data": {
+        "runs": 2,
+        "cleaned_before_final_close": 1
+      }
+    },
+    {
+      "scenario_id": "C2-03",
+      "event": "result",
+      "outcome": "observed",
+      "coverage": "explicit check notification changes dependency availability",
+      "deviations": [],
+      "data": {
+        "runs": 1,
+        "inactive_after_false": true
+      }
+    },
+    {
+      "scenario_id": "C2-04",
+      "event": "result",
+      "outcome": "observed",
+      "coverage": "duplicate provider rejected; reference missing-service wait is pending",
+      "deviations": [
+        "D-09"
+      ],
+      "data": {
+        "duplicate_rejected": true,
+        "pending_is_not_ready": true,
+        "cycle_diagnostics": "Stage-only"
+      }
+    },
+    {
+      "scenario_id": "C3-01",
+      "event": "result",
+      "outcome": "observed",
+      "coverage": "equal provider values still rebind when provider identity changes",
+      "deviations": [
+        "D-05"
+      ],
+      "data": {
+        "runs": 2
+      }
+    },
+    {
+      "scenario_id": "C3-04",
+      "event": "result",
+      "outcome": "observed",
+      "coverage": "unrelated service does not reload consumer",
+      "deviations": [],
+      "data": {
+        "runs": 1
+      }
+    },
+    {
+      "scenario_id": "C4-01",
+      "event": "result",
+      "outcome": "observed",
+      "coverage": "consumer cleanup retains old committed reference after public revocation",
+      "deviations": [],
+      "data": {
+        "cleanup_value": "old",
+        "public_absent": true
+      }
+    },
+    {
+      "scenario_id": "C4-02",
+      "event": "result",
+      "outcome": "observed",
+      "coverage": "independent replacement can publish while old consumer cleanup retains old binding",
+      "deviations": [],
+      "data": {
+        "seen": [
+          "old",
+          "new"
+        ],
+        "cleanup_value": "new"
+      }
+    },
+    {
+      "scenario_id": "C4-03",
+      "event": "result",
+      "outcome": "observed",
+      "coverage": "undeclared property access rejected while public get observes service",
+      "deviations": [],
+      "data": {
+        "discovered": 1,
+        "undeclared_rejected": true
+      }
+    },
+    {
+      "scenario_id": "C4-04",
+      "event": "result",
+      "outcome": "observed",
+      "coverage": "committed service view released after owner disposal",
+      "deviations": [],
+      "data": {
+        "committed_view_released": true
+      }
+    },
+    {
+      "scenario_id": "C5-01",
+      "event": "result",
+      "outcome": "observed",
+      "coverage": "reference allows pool cleanup before dependent cleanup finishes",
+      "deviations": [
+        "D-01",
+        "D-02"
+      ],
+      "data": {
+        "events": [
+          "pool.close",
+          "consumer.cleanup.end"
+        ],
+        "stage_requires_reverse_order": true
+      }
+    },
+    {
+      "scenario_id": "C6-01",
+      "event": "result",
+      "outcome": "observed",
+      "coverage": "per-key realm isolates db and inherits unrelated logger",
+      "deviations": [],
+      "data": {
+        "parent": "parent",
+        "child": "child",
+        "inherited": "same"
+      }
+    },
+    {
+      "scenario_id": "C6-02",
+      "event": "result",
+      "outcome": "observed",
+      "coverage": "same explicit realm label shares binding, different label remains independent",
+      "deviations": [],
+      "data": {
+        "sibling_shared": true,
+        "different_independent": true
+      }
+    },
+    {
+      "scenario_id": "C6-04",
+      "event": "result",
+      "outcome": "observed",
+      "coverage": "isolated provider and consumer disposal removes binding and listeners",
+      "deviations": [],
+      "data": {
+        "listener_removed": true,
+        "binding_removed": true,
+        "authz": "Stage-only"
+      }
+    },
+    {
+      "scenario_id": "C7-01",
+      "event": "result",
+      "outcome": "observed",
+      "coverage": "caller-owned registrations isolated while common provider remains alive",
+      "deviations": [
+        "D-06"
+      ],
+      "data": {
+        "first": 1,
+        "second": 2
+      }
+    },
+    {
+      "scenario_id": "C7-03",
+      "event": "result",
+      "outcome": "observed",
+      "coverage": "parent disposal owns nested child effects and removes listeners",
+      "deviations": [],
+      "data": {
+        "calls": 1,
+        "cleaned": 1
+      }
+    },
+    {
+      "scenario_id": "C7-04",
+      "event": "result",
+      "outcome": "observed",
+      "coverage": "stale caller context rejects new registration",
+      "deviations": [],
+      "data": {
+        "rejected": true
+      }
+    },
+    {
+      "scenario_id": "C8-01",
+      "event": "result",
+      "outcome": "observed",
+      "coverage": "listener removal does not change an existing callback snapshot",
+      "deviations": [
+        "D-08"
+      ],
+      "data": {
+        "events": [
+          "first",
+          "second",
+          "first"
+        ]
+      }
+    },
+    {
+      "scenario_id": "C8-02",
+      "event": "result",
+      "outcome": "observed",
+      "coverage": "around waterfall wraps downstream and can veto it",
+      "deviations": [],
+      "data": {
+        "value": 3,
+        "events": [
+          "before",
+          "inner",
+          "after"
+        ],
+        "veto": 5
+      }
+    },
+    {
+      "scenario_id": "C8-03",
+      "event": "result",
+      "outcome": "observed",
+      "coverage": "parallel waits all callbacks before aggregate failure; serial short circuits",
+      "deviations": [],
+      "data": {
+        "all_settled": true,
+        "serial_stopped_at_zero": true
+      }
+    },
+    {
+      "scenario_id": "C8-04",
+      "event": "result",
+      "outcome": "observed",
+      "coverage": "null undefined false continue while zero and empty string bail",
+      "deviations": [
+        "D-07"
+      ],
+      "data": {
+        "continued": [
+          true,
+          true,
+          true,
+          false,
+          false
+        ]
+      }
+    },
+    {
+      "scenario_id": "C8-05",
+      "event": "result",
+      "outcome": "observed",
+      "coverage": "reference await can settle PENDING; Stage strict readiness is separate",
+      "deviations": [
+        "D-03",
+        "D-04",
+        "D-09"
+      ],
+      "data": {
+        "pending_returned_without_ready": true
+      }
+    },
+    {
+      "scenario_id": "C3-02",
+      "event": "result",
+      "outcome": "observed",
+      "coverage": "late load result is cleaned; consumer ultimately binds latest independent provider",
+      "deviations": [
+        "D-05"
+      ],
+      "data": {
+        "starts": [
+          1,
+          3
+        ],
+        "stale_cleaned": true
+      }
+    },
+    {
+      "scenario_id": "C3-03",
+      "event": "result",
+      "outcome": "observed",
+      "coverage": "same provider Fiber restart reruns its dependent",
+      "deviations": [
+        "D-05"
+      ],
+      "data": {
+        "providerRuns": 2,
+        "consumerRuns": 2,
+        "fiber_uid_unchanged": true
+      }
+    },
+    {
+      "scenario_id": "C5-02",
+      "event": "result",
+      "outcome": "observed",
+      "coverage": "multiple provider resource inverses run before dependent cleanup ends",
+      "deviations": [
+        "D-01",
+        "D-02"
+      ],
+      "data": {
+        "events": [
+          "pool.close",
+          "timer.close",
+          "consumer.end"
+        ],
+        "stage_requires_resources_after_consumer": true
+      }
+    },
+    {
+      "scenario_id": "C5-03",
+      "event": "result",
+      "outcome": "observed",
+      "coverage": "reference does not pin arbitrary in-flight service calls during provider disposal",
+      "deviations": [
+        "D-01"
+      ],
+      "data": {
+        "events": [
+          "pool.close",
+          "query.end"
+        ],
+        "request_leases": "Stage-only"
+      }
+    },
+    {
+      "scenario_id": "C5-04",
+      "event": "result",
+      "outcome": "observed",
+      "coverage": "reference owner disposal remains pending while consumer inverse is pending",
+      "deviations": [
+        "D-01",
+        "D-04"
+      ],
+      "data": {
+        "pending_until_release": true,
+        "deadline_report": "Stage-only"
+      }
+    },
+    {
+      "scenario_id": "C6-03",
+      "event": "result",
+      "outcome": "observed",
+      "coverage": "service intercept merges base ancestors inject and head in order",
+      "deviations": [],
+      "data": {
+        "resolved": {
+          "base": true,
+          "common": "head",
+          "outer": true,
+          "inner": true,
+          "inject": true,
+          "head": true
+        }
+      }
+    },
+    {
+      "scenario_id": "C7-02",
+      "event": "result",
+      "outcome": "observed",
+      "coverage": "shared service effects are attributed to asynchronous caller contexts",
+      "deviations": [
+        "D-06"
+      ],
+      "data": {
+        "caller_cleanup": [
+          "first",
+          "second"
+        ]
+      }
+    }
+  ]
+}

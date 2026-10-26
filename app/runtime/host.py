@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import inspect
+from collections import deque
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from contextlib import contextmanager
 from contextvars import Context, ContextVar
@@ -31,6 +32,10 @@ from app.runtime.contracts import (
 from app.runtime.effects import EffectScope
 
 _current_owners: ContextVar[tuple[str, ...]] = ContextVar("runtime_current_owners", default=())
+
+
+def _disposed_setup(context: Any) -> None:
+    raise RuntimeClosed("disposed components cannot activate")
 
 
 @dataclass(eq=False)
@@ -60,6 +65,7 @@ class _Record:
     spec: PluginSpec
     base: ComponentContext
     parent: _Record | None = None
+    sequence: int = 0
     owner_id: str = field(default_factory=lambda: str(uuid4()))
     generation: int = 0
     revision: int = 0
@@ -499,24 +505,31 @@ class ComponentContext:
 
 
 class RuntimeHost:
-    def __init__(self) -> None:
+    def __init__(self, *, history_limit: int = 256, observation_limit: int = 256) -> None:
         from app.runtime.events import EventBus
 
+        if any(type(limit) is not int or limit < 1 for limit in (history_limit, observation_limit)):
+            raise ValueError("runtime diagnostic limits must be positive integers")
         self.events = EventBus()
         self.context = ComponentContext(self)
         self._records: list[_Record] = []
+        self._sequence = 0
+        self._history: deque[tuple[int, dict[str, Any]]] = deque(maxlen=history_limit)
+        self._history_omitted = 0
+        self._observations_omitted = 0
         self._slots: dict[tuple[str, ServiceKey[Any]], _Record | _Binding] = {}
         self._changed = asyncio.Event()
         self._stopping = False
         self._reconciling = False
-        self.observations: list[RuntimeFailure] = []
+        self.observations: deque[RuntimeFailure] = deque(maxlen=observation_limit)
 
     def load(self, spec: PluginSpec, *, context: ComponentContext | None = None) -> PluginHandle:
         if self._stopping:
             raise RuntimeClosed("runtime is stopping")
         base = context or self.context
         base._assert_current(registration=base._record is not None)
-        record = _Record(self, spec, base, base._record)
+        self._sequence += 1
+        record = _Record(self, spec, base, base._record, sequence=self._sequence)
         self._records.append(record)
         if record.parent is not None:
             record.parent.children.add(record)
@@ -547,8 +560,30 @@ class RuntimeHost:
 
     def _observe(self, record: _Record, error: BaseException, phase: str) -> RuntimeFailure:
         failure = RuntimeFailure(record.owner_id, record.spec.name, phase, type(error).__name__, str(error))
+        if len(self.observations) == self.observations.maxlen:
+            self._observations_omitted += 1
         self.observations.append(failure)
         return failure
+
+    def _remember_disposed(self, record: _Record) -> None:
+        # A handle may outlive its component. Preserve identity/state without
+        # retaining setup closures, configuration values or completed effects.
+        # The base context remains on the caller's handle so a later replace()
+        # still uses its original realm and inherited configuration.
+        record.spec = replace(record.spec, setup=_disposed_setup, config={}, inject={})
+        record.context = None
+        record.scope = None
+        record.children.clear()
+        record.inferred_requirements.clear()
+        if record.failure is not None:
+            # Failures are current diagnostic facts, not evictable success history.
+            return
+        if len(self._history) == self._history.maxlen:
+            self._history_omitted += 1
+        self._history.append((record.sequence, self._component_snapshot(record)))
+        self._records.remove(record)
+        if record.parent is not None:
+            record.parent.children.discard(record)
 
     def _fail(self, record: _Record, error: BaseException, phase: str) -> None:
         if record.failure is None:
@@ -753,6 +788,9 @@ class RuntimeHost:
                 binding.consumers.discard(record)
             record.committed = {}
             record.inherited = {}
+            # Retired bindings pin their service values. Retain them through
+            # drain/failed cleanup, then release them once this generation ends.
+            record.bindings.clear()
             record.stop_callbacks.clear()
             record.stop_tasks.clear()
             record.state = (
@@ -762,6 +800,8 @@ class RuntimeHost:
                 if record.failure
                 else ComponentState.PENDING
             )
+            if record.state == ComponentState.DISPOSED:
+                self._remember_disposed(record)
         except BaseException as error:
             record.blocked = True
             record.failure = self._observe(record, error, "cleanup")
@@ -818,7 +858,12 @@ class RuntimeHost:
                     identities.extend(b.identity for b in record.committed.values())
         if failures:
             return ReadyReport("failed", tuple(missing), tuple(failures), tuple(identities))
-        cycles = self._cycles()
+        required_records = {
+            record
+            for item in items
+            for record in ((item._record,) if isinstance(item, PluginHandle) else self._providers_for(item, "default"))
+        }
+        cycles = self._cycles(required_records)
         if missing and cycles:
             failure = RuntimeFailure(
                 "dependency-graph", "runtime", "dependency", "DependencyCycle", " -> ".join(cycles)
@@ -889,15 +934,13 @@ class RuntimeHost:
                             seen.add(provider)
                             stack.append(provider)
 
-    def _cycles(self) -> tuple[str, ...]:
+    def _cycles(self, roots: set[_Record] | None = None) -> tuple[str, ...]:
         graph = {
             r: {
                 p
                 for key in (*r.spec.requires, *r.inferred_requirements)
-                for p in self._records
-                if key in p.spec.provides
-                and p.base._realm(key) == r.inferred_requirements.get(key, r.base._realm(key))
-                and not p.retired
+                for p in self._providers_for(key, r.inferred_requirements.get(key, r.base._realm(key)))
+                if not p.retired
             }
             for r in self._records
             if not r.retired
@@ -919,7 +962,7 @@ class RuntimeHost:
             visited.add(record)
             return ()
 
-        for record in graph:
+        for record in graph if roots is None else roots:
             cycle = visit(record)
             if cycle:
                 return cycle
@@ -972,28 +1015,34 @@ class RuntimeHost:
         return self.load(spec, context=handle._record.base)
 
     def snapshot(self) -> dict[str, Any]:
+        components = [
+            *self._history,
+            *((record.sequence, self._component_snapshot(record)) for record in self._records),
+        ]
         return {
             "stopping": self._stopping,
-            "components": [
-                {
-                    "owner_id": r.owner_id,
-                    "name": r.spec.name,
-                    "state": r.state.value,
-                    "generation": r.generation,
-                    "change_revision": r.revision,
-                    "admission": r.admission,
-                    "calls": r.calls,
-                    "tasks": len(r.tasks),
-                    "blocked": r.blocked,
-                    "failure": r.failure,
-                    "missing": tuple(
-                        str(k)
-                        for k in r.spec.requires
-                        if (b := self._lookup(k, r.base._realm(k))) is None or not b.available()
-                    ),
-                    "bindings": tuple(b.identity for b in r.bindings if not b.retired),
-                }
-                for r in self._records
-            ],
+            "components": [dict(snapshot) for _, snapshot in sorted(components, key=lambda item: item[0])],
             "cycles": self._cycles(),
+            "history": {"limit": self._history.maxlen, "omitted": self._history_omitted},
+            "observations": {"limit": self.observations.maxlen, "omitted": self._observations_omitted},
+        }
+
+    def _component_snapshot(self, record: _Record) -> dict[str, Any]:
+        return {
+            "owner_id": record.owner_id,
+            "name": record.spec.name,
+            "state": record.state.value,
+            "generation": record.generation,
+            "change_revision": record.revision,
+            "admission": record.admission,
+            "calls": record.calls,
+            "tasks": len(record.tasks),
+            "blocked": record.blocked,
+            "failure": record.failure,
+            "missing": tuple(
+                str(key)
+                for key in record.spec.requires
+                if (binding := self._lookup(key, record.base._realm(key))) is None or not binding.available()
+            ),
+            "bindings": tuple(binding.identity for binding in record.bindings if not binding.retired),
         }

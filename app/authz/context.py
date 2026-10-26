@@ -62,6 +62,13 @@ class RoleAssignment:
     valid_from: datetime | None = None
     expires_at: datetime | None = None
     status: str = "active"
+    # Only a trusted loader may populate a pinned role capability set. None
+    # retains the original code-defined fixture policy; an empty tuple grants nothing.
+    permission_actions: tuple[str, ...] | None = None
+    role_ref: str | None = None
+    role_revision: int | None = None
+    role_version_digest: str | None = None
+    membership_ref: str | None = None
 
     def inactive_reason_at(self, now: datetime) -> str | None:
         return validity_failure(now, valid_from=self.valid_from, expires_at=self.expires_at, status=self.status)
@@ -158,6 +165,9 @@ class AuthorizationContext:
     attributes: AttributeContext = AttributeContext()
     policy_release_id: str = BUILTIN_POLICY_RELEASE_ID
     delegation: Delegation | None = None
+    # Immutable references to the authoritative facts used for this decision.
+    # This is audit evidence, never an independently reusable permission token.
+    fact_versions: tuple[tuple[str, str, int], ...] = ()
 
     @property
     def agent_ref(self) -> str | None:

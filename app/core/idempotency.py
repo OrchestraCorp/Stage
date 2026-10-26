@@ -1,3 +1,8 @@
+"""Historical key wrapper; command identity and replay are owned by app.execution.
+
+This value object alone does not provide durable deduplication or authorization.
+"""
+
 from dataclasses import dataclass
 
 

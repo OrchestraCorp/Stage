@@ -12,9 +12,9 @@ from app.identity.service import IdentityService
 from app.models.execution import TenantGuardTable
 from app.models.identity import PrincipalTable
 from app.models.identity_foundation import TrustStateTable
-from tests.identity.test_authentication import jwks, token
-from tests.identity.test_concurrency import _wait_until_blocked_by
-from tests.identity.test_service import read, seed
+from tests.support.identity_service import read, seed
+from tests.support.identity_tokens import jwks, token
+from tests.support.postgres import wait_until_blocked_by as _wait_until_blocked_by
 
 
 @pytest.fixture(scope="module")

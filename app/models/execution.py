@@ -99,6 +99,7 @@ class AuditRecordTable(Base):
     request_id: Mapped[str] = mapped_column(ExactString(128), nullable=False)
     before_json: Mapped[dict[str, Any] | None] = mapped_column(JSON(none_as_null=True))
     after_json: Mapped[dict[str, Any] | None] = mapped_column(JSON(none_as_null=True))
+    authorization_json: Mapped[dict[str, Any] | None] = mapped_column(JSON(none_as_null=True))
     created_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False, server_default=utc_now())
 
 

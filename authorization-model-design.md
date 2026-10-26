@@ -2,13 +2,17 @@
 title: Stage RBAC、ABAC 与 ReBAC 授权模型及 z-pool 迁移方案
 date: 2026-10-19
 version: 0.1
-status: design-proposal
+status: historical-proposal-superseded
 classification: internal
 policy_effect: none
-implementation_status: not-started
+implementation_status: historical-snapshot-not-current
 ---
 
 # Stage RBAC、ABAC 与 ReBAC 授权模型及 z-pool 迁移方案
+
+> **历史授权提案，不作为当前授权实现或阶段验收依据。** 保留 2026-10-19 的设计推导与原阶段编号；本文 Phase 1～5 不对应现行 P1～P5。现行约束见[身份与授权](docs/identity-and-authorization.md)、[表结构规格](docs/identity-schema-design.md)及[一期协作边界](docs/people-company-collaboration.md)，实现覆盖见[P1b 身份覆盖矩阵](docs/reviews/p1b-identity-coverage-2026-10-25.md)。
+>
+> **第 1 节的“角色授予 ∪ 关系授予 ∪ 有效委托授予”不是当前执行规则。** 当前人员命令须同时满足：真实人员身份与有效成员资格、明确单任职的固定角色版本 action、授权 scope、该 action 要求的对象关系以及 ABAC 条件。`owner_of`/`viewer_of` 不单独补足缺失的角色 action，也不合并不同任职的权限。独立 Agent/Delegation 和通用 ServiceGrant 后置；保留的相关模型是历史候选，不要求一期实现。
 
 ## 1. 结论
 

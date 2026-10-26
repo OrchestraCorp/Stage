@@ -2,16 +2,20 @@
 title: Stage OA 能力组合策略
 date: 2026-10-19
 version: 0.1
-status: design-proposal
+status: historical-proposal-superseded
 classification: internal
 policy_effect: none
-implementation_status: not-started
+implementation_status: historical-snapshot-not-current
 direction: prebuilt-capabilities-with-declarative-composition
 ---
 
 # Stage OA 能力组合策略
 
-> 本稿保留“预建能力＋声明式组合＋受控扩展”的长期方向。具体一期边界、后续顺序和验收以 [docs 设计入口](docs/README.md)、[一期方案](docs/phase-1.md)及[长期路线](docs/roadmap.md)为准；本稿的模块列表不表示一期全部交付。
+> **历史组合提案，不作为近期实施清单。** 保留“预建能力＋声明式组合＋受控扩展”的研究背景；当前定位与顺序以[运行时演进决策](docs/runtime-evolution-and-composition.md)、[一期方案](docs/phase-1.md)及[长期路线](docs/roadmap.md)为准。
+>
+> 第 1 节“预先实现大部分 OA”、第 5 节把所有业务对象纳入“稳定内核”、第 12 节首版编排范围均已被收敛：按真实业务切片逐步形成可组合模块，组件 Core 只管理依赖、资源和生命周期；身份/授权、事务执行与业务领域分层。当前装配是可信 Python 静态装配，蓝图发布属于 P2、持久 Workflow Runtime 属于 P3，尚未实现通用动态插件平台。业务规则实现可以属于插件，持久事实和统一授权/提交协议不能随插件卸载而消失。
+>
+> 一期为私有单组织根的“人员—公司—人员”协作，Agent 是受监督工具；本文的 Delegation/Grant、完整审批和工作流列表不是一期前置条件。Core 与最小人员命令已验收，完整人员管理/MFA、WASM、签名及后续能力仍按各自规格验收。
 
 ## 1. 结论
 

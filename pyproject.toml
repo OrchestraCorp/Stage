@@ -3,7 +3,10 @@ requires = ["setuptools==84.0.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-include = ["app*"]
+include = ["app*", "migrations*"]
+
+[tool.setuptools.package-data]
+migrations = ["script.py.mako"]
 
 [project]
 name = "orchestra-stage"
@@ -22,6 +25,9 @@ dependencies = [
     "loguru>=0.7.0",
     "pyjwt[crypto]>=2.10,<3",
     "httpx>=0.27,<1",
+    "argon2-cffi>=23.1,<26",
+    "pyotp>=2.9,<3",
+    "authlib>=1.6,<2",
 ]
 
 [dependency-groups]

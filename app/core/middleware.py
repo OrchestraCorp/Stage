@@ -1,5 +1,6 @@
 """Request correlation and a safe HTTP failure boundary."""
 
+import logging
 import re
 from uuid import uuid4
 
@@ -10,6 +11,22 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 from app.core.errors import unexpected_error_response
 
 REQUEST_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
+
+
+class AccessQueryFilter(logging.Filter):
+    """OAuth logout hints and authorization state must not enter server access logs."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        if isinstance(record.args, tuple) and len(record.args) == 5 and isinstance(record.args[2], str):
+            target = record.args[2].partition("?")[0]
+            record.args = (record.args[0], record.args[1], target, record.args[3], record.args[4])
+        return True
+
+
+def install_safe_access_logging() -> None:
+    access = logging.getLogger("uvicorn.access")
+    if not any(isinstance(filter_, AccessQueryFilter) for filter_ in access.filters):
+        access.addFilter(AccessQueryFilter())
 
 
 class ResponseStreamError(RuntimeError):

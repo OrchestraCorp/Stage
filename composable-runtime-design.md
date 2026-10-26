@@ -2,15 +2,17 @@
 title: Stage 可组合后端框架：权限、业务、时间与空间
 date: 2026-10-19
 version: 0.1
-status: architecture-proposal
+status: historical-proposal-superseded
 classification: internal
 policy_effect: none
-implementation_status: not-started
+implementation_status: historical-snapshot-not-current
 ---
 
 # Stage 可组合后端框架：权限、业务、时间与空间
 
-> 实施设计已细化到 [docs 设计入口](docs/README.md)。本稿第 2 节的统一 RuntimeContext 模型及第 5.1 节的 effect 分类，以新[目标架构](docs/architecture.md)中的 ComponentContext / ExecutionContext 分离、运行资源 / 持久业务副作用分层为准；一期范围与生命周期差异分别见[一期方案](docs/phase-1.md)和[Runtime 规格](docs/runtime-conformance.md)。本稿保留讨论背景，不能据此宣称当前运行时已实现。
+> **历史提案，已由后续规格取代，不作为近期实施依据。** 第 2 节的统一 `RuntimeContext` 模型及第 5.1 节的 effect 分类，以[目标架构](docs/architecture.md)中的 `ComponentContext` / `ExecutionContext` / `AuthorizationContext` 分离、运行资源 / 持久业务副作用分层为准。当前实现见[代码架构](docs/current-code-architecture.md)，一期范围与生命周期差异分别见[一期方案](docs/phase-1.md)和[Runtime 规格](docs/runtime-conformance.md)。正文的“首版”与“未实现”属于研究时点，不能覆盖后续验收。
+>
+> 参考 Cordis 的重点是依赖、资源归属与生命周期，不把授权、事务和持久工作流合并进组件 Core。业务模块及可信规则实现可以由插件提供，但须服从宿主的授权、提交、版本和审计协议；Python 插件不是安全沙箱，disposer 不回滚已提交事实。当前采用私有单组织根和“人员—公司—人员”，独立 Agent/Delegation 后置。新增与移除功能以[运行时演进决策](docs/runtime-evolution-and-composition.md)为准。
 
 本文提出 Stage 的通用后端内核：让同一套业务命令能够在不同岗位、任务、组织空间、时间窗口和 Agent 委托下安全复用，而不把权限判断散落在业务代码中。
 

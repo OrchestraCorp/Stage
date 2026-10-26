@@ -13,7 +13,9 @@ research_date: 2026-10-24
 
 本文件把 WASM 整体基座前置到 P1：P1c 建设独立进程 runner、签名制品准入和受限 ABI，P1d 用 `EvaluateQualification` 验证真实认证、组件生命周期、隔离计算与领域提交之间的完整路径。P1a 的 Core 和 P1b 的真实协议认证是其前提；测试身份 fixture 不能代替认证链验收。
 
-这里是待实现的工程设计。没有新增依赖、运行器、签名服务、业务接口或测试结果；下文 W1 场景当前执行 **0 项**、通过 **0 项**。这套场景与 [Core 的 34 个场景](runtime-conformance.md)分别计数。它不表示通用流程 DSL、带外部副作用的 WASM 插件或完整企业发布治理已完成。
+第一期采用[人员—公司—人员](people-company-collaboration.md)协作模型：资格评估和制品批准的业务责任主体是人员。Agent 与 WASM 都是受控辅助工具，runner 是技术执行进程；三者均不作为独立成员或任职者。WASM 路线不以前置 Agent 登记、binding 或 Delegation 为条件，也不因人员协作范围收敛而后移。
+
+这里是待实现的工程设计。纯计算的 WASM/进程隔离属于 P1c 目标，并非推迟到后续 hostcall/扩展 SDK 阶段；当前可信 Python 插件的生命周期管理不提供这种隔离。没有新增依赖、运行器、签名服务、业务接口或测试结果；下文 W1 场景当前执行 **0 项**、通过 **0 项**。这套场景与 [Core 的 34 个场景](runtime-conformance.md)分别计数。它不表示通用流程 DSL、带外部副作用的 WASM 插件或完整企业发布治理已完成。
 
 ## 1. 自研范围与 P1 执行面
 
@@ -91,8 +93,8 @@ manifest至少包括：`manifest_version/encoding_profile`、`artifact_id/versio
 
 ### 4.1 最小批准和签名方案
 
-1. 上传或构建产生候选 module/manifest，并计算 exact bytes 摘要；Stage 展示语义差异、目标租户/环境、能力、预算和前置版本。
-2. 真实认证后的主体通过 Stage 发布批准命令提交批准，服务端核验当前有效的发布能力、tenant/scope、所需近期强化认证证据及对象版本。P1 默认一名具备明确批准能力的主体；多方门槛、职责分离与企业治理策略后续扩展，不能虚构已获批准的实际企业规则。
+1. 上传或构建产生候选 module/manifest，并计算 exact bytes 摘要；Stage 展示语义差异、目标组织根/环境、能力、预算和前置版本。
+2. 真实认证后的人员通过 Stage 发布批准命令提交批准，服务端核验当前有效的发布能力、tenant/scope、所需近期强化认证证据及对象版本。P1 默认一名具备明确批准能力的人员；工具可以准备发布材料，但不能把自动生成结果当作其人工批准。多方门槛、职责分离与企业治理策略后续扩展，不能虚构已获批准的实际企业规则。
 3. Stage 在持久记录中把批准者、认证证据引用、授权决策、精确 manifest/module 摘要、发布序号、有效期及目标环境绑定。认证 token、Passkey 私钥和完整认证断言不随模块交给 runner。
 4. 独立的受控发布签名组件只对上述已批准且未撤销的 manifest bytes 签名。P1 建议采用标准 JWS 与平台固定的 `ES256` 算法/密钥类型，使用经过验证的库与密钥托管实现；不自行拼接 ECDSA 签名格式。此算法选择是工程默认方案，仍须安全评审和互操作测试，不能由 manifest 的 `alg` 自选。[S7]
 5. admission verifier 先按平台配置允许的 key ID/算法验签，再检查批准记录、当前撤销状态、tenant/environment、有效期、发布序号、所需能力上限和 expected revision。对象存储拿回的 bytes 必须与批准/签名摘要一致，然后才进入隔离验证编译。
@@ -101,7 +103,7 @@ manifest至少包括：`manifest_version/encoding_profile`、`artifact_id/versio
 
 `alg`、`kid` 和本协议使用的类型标识必须位于受签名保护的 header；key ID 只能查平台受控信任库。拒绝 `alg=none`、重复或冲突 header、未知 critical 参数和包自带的外部取钥地址；不跟随任意 `jku`、`x5u`，不把包自带公钥自动加入信任库。固定发布序号不能被回退包重置；紧急回退也形成新的受权 activation 记录。
 
-Passkey/2FA 用于证明本次批准操作经过相应认证，不等于直接为模块提供发布签名。签名有效也不等于批准者仍有权限、制品当前未撤销或调用者有权使用该能力。明确记录 `signature_valid`、`approval_authorized`、`admission_allowed` 与 `activation_observed`，不能合并成一个布尔值。签名密钥轮换与信任根修改属于平台受控配置，业务包不能修改自己的信任链。
+普通登录 MFA 属 P1b，独立于本节的业务批准，不等待 WASM 才实施。P1c/P1d 的批准须绑定具体意图与当前批准权，ceremony 在 Stage RP WebAuthn 或 IdP step-up 中选择并冻结 profile；当前未选定，不能把普通登录的 2FA 标记直接当批准证据，也不能把人员认证当作模块发布签名。签名有效也不等于批准者仍有权限、制品当前未撤销或调用者有权使用该能力。明确记录 `signature_valid`、`approval_authorized`、`admission_allowed` 与 `activation_observed`，不能合并成一个布尔值。签名密钥轮换与信任根修改属于平台受控配置，业务包不能修改自己的信任链。
 
 P1 不要求每次调用都重新进行人类批准，但 dispatch 前和最终业务提交前必须检查制品/activation 的当前状态。撤销先于最终提交生效时，正在返回的计算结果不得继续提交。签名包不能授予原调用者所没有的岗位、租户或业务权限。
 
@@ -109,7 +111,7 @@ P1 不要求每次调用都重新进行人类批准，但 dispatch 前和最终�
 
 标准 `.wasm` 可以是对宿主不可信的程序，但必须经过受限验证编译。Wasmtime `serialize/deserialize` 产物包含编译后的执行代码，反序列化不是再次执行 Wasm 安全验证；官方明确要求仅反序列化来源可信且未篡改的产物。[S5]
 
-因此 P1 拒绝租户上传 `.cwasm`、Module/Component serialized bytes 或声称由租户编译的 native cache。**租户管理员批准/签名不能把这些 bytes 变成平台可信编译产物。**平台缓存只有在受控编译链生成、完整性与构建来源校验通过后才可被 execution runner 读取；无法证明来源时丢弃并从获准的原始 Wasm 重编译。
+因此 P1 拒绝业务上传方提交 `.cwasm`、Module/Component serialized bytes 或自行编译的 native cache。**组织管理员批准/签名不能把这些 bytes 变成平台可信编译产物。**平台缓存只有在受控编译链生成、完整性与构建来源校验通过后才可被 execution runner 读取；无法证明来源时丢弃并从获准的原始 Wasm 重编译。
 
 缓存键至少包含以下全部字段：
 
@@ -122,17 +124,17 @@ module_sha256
 + target triple / architecture / required CPU features
 ```
 
-产物元数据还须记录原始 module digest、编译器/构建镜像摘要、目标环境和缓存 bytes digest。任何影响编译语义、安全检测或兼容性的配置变化都进入 key；不只用包名/版本字符串命中缓存。cache hit 仍执行该租户的 admission 和撤销核验，不能沿用另一个租户的授权结果。
+产物元数据还须记录原始 module digest、编译器/构建镜像摘要、目标环境和缓存 bytes digest。任何影响编译语义、安全检测或兼容性的配置变化都进入 key；不只用包名/版本字符串命中缓存。cache hit 仍核验当前部署组织根的 admission、调用人员/任职与撤销状态，不能沿用另一次请求的授权结果；P1 不建设跨实例共享缓存。
 
-P1 可先禁用持久预编译缓存，或实现平台生成缓存及其完整性封装；二者须在验收配置中明确，不存在“来源不明时先 deserialize 试试”的回退。缓存目录对执行 guest 不可写，runner 只收到已经验证的内容句柄或 bytes，不按 guest 给出的路径/URL加载。跨租户缓存命中信息不作为公开接口；共享代码缓存不等于共享 Store、Memory、输入或调用结果。
+P1 可先禁用持久预编译缓存，或实现平台生成缓存及其完整性封装；二者须在验收配置中明确，不存在“来源不明时先 deserialize 试试”的回退。缓存目录对执行 guest 不可写，runner 只收到已经验证的内容句柄或 bytes，不按 guest 给出的路径/URL加载。缓存命中信息不作为公开接口；同一部署复用代码缓存不等于跨人员、任职或请求共享 Store、Memory、输入或调用结果。
 
 ## 6. 全过程预算与独立进程
 
 ### 6.1 预算是准入条件
 
-每个被激活的能力必须绑定一个有限 `BudgetProfile`。至少配置模块/manifest 大小、验证与编译墙钟/CPU/RSS、函数与表复杂度上限、线性内存/表/实例数量、Wasm stack、fuel、调用墙钟、输入/输出 bytes、JSON 深度/元素数、日志 bytes、每租户并发/队列长度和总宿主并发。缺失、不支持、零意义或无限配置不能被解释为“使用引擎无限默认值”，部署不进入 ready。
+每个被激活的能力必须绑定一个有限 `BudgetProfile`。至少配置模块/manifest 大小、验证与编译墙钟/CPU/RSS、函数与表复杂度上限、线性内存/表/实例数量、Wasm stack、fuel、调用墙钟、输入/输出 bytes、JSON 深度/元素数、日志 bytes、每能力并发/队列长度和总宿主并发。缺失、不支持、零意义或无限配置不能被解释为“使用引擎无限默认值”，部署不进入 ready。
 
-实际数字是待基准测试和部署容量确认的运行配置，不在本规格中捏造已验证阈值。平台上限与能力申请取较小值；租户批准只能收紧预算，不能扩张平台上限。限额 profile 本身版本化，修改后重新进行准入与兼容检查。
+实际数字是待基准测试和部署容量确认的运行配置，不在本规格中捏造已验证阈值。平台上限与能力申请取较小值；组织批准只能收紧预算，不能扩张平台上限。限额 profile 本身版本化，修改后重新进行准入与兼容检查。
 
 | 阶段 | 必须控制的资源 | 不能依赖的错误假设 |
 |---|---|---|
@@ -141,7 +143,7 @@ P1 可先禁用持久预编译缓存，或实现平台生成缓存及其完整�
 | 实例化 | Store limits、初始/最大 memory、table/instance 数量、fuel/epoch、进程总预算 | start function 尚未到业务入口，所以可以无限运行 |
 | ABI 查询/分配/调用 | 同一 Store 的剩余 fuel、epoch deadline、总调用 deadline | 每次调用导出都重置预算，或者只给 stage_invoke 计量 |
 | 输出复制与解码 | 输出长度、内存边界、结构复杂度、宿主解析 CPU/RSS | guest 输出通过了线性内存检查就一定适合交给业务层 |
-| 队列与返回 | per-tenant/global 并发、队列长度、IPC帧与日志大小、截止时间 | 单个模块有限意味着整个平台不会被请求数量耗尽 |
+| 队列与返回 | 能力/宿主并发、队列长度、IPC帧与日志大小、截止时间 | 单个模块有限意味着整个平台不会被请求数量耗尽 |
 
 Wasmtime fuel 需要在 Engine 配置开启，并在 Store 中设置有限数额；epoch 需要宿主推进 Engine epoch，Store deadline 本身不是自动计时器。两者在创建 Instance **之前**配置。独立监督者使用单调时钟监控编译和执行进程，作为 guest 不协作、引擎/FFI 故障或 epoch 未推进时的最终停止机制。[S2][S3][S4]
 
@@ -183,7 +185,7 @@ provider 换代遵循 [Core 的整体 drain 屏障](runtime-conformance.md)：�
 
 ## 9. P1d：`EvaluateQualification` 的真实垂直验证
 
-演示使用实际认证协议产生的主体，通过当前组织成员/任职和能力判定调用固定的资格评估能力。输入是 Stage 有权读取的最小事实投影，例如资格标识集合与规则参数；模块返回结构化的匹配结果和允许的原因码。它不能签发任职、授予权限、自动领取任务或把自身输出作为授权事实源。
+演示使用实际认证协议确认的人员，通过当前组织成员经历、选定任职和能力判定调用固定的资格评估能力。工具辅助不会改变该人员的业务责任身份；runner 和 guest 不另持协作角色。输入是 Stage 有权读取的最小事实投影，例如资格标识集合与规则参数；模块返回结构化的匹配结果和允许的原因码。它不能签发任职、授予权限、自动领取任务或把自身输出作为授权事实源。
 
 ```text
 真实认证 → 按一期锁序短持guard/FactSet锁，一致读取当前授权、受限输入及revision
@@ -191,7 +193,7 @@ provider 换代遵循 [Core 的整体 drain 屏障](runtime-conformance.md)：�
 → 结束读取事务，不持数据库锁运行 WASM
 → 独立 runner 返回候选结果
 → Stage 开启新的提交事务并取得既定授权 guard/对象锁
-→ 重读当前认证有效性、主体/任职/委托、制品状态、事实和规则版本
+→ 重读当前认证有效性、人员/成员经历/选定任职、制品状态、事实和规则版本
 → 全部匹配才写评估结果、执行结果、审计与 outbox
 → COMMIT 后返回已确认结果；断连则按原幂等身份对账
 ```
@@ -214,7 +216,7 @@ provider 换代遵循 [Core 的整体 drain 屏障](runtime-conformance.md)：�
 | W1-04 | 输出长度越界、重复字段、NaN、超深/超大JSON | 在受限解码阶段拒绝，不进入领域提交 | 未执行 |
 | W1-05 | module/manifest任一字节篡改或签名不匹配 | admission拒绝，无验证编译后门 | 未执行 |
 | W1-06 | alg none/算法混用、未知/撤销 key、替换 manifest payload | 固定算法/密钥与exact bytes校验拒绝 | 未执行 |
-| W1-07 | 签名有效但批准无权、过期、跨tenant/environment或前置revision不符 | 区分验签成功与准入拒绝，不激活 | 未执行 |
+| W1-07 | 签名有效但批准无权、过期、伪造组织根/跨environment或前置revision不符 | 区分验签成功与准入拒绝，不激活 | 未执行 |
 | W1-08 | 旧发布序号重放、撤销与dispatch/最终提交竞争 | 不回退未经批准的版本；撤销先发生则不提交结果 | 未执行 |
 | W1-09 | 上传serialized/.cwasm，或污染平台缓存 | 不对不可信bytes调用deserialize；缓存来源/摘要不符即弃用 | 未执行 |
 | W1-10 | 模块相同但engine/config/CPU目标/ABI变化 | cache key变化或明确不兼容；无静默错误复用 | 未执行 |
@@ -223,7 +225,7 @@ provider 换代遵循 [Core 的整体 drain 屏障](runtime-conformance.md)：�
 | W1-13 | ABI查询/alloc/invoke分别无限循环或memory增长 | 共用有限fuel/deadline；不通过逐次重置逃逸限额 | 未执行 |
 | W1-14 | epoch推进失效、guest不协作或FFI/runner异常 | 独立监督者最终停止进程；确认退出后才释放租约 | 未执行 |
 | W1-15 | JIT/Python/宿主缓冲耗尽内存或stdout/IPC泛洪 | OS/IPC上限生效；不能只依靠Wasm memory上限 | 未执行 |
-| W1-16 | 不同tenant并发、同tenant高负载、队列溢出 | 独立Store/实例/数据；公平限额与明确背压，无租户混读 | 未执行 |
+| W1-16 | 不同人员/任职/scope并发、同实例高负载、队列溢出 | 独立Store/实例/数据；公平限额与明确背压，无跨人员或未授权scope混读 | 未执行 |
 | W1-17 | 检查runner环境、FD、文件、网络与派生进程能力 | 无DB/IdP/session/签名秘密；部署OS隔离实际生效 | 未执行 |
 | W1-18 | 伪造nonce/invocation/attempt/digest/generation、重复或迟到响应 | 不推进错误请求；丢弃并记录安全诊断 | 未执行 |
 | W1-19 | 取消与结果同时到达、超时后子进程仍活着 | 一次终态判定；确认进程终结；无迟到提交和孤儿 | 未执行 |

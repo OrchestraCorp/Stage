@@ -6,6 +6,7 @@ from fastapi import APIRouter, Query, Request, Security
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.exc import SQLAlchemyError
+from starlette._utils import get_route_path
 from starlette.datastructures import MutableHeaders
 from starlette.responses import JSONResponse
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
@@ -13,7 +14,11 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 from app.core.errors import error_response
 from app.core.schemas import ErrorResponse
 from app.execution.errors import TenantNotProvisioned
-from app.identity.authentication import AuthenticationRejected, AuthenticationUnavailable
+from app.identity.authentication import (
+    AuthenticationAssuranceRequired,
+    AuthenticationRejected,
+    AuthenticationUnavailable,
+)
 from app.identity.service import IdentityDenied, SelfIdentity
 from app.providers.identity import IDENTITY
 from app.runtime import MissingService, RuntimeClosed
@@ -25,19 +30,25 @@ bearer = HTTPBearer(auto_error=False)
 class IdentityQuery(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    profile_ref: str = Field(min_length=1, max_length=128)
+    profile_ref: str = Field(min_length=1, max_length=128, pattern=r"^[^\s\x00-\x1f\x7f]+$")
     profile_version: int = Field(ge=1, le=2**63 - 1)
 
 
 class IdentityCacheControlMiddleware:
-    """Keep every identity response private, including validation and failure responses."""
+    """Keep identity/work responses private, including validation and failure responses."""
 
     def __init__(self, app: ASGIApp) -> None:
         self.app = app
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
-        path = scope.get("path", "")
-        if scope["type"] != "http" or not (path == "/api/v1/identity" or path.startswith("/api/v1/identity/")):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+        path = get_route_path(scope)
+        private_path = any(
+            path == prefix or path.startswith(prefix + "/") for prefix in ("/api/v1/identity", "/api/v1/work-items")
+        )
+        if not private_path:
             await self.app(scope, receive, send)
             return
 
@@ -80,6 +91,14 @@ async def read_self_identity(
                         profile_ref=query.profile_ref,
                         profile_version=query.profile_version,
                     )
+            except AuthenticationAssuranceRequired:
+                result = error_response(
+                    request,
+                    401,
+                    "MFA_REQUIRED",
+                    "Fresh multi-factor authentication is required",
+                    {"WWW-Authenticate": 'Bearer error="insufficient_user_authentication"'},
+                )
             except AuthenticationRejected:
                 result = error_response(
                     request,

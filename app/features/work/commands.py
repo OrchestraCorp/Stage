@@ -1,3 +1,10 @@
+"""Historical task DTO sketches, not registered commands or public request schemas.
+
+Their subject/reviewer fields are not authenticated identity. The live human
+metadata command is in details.py; future task commands require host-derived
+identity, current authorization, idempotency, version checks and atomic audit.
+"""
+
 from dataclasses import dataclass
 
 

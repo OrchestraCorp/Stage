@@ -1,7 +1,7 @@
 ---
 title: Stage 长期目标与阶段路线
 status: design-proposal
-implementation_status: p1a-implemented-p1b-p1d-pending
+implementation_status: self-assignments-and-login-mfa-server-implemented-client-and-full-p1-pending
 policy_effect: none
 research_date: 2026-10-23
 ---
@@ -16,31 +16,37 @@ Stage 最终提供一个可审阅、可组合、可恢复的组织协作后端�
 
 2026-10-24 确定的上位愿景是 **AI 驱动、安全可靠的分布式工作协作平台**。Stage 自研组件运行时与业务流程运行器，Graphon / Dify 仅作为研究参考。可验证的分布式组织不以区块链为前提，跨地点协作、跨组织治理和多节点部署分别推进，见[愿景与自研方向](vision-and-runtime-direction.md)。
 
-本轮进一步明确一期基座优先：Core、真实身份认证、受控WASM与最小签名准入先联调，完整任务业务随后扩展。对应对象与阶段以[核心对象](core-object-contracts.md)、[一期方案](phase-1.md)为准。长期保持可信身份、明确任职、有限委托、对象版本、读者范围、持久事务与可追踪外部结果。
+本轮进一步明确一期基座优先：Core、真实人员身份认证、受控 WASM 与最小签名准入先联调，完整任务业务随后扩展。早期协作采用**人员—公司—人员**模式，Agent 仅是人员监督使用的工具，不独立入职、任职、承诺或验收，不拆 Agent 专用业务接口。对应对象与阶段以[人员协作边界](people-company-collaboration.md)、[核心对象](core-object-contracts.md)、[一期方案](phase-1.md)为准。保持可信人员身份、明确任职、对象版本、读者范围、持久事务与可追踪外部结果。
+
+独立 Agent 主体、AgentRegistration、AgentWorkloadBinding 和 Delegation 仅作为长期候选，没有默认实施时间表，不随 P1b、P2 或 P3 自动启用。ServiceGrant 只在真实技术后台任务有独立授权需求时另案，不作为 AI 辅助协作的前置条件。已有 service 认证属于技术来源事实，不授予组织成员业务权。
 
 运行时与能力组合的统一决策入口是[运行时演进与能力组合决策](runtime-evolution-and-composition.md)，其中明确 Component Runtime、Execution Kernel、Workflow Runtime 的边界，以及 Cordis/Dify 仅作机制研究参考。
 
 ## 2. 阶段划分
 
-P1a 已按证据完成，其余阶段仍为设计目标；没有承诺日历工期或已完成比例。不能以目录存在、API 壳子或演示截图代替验收。
+2026-10-26 已按[代码复查](reviews/code-state-and-next-steps-2026-10-26.md)把近期实施拆为本人任职发现、MFA 的窄配置变更与强度验证、Maestro 实际人员闭环。该记录之后，本人任职查询和 MFA 配置/强度/新鲜度已由 [P1b.4](reviews/p1b4-assignments-mfa-2026-10-26.md)实现并有真实隔离协议证据；阶段目标不因局部交付而提前完成。
+
+P1a 已按证据完成；P1b.1/.2 已有真实身份与内部人类授权，P1b.3 将真实认证证据、当前单任职与已有工作项元数据命令接入同一链路。最小人员路径的 Stage 侧收尾见[复查与并发记录](reviews/p1b-closeout-2026-10-25.md)；P1b.4 已提供本人任职发现和组织统一登录 MFA，用户选定密码＋TOTP；随后[原生认证模块](native-authentication-design.md)实现服务端密码＋TOTP、绑定/恢复与最小 OAuth/OIDC；整体 P1b 仍需 Maestro 桌面登录/任职选择及实际用户恢复交互验收，生产接入单独验证。正式入离职与权限管理按具体最小切片确定，不默认扩建完整 IAM。其余阶段仍为目标，没有承诺日历工期或已完成比例；最小编辑接口不等于完整任务业务或整期完成。
 
 | 阶段 | 主要交付 | 进入前提 | 完成证据 |
 |---|---|---|---|
-| **P1：Core＋身份＋WASM基座** | 自研Core、共同对象、真实协议adapter与当前授权、独立WASM runner、有限ABI、签名准入；EvaluateQualification＋幂等/审计/outbox | 当前底板；Core/IAM/ABI/准入及事务契约共同评审 | Core C1–C8 34项＋S1 12项、所选profile适用I1、W1-01～28、O1-01～07、F1-01～12；O1-08留P3。真实IdP/真库/runner故障留证，不冒充生产就绪 |
-| **P2：业务切片与蓝图发布** | 任务/承诺/容量/交付/独立验收；蓝图schema、确定计划与依赖锁、语义diff、扩展批准签名与激活；细化自研流程契约 | P1身份、运行、制品和事务基础通过 | [业务切片](business-slice-plan.md)九类验收；无效配置不破坏当前组合；部分激活失败准确报告；重复应用可对账 |
+| **P1：Core＋身份＋WASM基座** | 自研 Core、共同对象、真实人员认证/登录 MFA 与任职授权、独立 WASM runner、有限 ABI、签名准入；EvaluateQualification＋幂等/审计/outbox | 当前底板；Core/IAM/ABI/准入及事务契约共同评审 | Core C1–C8 34 项＋S1 12 项、人员范围适用 I1、W1-01～28、O1-01～07、F1-01～12；O1-08 留 P3，独立 Agent/Delegation 不构成门槛。真实 IdP/真库/runner 故障留证，不冒充生产就绪 |
+| **P2：人员业务切片与蓝图发布** | 人员间任务/承诺/容量/交付/独立验收，AI 提供受监督辅助；蓝图 schema、确定计划与依赖锁、语义 diff、扩展批准签名与激活；细化自研流程契约 | P1 身份、运行、制品和事务基础通过 | [业务切片](business-slice-plan.md)九类验收；人员责任与实际确认不被工具输出替代；无效配置不破坏当前组合；部分激活失败准确报告；重复应用可对账 |
 | **P3：持久流程与组织协作** | 自研 Workflow Runtime 的分支、循环、人工等待和恢复；组织岗位、正式审批、表单 / 记录、SLA、替补接管；ScoreBook 与 GitLab / 身份目录连接 | P2 版本与策略来源明确；自研流程契约及领域授权协议通过 | 旧实例与版本保留、撤销竞争、重复恢复、重试副作用、审批版本、跨系统漂移 / unknown 均有故障注入与真实接口验收 |
 | **P4：多进程、多节点与受控升级** | 独立 worker、持久协调、服务 broker、版本化部署、配置代次一致性、滚动切换与恢复 | P1～P3 不变量可在持久层表达；事件与命令版本策略确定 | 节点失联 / 重启、旧任务回写、重复投递、混合版本、故障切换和备份恢复经过压力与混沌测试 |
 | **P5：扩展互操作与隐私能力** | 基于P1受控WASM扩展SDK、有限hostcalls与可能的WIT/Component Model；评估隐私凭证、自研runtime独立发布与有条件HMR | 明确消费者、维护资源与威胁模型；各接口与密码协议独立选型 | 扩展行为、宿主能力限制、版本兼容、凭证/最小披露按选定协议实测；不从纯计算WASM推断已支持 |
 
 P3 的单个能力可以在其依赖满足后与 P2 局部并行；P4 不能绕过 P1 的事务和退出协议。拆微服务由隔离、容量与运维证据驱动，不按能力列表机械拆进程。
 
-P1a 按[框架实施规格](framework-foundation.md)完成资源/依赖内核、安全退出/组合、真实 provider/应用装配；原 C、补充 S 和 D-01～D-09 的证据见[P1a 验证](reviews/p1a-validation-2026-10-25.md)。接下来推进真实身份和 WASM。
+P1a 按[框架实施规格](framework-foundation.md)完成资源/依赖内核、安全退出/组合、provider/应用装配。P1b.3 以人员元数据编辑闭合认证到命令；P1b.4 已实现本人任职查询和密码＋TOTP 的组织策略，接下来完成 Maestro 实际客户端与因素绑定/恢复验收，并按实际入口核对剩余证据。登录 MFA 和 P1c/P1d 中绑定具体业务意图的批准分别建设；服务端 MFA 验证不等于桌面或业务批准完成。独立 Agent 身份平台不构成门槛，完整任务领取/交付/验收不随最小编辑接口提前进入 P1，详见[P1b 入口](p1b-implementation-entry.md)。
 
 运行时演进以真实后端故障场景为验收目标，不以 Cordis API 相似度为目标。当前 `ComponentContext` 只管理后端组件激活代次、依赖、资源 owner、进程内任务和调用租约；`ExecutionContext`/`AuthorizationContext` 负责业务身份与授权，PostgreSQL 负责持久事实和结果。后续每增加一层能力，都必须先说明重启是否要保留状态、是否跨越外部副作用、未知结果如何查询、撤销/版本何时重验，以及停止时怎样停接入、排空和释放。
 
 P1 完成身份、受控 WASM、签名准入和 `EvaluateQualification` 纵向闭环后，优先建设一个真实连接器与 Durable Worker：连接器提供 health/invoke/query/close 等受控边界，调用带 deadline 和稳定幂等键；Worker 从 PostgreSQL outbox/attempt 领取持久工作，停止时先停止新领取再排空在途调用，外部超时保留 `unknown`。这一步验证 Runtime 对连接器和 Worker 的实际价值；`ctx.spawn()` 仍只承担进程内监督。
 
-P2 继续使用统一 Execution Kernel 建设业务切片、能力目录和蓝图发布，不提前建设通用 DSL、插件市场或任意代码热插拔。P3 再建设持久 Workflow Runtime；人工等待释放事务和组件租约，恢复时重新验证当前授权、定义版本和对象版本。P4 只有在容量或故障证据成立后才扩展多进程、多节点、fencing 和滚动升级；P5 只有在有真实消费者和威胁模型时才扩展 WASM hostcall/WIT/隐私能力。
+Worker 和 runner 是技术设施。后续人员发起的排队工作保留原人员、成员经历、选定任职与原命令因果链，执行和提交时重新授权；工具辅助不能充当人工确认。持久任务机制不会自动产生一个 Agent 业务参与者或 ServiceGrant。
+
+P2 继续使用统一 Execution Kernel，先交付一条明确的人员业务闭环，再以真实配置/替换需求扩展有限能力目录和蓝图发布；业务模块从现在就可按受信组件组织，不等待通用组合平台完成。不提前建设通用 DSL、插件市场或任意代码热插拔。P3 再建设持久 Workflow Runtime；人工等待释放事务和组件租约，恢复时重新验证当前授权、定义版本和对象版本。P4 只有在容量或故障证据成立后才扩展多进程、多节点、fencing 和滚动升级；P5 只有在有真实消费者和威胁模型时才扩展 WASM hostcall/WIT/隐私能力。
 
 ## 3. P2：业务切片与声明式装配
 
@@ -78,7 +84,7 @@ P2 不默认承诺事务化 Loader。多个 provider 的启动可能包含不可
 | 上下文与投影 | 员工 / 管理视图、最小交接上下文、附件、搜索与知识候选 | 索引、缓存、摘要与嵌入继承来源权限，私人会话不自动汇总 |
 | ScoreBook | 精确版本引用、结构化规则包、提案 / 审阅 / 加载回执 | 文本制度不直接解释成任意授权代码；运行激活独立于合并 |
 | GitLab / 专业系统 | 最小权限身份、MR 回写、实际 ACL 核验与漂移对账 | 专业系统保持自身事实权威；请求成功与外部结果已确认分别记录 |
-| Agent 运行 | 绑定委托与任务版本、暂停 / 取消 / 接管、动作回执 | Stage 不托管模型路由；Agent 运行结束不等于业务验收 |
+| 人员监督的工具执行 | 原人员命令、任务版本、暂停 / 取消 / 接管和动作回执 | Stage 不托管模型路由；工具完成不等于人员批准或业务验收；独立 Agent 主体不列入本阶段默认交付 |
 
 P2业务切片暂定单名额、单位容量仅用于验证原子承诺机制。长期容量单位、时间窗口、并行工时和跨组织兼职口径另定，不能把演示计数直接当成人力核算模型。
 
@@ -120,7 +126,7 @@ P1已经规划标准Core WASM纯计算、独立runner与签名准入；P5在此�
 
 | 事项 | 当前设计默认 | 最晚何时确认 |
 |---|---|---|
-| 真实认证profile与生产身份提供方 | P1至少一个真实协议adapter＋隔离测试IdP；fixture仅辅助 | P1b前固定测试profile；真实部署前验issuer/audience/撤销/恢复与主体映射 |
+| 原生认证与生产部署 | 最小本地 issuer＋成熟库；Keycloak 为历史兼容来源 | 原生 profile 已固定；生产前验 HTTPS/key 管理、恢复责任、容量及 Maestro 实际客户端 |
 | 存储部署与容量 | 2026-10-25 已确定唯一主库 PostgreSQL 17＋辅助 Redis 8；MySQL 不再是待选项，见[存储策略](storage-strategy.md) | 生产前固定 PG 备份恢复、Redis 故障策略、容量与访问边界；新增能力须有实际目标环境证据 |
 | 生产环境是否自托管与部署规模 | P1单worker宿主＋受控runner子进程，不预设公司规模 | P1c前明确验收OS隔离；真实部署前决定网络、备份和恢复指标 |
 | WASM引擎/ABI/预算与签名profile | P1参考Wasmtime、有限Core bytes ABI和固定签名profile；参数仍需冻结 | P1c实现前锁版本、平台、编码、算法与资源限额，并有负向验收 |

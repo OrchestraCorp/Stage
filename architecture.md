@@ -2,16 +2,20 @@
 title: Stage 组织运行与热协作架构初稿
 date: 2026-10-19
 version: 0.1
-status: architecture-proposal
+status: historical-proposal-superseded
 classification: internal
 owner_role: Stage 产品设计责任岗位（待指定）
 policy_effect: none
-implementation_status: foundation
+implementation_status: historical-snapshot-not-current
 ---
 
 # Stage 组织运行与热协作架构初稿
 
-本文将已明确的 OrchestraCorp 方向转成 Stage 的首轮产品设计。当前已建立 Python/FastAPI 工程底板、纯授权内核、基础模型和迁移、健康检查及测试门禁；六个能力域的完整业务流程、运行 Agent 与真实企业接入仍属提案，未实现或全部定案。
+> **历史提案，已由后续规格取代，不作为近期实施依据。** 本文保留 2026-10-19 的产品探索及后续存储补记；正文中的“首版”“当前”“下一步”属于当时语境。当前定位与阶段以[一期协作边界](docs/people-company-collaboration.md)、[目标架构](docs/architecture.md)、[一期范围](docs/phase-1.md)及[路线图](docs/roadmap.md)为准，已实现能力以[当前代码架构](docs/current-code-architecture.md)及[P1b 收尾证据](docs/reviews/p1b-closeout-2026-10-25.md)为准。
+>
+> 现已明确企业私有化部署、一实例一个组织授权根；一期采用“人员—公司—人员”，Agent 是受监督工具，独立 Agent 成员/任职、Delegation 与通用 ServiceGrant 不属于一期前置条件。本文的统一 `RuntimeContext`、完整任务闭环和 Agent 运行模型均不能直接转为近期 schema/API 要求。Core、真实人员认证、单任职授权及最小编辑命令已落地；完整人员管理、MFA、WASM 和签名准入不能据此计为完成。
+
+本文将当时已明确的 OrchestraCorp 方向转成 Stage 的首轮产品设计。研究时已建立 Python/FastAPI 工程底板、纯授权内核、基础模型和迁移、健康检查及测试门禁；以下六个能力域是当时的提案。
 
 ## 1. 定位与已有设计输入
 
@@ -19,7 +23,7 @@ Stage 是公司当前组织协作的共同后端，保存“现在谁负责什�
 
 本稿会参考本地 `z-pool-backend-v2` 的工程实现方法，但不复制它的供应商资源池业务；方法提炼见[z-pool 参考实现分析](reference-z-pool.md)。
 
-权限、业务、时间和空间的统一组合方案见[可组合后端框架设计](composable-runtime-design.md)。该文引入 `RuntimeContext`、能力与约束、业务命令、空间 scope、时间 lease、依赖 ContextKey 和 effect ledger，作为后续对象 schema 与 API 设计的上层约束。
+早期权限、业务、时间和空间的统一组合探索见[可组合后端框架设计](composable-runtime-design.md)。其中统一 `RuntimeContext` 已由组件、执行和授权上下文分离的方案取代，不再作为后续对象 schema 与 API 的上层约束；现行边界见[运行时演进决策](docs/runtime-evolution-and-composition.md)。
 
 关于 Stage 如何承担 OA 核心能力并适配不同企业，采用[OA 能力组合策略](composition-strategy.md)：预建稳定模块和内核，使用声明式蓝图编排企业差异，专业代码只通过受控扩展进入。
 
@@ -169,7 +173,7 @@ Stage 保存当前上下文与受限过程证据；正式 SOP、Skill 和知识�
 
 首版不实现完整 ERP、财务/合同账本、全行业流程库、薪酬自动结算、第三方 Agent 市场或全功能流程编排。贡献可先记录证据与责任，不从任务计数自动推导奖励。
 
-底板采用 Python 3.12、FastAPI、SQLAlchemy async 和 Alembic。2026-10-25 用户确定 PostgreSQL＋Redis 长期组合，本轮工程基线为 PostgreSQL 17 与 Redis 8：PostgreSQL 是唯一主库，Redis 用于可重建缓存、非权威短期协调和可丢失唤醒；SQLite 仅快速开发测试，MySQL 退出受支持配置，历史迁移/双库评审原样保留。授权、幂等、outbox、业务租约和业务事实的权威留在 PostgreSQL；不承诺与 Redis 双写原子性，缓存须遵守 tenant 与当前权限版本。细则和实现边界见[存储策略](docs/storage-strategy.md)，实际代码与真库验证按本轮证据分别记录。业务结构保持模块化后端；Runtime Core、真实身份、WASM 和业务接入仍待建设。Stage 是否必须自托管、哪些场景需离线、首版用户规模与保留期限需要后续确定。
+底板采用 Python 3.12、FastAPI、SQLAlchemy async 和 Alembic。2026-10-25 补记：用户确定 PostgreSQL＋Redis 长期组合，工程基线为 PostgreSQL 17 与 Redis 8；PostgreSQL 是唯一主库，Redis 用于可重建缓存、非权威短期协调和可丢失唤醒，SQLite 仅快速测试，MySQL 退出受支持配置。授权、幂等、outbox、业务租约和业务事实的权威留在 PostgreSQL；不承诺与 Redis 双写原子性，历史迁移/双库评审原样保留。细则见[存储策略](docs/storage-strategy.md)。私有化部署及固定组织根已经确定，兼容字段 `tenant_*` 不代表 SaaS 多租户。Core、真实身份和最小人员业务链的当前状态见[当前代码架构](docs/current-code-architecture.md)；离线需求、实际容量目标和保留期限仍需按部署场景确认。
 
 ## 11. 来源、未决问题与复核
 

@@ -1,21 +1,21 @@
 flowchart TB
-  accTitle: Stage 自研基座：组件运行时、真实身份与受控 WASM
-  accDescr: 一期由单 worker 可信宿主和独立 WASM runner 构成。身份、签名准入、受限计算及事务提交分别校验。紫色区域为后续业务与分布式扩展，所有新能力均待实现。
+  accTitle: Stage 人员协作基座：组件运行时、真实身份与受控 WASM
+  accDescr: 一期面向人员经公司规则协作，Agent 是受人员监督的工具，技术 worker 不成为业务成员。Core、最小人员命令、本人任职发现与登录 MFA 服务端已实现；Maestro 桌面交互、因素绑定恢复、WASM 与业务批准签名准入仍待完成。业务批准 profile 尚未冻结，图不预选 Stage RP 或 IdP step-up。单 worker 可信宿主管理身份、准入和事务，目标独立 WASM runner 只进行有限计算；紫色为后续目标。
 
-  CLIENT["人 · Agent · 服务<br/>HTTP / CLI / worker"]
-  IDP["P1 测试 IdP / WebAuthn RP<br/>真实协议凭据与批准证据<br/>生产环境另验收"]
+  CLIENT["人员通过公司规则协作<br/>HTTP / CLI · 统一业务入口<br/>Agent 仅作受监督辅助工具"]
+  IDP["P1 登录 IdP · 密码＋TOTP<br/>Stage 已核验 · 桌面待验收<br/>业务批准 profile 待冻结<br/>生产身份与入口另验收"]
   ART["不可变 module.wasm + manifest<br/>受控批准与发布签名<br/>私钥始终在 runner 外"]
 
-  subgraph HOST["P1 · Stage 可信宿主 · 单 ASGI worker / 事件循环 · 待实现"]
+  subgraph HOST["P1 目标 · 单 ASGI worker / 事件循环<br/>Core 与身份切片已实现 · WASM/准入待实现"]
     direction TB
     RT["自研 RuntimeHost / ComponentContext<br/>owner · generation · 声明依赖<br/>lease · drain · 清理结果"]
-    AUTH["认证与可信上下文<br/>主体 · 组织根 · 任职 / 服务授权 / 委托<br/>当前 authz · 非客户端自报"]
+    AUTH["认证与可信上下文<br/>人员 · 组织根 · 成员经历 · 选定任职<br/>当前 authz · 工具不另获权限"]
     RELEASE["制品准入与 Activation<br/>摘要 / 签名 / 批准 / 环境 / ABI / 预算<br/>当前撤销状态 · 条件版本更新"]
     CMD["CommandKernel / EvaluateQualification<br/>幂等身份 · 固定能力绑定<br/>资格结果不自动授予权限"]
     FACT["输入准备<br/>短锁一致采样最小 FactSnapshot<br/>行 + 集合 revision · 结束读取事务"]
     SUP["WasmRunnerProvider<br/>受保护 IPC · invocation / attempt / digest<br/>进程监督 · 有界队列 · 代次租约"]
     COMMIT["结果核验与短事务<br/>重验当前权限 / 准入 / 事实 revision<br/>结果 + 命令终态 + 审计 + outbox"]
-    OUTBOX["受管投递 worker<br/>当前服务授权 · 稳定去重<br/>至少一次 · unknown 对账"]
+    OUTBOX["受管技术投递 worker<br/>原人员命令因果链 · 当前外发授权<br/>稳定去重 · unknown 对账"]
     AUTH --> CMD
     RELEASE --> CMD
     CMD --> FACT --> SUP
@@ -40,7 +40,7 @@ flowchart TB
 
   subgraph LATER["P2–P5 · 后续目标 · 独立验收"]
     direction LR
-    BIZ["P2 任务业务 + 蓝图发布<br/>承诺 / 容量 / 独立验收<br/>计划 / diff / 扩展治理"]
+    BIZ["P2 人员协作 + 蓝图发布<br/>承诺 / 容量 / 独立人员验收<br/>计划 / diff / 扩展治理"]
     FLOW["P3 自研持久 Workflow Runtime<br/>分支 / 循环 / 人工等待 / 恢复<br/>复用同一能力、身份与命令契约"]
     DIST["P4–P5 跨组织与扩展<br/>多节点 · 版本升级 · 有限 hostcalls<br/>隐私凭证 / 证明单独选型"]
   end

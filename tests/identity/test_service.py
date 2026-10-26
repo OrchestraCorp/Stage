@@ -1,6 +1,6 @@
 """Verified credentials require current identity facts in the deployment's sole organization."""
 
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from types import SimpleNamespace
 from typing import Any
 
@@ -12,12 +12,8 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.identity.authentication import AuthenticationRejected, AuthenticationUnavailable
 from app.identity.service import (
-    PROFILE_SCHEMA,
     IdentityDenied,
     IdentityService,
-    ProfileConfiguration,
-    content_digest,
-    profile_content,
 )
 from app.main import create_app
 from app.models.execution import TenantGuardTable
@@ -25,7 +21,6 @@ from app.models.identity import PrincipalTable
 from app.models.identity_foundation import (
     AuthenticationProfileTable,
     ExternalIdentityTable,
-    IdentityProviderTable,
     OrganizationAuthenticationBindingTable,
     OrganizationMembershipTable,
     OrganizationRootTable,
@@ -34,102 +29,16 @@ from app.models.identity_foundation import (
 )
 from app.providers.identity import IDENTITY
 from app.runtime import ComponentContext, PluginSpec, RuntimeHost
-from tests.identity.test_authentication import jwks, profile, token
+from tests.support.identity_service import (
+    read,
+    seed,
+)
+from tests.support.identity_tokens import jwks, token
 
 
 @pytest.fixture(scope="module")
 def key() -> rsa.RSAPrivateKey:
     return rsa.generate_private_key(public_exponent=65537, key_size=2048)
-
-
-async def seed(
-    sessions: async_sessionmaker[AsyncSession], *, service: bool = False, include_organization: bool = True
-) -> None:
-    now = datetime.now(UTC) - timedelta(seconds=10)
-    kind = "service" if service else "human"
-    profile_row = AuthenticationProfileTable(
-        profile_ref="local-human",
-        profile_version=1,
-        provider_ref="provider",
-        subject_namespace="keycloak-human-v1",
-        credential_kind="workload_oauth2" if service else "human_oidc",
-        stage_audience="stage-api",
-        config_schema=PROFILE_SCHEMA,
-        config_json=ProfileConfiguration(jwks_url=profile().jwks_url, allowed_clients=("maestro",)).model_dump(
-            mode="json"
-        ),
-    )
-    profile_row.digest = content_digest(profile_content(profile_row))
-    # Flush dependency groups explicitly; no ORM relationships imply an insertion order.
-    async with sessions.begin() as session:
-        session.add_all(
-            [
-                PrincipalTable(principal_ref="person", principal_type=kind),
-                TrustStateTable(trust_ref="trust", purpose="authentication", configuration_digest="a" * 64),
-            ]
-        )
-        if include_organization:
-            session.add_all(
-                [
-                    OrganizationRootTable(organization_ref="tenant-a", display_name="A"),
-                    TenantGuardTable(tenant_ref="tenant-a"),
-                ]
-            )
-        await session.flush()
-        session.add(IdentityProviderTable(provider_ref="provider", issuer_exact=profile().issuer, trust_ref="trust"))
-        await session.flush()
-        session.add(profile_row)
-        session.add(
-            ExternalIdentityTable(
-                external_identity_ref="identity",
-                provider_ref="provider",
-                subject_namespace="keycloak-human-v1",
-                subject_exact="subject-1",
-                principal_ref="person",
-                principal_type=kind,
-                link_evidence_ref="fixture",
-            )
-        )
-        await session.flush()
-        if include_organization:
-            session.add(
-                OrganizationAuthenticationBindingTable(
-                    organization_ref="tenant-a",
-                    binding_ref="binding",
-                    profile_ref="local-human",
-                    profile_version=1,
-                    environment="test",
-                    constraints_json={"allowed_clients": ["maestro"]},
-                    valid_from=now,
-                )
-            )
-            session.add(
-                OrganizationMembershipTable(
-                    organization_ref="tenant-a",
-                    membership_ref="member-a",
-                    principal_ref="person",
-                    principal_type=kind,
-                    source_ref="fixture",
-                    valid_from=now,
-                )
-            )
-        if service:
-            session.add(
-                WorkloadRegistrationTable(
-                    workload_ref="workload",
-                    service_principal_ref="person",
-                    profile_ref="local-human",
-                    profile_version=1,
-                    external_identity_ref="identity",
-                    verified_client_ref="maestro",
-                    environment="test",
-                    valid_from=now,
-                )
-            )
-
-
-async def read(service: IdentityService, bearer: str) -> Any:
-    return await service.read_self(bearer, profile_ref="local-human", profile_version=1)
 
 
 async def test_self_projection_resolves_the_deployment_organization(
@@ -164,6 +73,24 @@ async def test_verified_identity_without_membership_is_denied(
     ) as client:
         with pytest.raises(IdentityDenied):
             await read(IdentityService(persistence_sessions, environment="test", http_client=client), token(key))
+
+
+async def test_external_subject_preserves_unicode_and_exact_case(
+    persistence_sessions: async_sessionmaker[AsyncSession],
+    key: rsa.RSAPrivateKey,
+) -> None:
+    await seed(persistence_sessions)
+    subject = "Subject:用户é"
+    async with persistence_sessions.begin() as session:
+        await session.execute(update(ExternalIdentityTable).values(subject_exact=subject))
+    async with httpx.AsyncClient(
+        transport=httpx.MockTransport(lambda _: httpx.Response(200, json=jwks(key)))
+    ) as client:
+        service = IdentityService(persistence_sessions, environment="test", http_client=client)
+        assert (await read(service, token(key, claims={"sub": subject}))).principal_ref == "person"
+        for different in (subject.lower(), "Subject:用户e\u0301"):
+            with pytest.raises(IdentityDenied):
+                await read(service, token(key, claims={"sub": different}))
 
 
 async def test_missing_deployment_organization_is_unavailable(

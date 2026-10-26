@@ -6,7 +6,7 @@ from uuid import uuid4
 
 import pytest
 import pytest_asyncio
-from sqlalchemy import MetaData, Table, select
+from sqlalchemy import ForeignKeyConstraint, MetaData, Table, select
 from sqlalchemy.dialects import mysql, postgresql, sqlite
 from sqlalchemy.engine import Dialect, make_url
 from sqlalchemy.exc import IntegrityError, StatementError
@@ -77,6 +77,14 @@ async def storage(request: pytest.FixtureRequest) -> AsyncIterator[tuple[AsyncEn
     for model in (PrincipalTable, RoleAssignmentTable, RelationTupleTable, WorkItemTable):
         original = cast(Table, model.__table__)
         table = original.to_metadata(metadata, name=prefix + original.name)
+        # These isolated probes test value encodings, not the authorization FK
+        # graph. Schema/loader integration tests exercise the real references.
+        for constraint in tuple(table.constraints):
+            if isinstance(constraint, ForeignKeyConstraint):
+                table.constraints.remove(constraint)
+                for foreign_key in constraint.elements:
+                    table.foreign_keys.discard(foreign_key)
+                    foreign_key.parent.foreign_keys.discard(foreign_key)
         # PostgreSQL unique constraints create schema-wide named indexes.
         # Probe tables must coexist with tables created by Alembic above.
         for constraint in table.constraints:

@@ -20,8 +20,16 @@ class AuthorizationDenied(ExecutionError):
     code = "AUTHORIZATION_DENIED"
 
 
+class ObjectVersionConflict(AuthorizationDenied):
+    code = "OBJECT_VERSION_CONFLICT"
+
+
 class ContextExpired(ExecutionError):
     code = "EXECUTION_CONTEXT_EXPIRED"
+
+
+class RequestDeadlineExceeded(ExecutionError):
+    code = "REQUEST_DEADLINE_EXCEEDED"
 
 
 class TenantNotProvisioned(ExecutionError):

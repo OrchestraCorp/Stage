@@ -1,16 +1,18 @@
 ---
 title: Stage 一期基座架构与验收
 status: design-proposal
-implementation_status: p1a-complete-p1b-first-slice-implemented-p1c-p1d-pending
+implementation_status: p1b4-assignments-login-mfa-server-implemented-client-and-full-p1-pending
 policy_effect: none
-revised_date: 2026-10-25
+revised_date: 2026-10-26
 ---
 
 # Stage 一期基座架构与验收
 
-部署目标已收敛为**一个组织授权根一套 Stage、一套数据库、一个环境**。本期不建设多租户选择/管理；根是信任与治理边界，不等同于一个法人公司。集团、子公司、部门等业务组织单元以后按需建模，部门和项目是 scope。原 `tenant_*` 字段及 guard 保留兼容并绑定唯一组织根，以下边界验收以根单例、主体、任职与 scope 为准。公开业务接口统一 `/api/v1`；详见[组织授权根语义](organization-root-semantics.md)和[私有化部署与 API v1](private-deployment-api-v1.md)。历史验收记录中的多公司 fixture 不再作为当前产品范围。
+部署目标已收敛为**一个组织授权根一套 Stage、一套数据库、一个环境**。本期不建设多租户选择/管理；根是信任与治理边界，不等同于一个法人公司。集团、子公司、部门等业务组织单元以后按需建模，其访问范围可由 scope 表达，但 scope 不自动等同组织树。原 `tenant_*` 字段及 guard 保留兼容并绑定唯一组织根，以下边界验收以根单例、主体、任职与 scope 为准。公开业务接口统一 `/api/v1`；详见[组织授权根语义](organization-root-semantics.md)和[私有化部署与 API v1](private-deployment-api-v1.md)。历史验收记录中的多公司 fixture 不再作为当前产品范围。
 
-一期按“类 Cordis＋身份验证＋WASM 基座优先”推进。P1a 已实现 RuntimeHost、资源/依赖/事件生命周期、PG/Redis provider、命令/投递组件和系统 HTTP 探针，并在云设备验证。P1b 首条切片已实现真实认证、主体映射、tenant/membership、最小身份读取与受控 bootstrap，并通过 PG17 与真实测试 IdP 验证；完整角色/服务/委托授权、WASM 与签名准入继续分段交付。当前证据见[首条切片记录](reviews/p1b-first-slice-2026-10-25.md)，完整任务业务保留到[后续业务切片](business-slice-plan.md)。
+一期按组件运行时、真实人员身份与当前授权、受控 WASM 和签名准入的共同基座推进。P1a 已有生命周期、PG/Redis provider 与内部命令/投递底座；P1b.1/.2 已有真实身份与单任职/角色版本/scope/resource/直接 ACL。P1b.3 接通人员证据到提交前重验，以已有 WorkItem 标题/说明编辑和结果查询验证最小闭环，见[P1b.3 记录](reviews/p1b3-human-work-2026-10-25.md)。Stage 最小路径收尾不等于完整 P1b：[P1b.4](reviews/p1b4-assignments-mfa-2026-10-26.md)已交付本人任职发现和组织统一登录 MFA 服务端能力，密码＋TOTP 经隔离真实 IdP 与 Stage 链路验证；随后原生认证模块补齐服务端因素绑定/恢复与会话管理；真实 Maestro 客户端与剩余适用 I1 项仍待验收；正式人员与权限管理仍缺产品接口，开发 CLI 不替代它们。WASM 与签名继续按阶段推进；完整任务业务保留到[后续业务切片](business-slice-plan.md)。
+
+早期协作模型确定为**人员—公司—人员**，Agent 是人员监督使用的工具，不作为独立成员、任职者、承诺者或验收者，不建设 Agent 专属业务接口。当前 HUMAN 授权 loader 符合此边界。独立 Agent 身份、承载绑定和 Delegation 不属于一期门槛，也不预排到后续固定阶段；ServiceGrant 仅在真实技术后台任务需要时另案设计。已实现的 service 认证继续保留为技术来源验证，不能据此取得人员业务权限。详见[人员—公司—人员协作边界](people-company-collaboration.md)。
 
 本文件是一期范围的权威入口。对象定义见[核心对象](core-object-contracts.md)，身份协议见[身份与授权](identity-and-authorization.md)，WASM 见[宿主设计](wasm-host-design.md)，历史表达修正与来源见[核对记录](design-review-2026-10-24.md)。
 
@@ -24,13 +26,13 @@ revised_date: 2026-10-25
 
 - 自研 Python async Core：声明依赖、provider、资源 owner、代次、就绪、租约、排空及失败报告；完成原定 34 个 Core 场景和补充 12 个 S1 边界场景。
 - 能力、身份上下文、命令/结果、发布清单、runner 调用等共同契约；未来 WorkflowRun 的边界一并定义。
-- 至少一个真实认证协议 adapter 对本地测试 IdP 的集成路径；包含人和服务身份、企业成员、任职/服务授权、有限委托与撤销竞争。fixture 仅辅助隔离测试。
+- 至少一个真实认证协议 adapter 对本地测试 IdP 的集成路径；闭合人员身份、登录 MFA、当前成员、本人任职发现与选择、资源关系、撤销竞争和真实认证证据到命令的重验。已有技术服务认证单独保留验证，fixture 仅辅助隔离测试。
 - WASM 宿主与独立 runner 进程：固定标准 Core WASM / ABI、纯计算、有限输入输出、无任意宿主导入、受控编译与执行预算。
 - 最小制品批准与签名准入：冻结 manifest、授权批准记录、验签/摘要/环境/版本/撤销检查，受控激活；不要求通用发布画布。
 - 一个 `EvaluateQualification` 资格评估演示命令，串联当前身份、真实受限输入、WASM、提交前重验、幂等、审计、outbox 与恢复。
 - 生命周期与故障验收：runner 崩溃/超时、provider 换代、身份或发布撤销、输入变化、重复请求和提交回执丢失。
 
-一期暂不交付：通用工作流 DSL / 画布、完整任务与容量产品、生产任意插件上传、进程内源码 HMR、分布式共识、跨组织原子事务、隐私证明系统或多种密码学方案。生产 IdP 品牌、KMS 和运行平台选择待确定；本地协议和签名验证不能因此只留空接口。
+一期暂不交付：通用工作流 DSL / 画布、完整任务与容量产品、生产任意插件上传、进程内源码 HMR、分布式共识、跨组织原子事务、隐私证明系统或多种密码学方案。生产原生认证部署与恢复责任、KMS 和运行平台选择待确定；本地协议和签名验证不能因此只留空接口。
 
 ## 2. 部署与信任边界
 
@@ -49,9 +51,11 @@ revised_date: 2026-10-25
 
 ## 3. 组件装配和共同对象
 
-受信任 composition root 装配 RuntimeHost、能力注册、认证适配、可信 loader、authz、CommandKernel、UoWFactory、制品信任、WasmExecutor provider 和 outbox worker。启动必需依赖不满足时 readiness 失败，已有 `/health` liveness 含义保持。
+一期目标的受信任 composition root 装配 RuntimeHost、固定能力/命令实现、认证适配、可信 loader、authz、CommandKernel、UoWFactory、制品信任、WasmExecutor provider 和 outbox worker。当前仅固定 CommandSpec 集合与人员元数据服务已接通，WASM/发布仍待实现，不要求先建通用能力注册平台。启动必需依赖不满足时 readiness 失败，已有 `/health` liveness 含义保持。
 
 WasmExecutor provider 管理引擎配置和 runner 监督；每次调用获得代次租约。退役先拒绝新调用，再等待或取消纯计算并确认 worker 已结束，最后释放资源。未确认终止时不能报告成功清理。原 Core 的 default drain 规则不因引入 runner 被放宽。
+
+可信业务服务、命令集合和规则实现可按领域模块组合，独立资源/生命周期的服务由插件管理；不是每个函数或持久记录都需要一个插件。运行时装配不授予业务权限，也不允许业务插件自改平台信任配置。
 
 AuthenticationEvidence、ExecutionContext、AuthorizationContext 分别描述已验证认证、一次执行的可信身份引用、当前动作内的授权投影；不能存为共享 provider 的当前用户。能力注册与获得服务对象也不等于主体获得业务权限。
 
@@ -62,13 +66,13 @@ P1 在接口评审时定义后续 WorkflowDefinition/Run/Step/Wait 的引用关�
 | 阶段 | 主要交付 | 退出门槛 |
 |---|---|---|
 | P1a：Core 与共同契约 | 按 P1a.1资源依赖 → P1a.2安全退出与组合 → P1a.3应用装配交付；Core 不依赖身份/业务类型 | C1–C8 共 34 项＋S1 共 12 项、共享语义与 D-01～D-09 证据、真实 provider 和既有回归；此时不宣称 IAM 或 WASM 已验收 |
-| P1b：真实身份与当前授权 | 实际协议 adapter、本地测试 IdP、可信身份映射、成员/任职/服务授权/委托、guard 与认证证据；绑定意图的批准验证 | 按身份规格分组完成P1b适用I1场景；签名/WASM联调项在P1c/P1d验收；fixture仅辅助 |
+| P1b：真实身份与当前授权 | 实际协议 adapter、本地测试 IdP、人员身份映射、登录 MFA、本人任职发现与选择、成员/关系、guard 与认证证据、命令重验 | 客户端及登录 MFA 端到端验收、当前人员范围适用 I1 项；明确正式人员/权限管理缺口。独立 Agent、Delegation 与 ServiceGrant 后置且不计通过；绑定意图的批准和签名/WASM 在 P1c/P1d 验收 |
 | P1c：WASM 与制品准入 | 固定 ABI、独立受控 runner、原始模块验证编译、预算、IPC、批准签名清单、受控激活与撤销 | W1中准入/ABI/预算/IPC/生命周期场景通过，非法制品/权限/imports/预算均拒绝，真实签名验证而非mock allow；业务联调项在P1d完成 |
 | P1d：基座联调 | EvaluateQualification、提交前重验、幂等/审计/outbox、多主体/部门 scope 并发、升级与故障恢复、运行手册 | W1-01～28、所选profile适用I1项、O1-01～07与F1-01～12通过；O1-08留P3。未选profile不可计通过；生产部署另验收 |
 
-协议可以并行设计，实现与验收按依赖推进。身份提供方尚未选定不阻止用隔离测试 IdP 验证真实协议；WASM 引擎的精确版本、平台能力和预算必须在实现前锁定，不能用“latest＋无限制”代替决策。
+协议可以并行设计，实现与验收按依赖推进。本地认证已选择[自研最小模块](native-authentication-design.md)，旧隔离 IdP 用于迁移比较与兼容测试；WASM 引擎的精确版本、平台能力和预算必须在实现前锁定，不能用“latest＋无限制”代替决策。
 
-P1b 内部按[实施入口](p1b-implementation-entry.md)四个切片推进，表结构以[已对齐设计](identity-schema-design.md)为准。首条认证/成员读取切片不等同完整 P1b；真实签名 token 验证测试与成熟 IdP 授权码＋PKCE 联调分别记录，不能互相代替。
+P1b 内部按[实施入口](p1b-implementation-entry.md)四个切片推进，表结构以[已对齐设计](identity-schema-design.md)为准。首条认证/成员读取和元数据编辑切片均不等同完整 P1b；登录 MFA 不以 WASM 或业务批准实现为前提，登录因素已选密码＋TOTP，组织策略绑定精确 profile/version、ACR/AMR 和认证年龄；真实桌面与生产接入仍分别验收。真实签名 token 验证测试与成熟 IdP 授权码＋PKCE 联调分别记录，不能互相代替。
 
 ## 5. 最小垂直切片：EvaluateQualification
 
@@ -91,7 +95,7 @@ FactSnapshot 包含参与计算的行版本和查询集合 revision。所有可�
 
 P1设独立的 `QualificationFactSet(tenant_id, scope_id, fact_kind, revision)` 行，明确每类投影的唯一owner与写命令。事实增删改、集合成员变化和归属移动必须在同一事务持tenant guard及相关FactSet行锁，更新事实并递增所有受影响集合revision；空集合也有revision行，跨scope移动同时推进两端。外部同步经相同受权写命令，不允许旁路直接写表。初次读取也按统一锁序短持guard/FactSet锁，在锁内读取数据与revision形成一致快照，再提交释放；禁止先读旧数据、后读新revision后当作有效快照。相关状态如受时间窗口影响，额外记录最早失效时间，提交时核验；缺乏完整writer与时间协议的事实源暂不接入。
 
-演示一家企业的两个部门/项目使用相同能力协议和不同受控规则包，验证同一主体在不同任职/scope、不同委托之间的边界；不以进程内 realm 代替业务授权。模块输出即使写出 allow=true，也不能改变宿主的 authz 判定。
+演示一家企业的两个部门/项目使用相同能力协议和不同受控规则包，验证不同人员、同一人员的不同任职/scope 之间的边界；不以进程内 realm 代替业务授权。模块输出即使写出 allow=true，也不能改变宿主的 authz 判定。
 
 ## 6. 最小批准、签名和激活
 
@@ -101,7 +105,7 @@ P1 发布对象是固定计算能力的 manifest，字段边界见[核心对象]
 
 此处缺可信配置的 readiness 约束针对后续签名批准/激活能力组合。当前基础 `/ready` 表示 runtime、必需依赖及数据库 schema 就绪，不代表部署企业身份已初始化；没有登记唯一组织根、profile、来源准入或成员的身份请求由入口拒绝。P1b 首条 bootstrap 只登记虚构身份与成员，不创建管理任职或发布权。
 
-批准动作绑定精确 manifest digest 和一次性意图；身份模块核验批准人的当前权限和认证证据。发布工具/服务只能签经过检查的内容。Passkey/WebAuthn 绑定批准的验证语义在 P1 范围内，不要求先建完整审批产品；普通登录或 MFA 成功不能直接记为用户已签署任意文件。
+批准动作绑定精确 manifest digest 和一次性意图；身份模块核验批准人的当前权限和认证证据。发布工具/服务只能签经过检查的内容。绑定意图的批准验证在 P1c/P1d 范围内，实施前选择 Stage RP WebAuthn 或 IdP step-up profile，不默认选定 Passkey，也不要求先建完整审批产品；普通登录或 MFA 成功不能直接记为用户已签署任意文件。
 
 签名格式与算法必须采用固定 profile 和成熟实现，拒绝算法降级、未知 key 或跨环境 key。开发签名密钥与生产分开；开发密钥不能让产物越过生产门槛。身份凭据密钥与组织发布密钥分别管理，轮换和撤销分别记录。
 
@@ -119,15 +123,17 @@ TrustState记录平台受控 `trust_config_revision / key_status_revision`，key
 
 全局主体禁用、信任根轮换等变更必须确定受影响范围并使提交路径观察到新状态；不能可靠覆盖时 P1 拒绝该类变更，不能伪称全局即时撤销。外部 IdP JWT 的撤销可见窗口独立记录，不把本地 guard 当成能立即观察外部一切事件。
 
-本轮在身份自身读取与离线开发撤销路径实现并验证全局共享/独占锁协议：读取对相关 TrustState 与 Principal 行持 `FOR SHARE`，对应身份/信任变更持 `FOR UPDATE`，随后按统一顺序取得 tenant guard 的独占锁。PG17 用真实 blocking PID 验证撤销先取得锁、读取先取得锁及主体撤销竞争（历史跨租户 fixture 仅保留验证记录），见实施记录。该结论只覆盖当前身份读取和离线 principal/tenant/membership/profile 撤销；旧 CommandKernel 尚未接入全局锁，不能推导业务写路径已经具备此保证。
+人员身份读取与公开元数据命令采用共同全局锁协议：相关 TrustState 与 Principal 行按顺序持 `FOR SHARE`，再取得组织 guard，随后读取授权和资源；对应身份/信任撤销持相应 `FOR UPDATE`。`AuthenticatedAuthorizationLoader` 连接真实认证证据与当前单任职授权，命令提交前重验 profile/trust/外部映射、来源准入、成员及有效截止。网络验证不占数据库锁，公开请求不接收自报的 ExecutionContext。身份及授权历史竞争证据分别保留，新增人员命令的真实 PG 竞争与 HTTP 验收见[P1b.3 记录](reviews/p1b3-human-work-2026-10-25.md)。
 
 后续受控提交继续采用相同锁序：锁外只发现候选依赖，锁后重载；依赖集合改变时整笔有界重试，不能持 tenant guard 再补前序锁。新增 mapping/profile/binding/member writer 必须纳入共同协议；无法建立共同锁点并覆盖唯一部署组织 guard 时拒绝变更。
 
-tenant 停用、成员/任职/关系/委托/服务授权及租户来源准入变更，与 tenant epoch 推进同事务；全局主体与信任分别推进 identity epoch/revision。企业请求锁后重验部署组织状态、认证映射/registration、来源准入和有效截止。身份写使用变更前事实验证操作者，随后持久变更和审计，不能直接放入禁止修改授权事实的旧业务 handler。首条只读身份入口不授予业务能力。
+组织根停用、成员/任职/关系及组织来源准入变更，与兼容 tenant epoch 推进同事务；全局主体与信任分别推进 identity epoch/revision。企业请求锁后重验部署组织状态、认证映射、来源准入和有效截止。已有技术服务认证路径继续核验其 registration，但不能作为人类命令的身份依据。身份写使用变更前事实验证操作者，随后持久变更和审计，不能直接放入禁止修改授权事实的旧业务 handler。首条只读身份入口不授予业务能力。
 
 同一逻辑命令有唯一幂等范围，参数摘要独立保存。并行重复请求只能有一个确定提交；输入不一致则冲突。结果丢失先按原命令身份查询，禁止更换 key 后盲目重放。身份/权限变化后的结果查询与敏感错误也要校验当前读权限。
 
 业务结果、命令终态、审计与 outbox 同事务提交。outbox 至少一次投递，稳定去重键、租约、独立 attempt 和回执状态可核对；外部接收端不支持幂等或查询时，明确保留 unknown，不承诺 exactly-once。
+
+人员发起的延迟动作或队列工作必须保留原人员、成员经历、选定任职与原命令因果链，在实际执行与提交前按当前权限重验。Worker、runner 和 `ctx.spawn()` 任务是技术执行设施，不能从队列记录取得永久人员权限，也不能将工具辅助自动记为人工确认；需要人工确认的动作必须验证实际确认记录。具体延迟身份凭据与恢复协议必须先独立验收，不通过保存原 bearer token 实现。
 
 2026-10-25 选型已确定为 PostgreSQL 17＋Redis 8：PostgreSQL 是唯一长期主库，MySQL 退出受支持配置与新门禁。SQLite 只做适用子集的快速检查。P1 新增身份、发布和结果模型的迁移/锁/撤销竞争须在 PostgreSQL 17 真库验证；现有迁移历史与验证 JSON 保留，不改写成当前已验收结论。
 
@@ -135,13 +141,13 @@ Redis 只作可重建缓存、非权威短期协调和可丢失唤醒，不接�
 
 ## 8. 持久模型最小范围
 
-- Principal、ExternalIdentity、TenantMembership、RoleAssignment、Delegation / ServiceGrant 及 AuthorizationGuard。
+- 人类 Principal、ExternalIdentity、OrganizationMembership（兼容物理表 `tenant_membership`）、RoleAssignment、角色版本、scope/resource/关系及 AuthorizationGuard；已实现的技术服务认证记录保留。
 - 固定能力定义/实现引用、Artifact/Manifest、ApprovalIntent/Evidence、Activation、TrustState与key状态；QualificationFactSet负责资格输入集合revision。
 - CommandExecution、ExecutionAttempt、FactSnapshot 引用、QualificationEvaluation、AuditEntry、OutboxMessage 与投递 attempt。
 
 字段草案与存储权威见[核心对象](core-object-contracts.md)及身份/WASM 专项文档。测试资格事实可以是有限虚构 schema；不提前引入完整任务、承诺和容量产品模型。已有四类底板模型保留，后续迁移不得无故重置用户数据。
 
-身份 schema 补充固定成员经历、角色版本、动作—目标配对和租户认证来源准入。迁移先增量扩展，保留旧 ID/审计；旧行没有可信 tenant/membership 映射时保持隔离，不补默认公司、不解析 scope 前缀，阻止最终约束收紧和完整角色 loader 切换。首次 bootstrap 与授予在同一事务记录配置摘要及唯一环境/类型，幂等重放不重新开权。
+身份 schema 固定成员经历、角色版本、动作与资源范围、组织认证来源准入。AgentRegistration、AgentWorkloadBinding、Delegation/term 不在一期建表清单，ServiceGrant 不作为人员或 AI 辅助调用的前置依赖。迁移先增量扩展，保留旧 ID/审计；旧行没有可信组织/membership 映射时保持隔离，不补默认公司、不解析 scope 前缀，阻止全表约束收紧与历史权限全量切换。内部新 loader 只读取完整新引用，不接受未映射旧行。首次 bootstrap 与授权开发变更分别在其事务中记录配置摘要/操作键和结果，重放不重新开权。
 
 ## 9. 一期联调验收
 
@@ -149,10 +155,10 @@ Redis 只作可重建缓存、非权威短期协调和可丢失唤醒，不接�
 
 | ID | 验收内容 |
 |---|---|
-| F1-01 | 真实测试 IdP 凭据→内部主体→本企业成员资格→正确 manifest→WASM→提交结果完整贯通，HTTP/CLI/worker 使用同一契约 |
+| F1-01 | 真实测试 IdP 人类凭据→内部人员主体→本企业成员资格→正确 manifest→WASM→提交结果完整贯通；HTTP/CLI 使用同一命令契约，技术 Worker 不取得独立业务成员身份 |
 | F1-02 | 同企业两部门/项目及两主体并发评估，不共享可变身份、WASM memory、句柄或敏感日志 |
 | F1-03 | 输入/结果中的伪造 tenant、角色、actor、module digest 均不能改变宿主权威上下文 |
-| F1-04 | 计算期间任职、委托、主体或包被撤销，提交路径按明确竞态顺序拒绝过期结果 |
+| F1-04 | 计算期间成员、任职、主体、资源关系或包被撤销，提交路径按明确竞态顺序拒绝过期结果；AI 辅助不绕过人员当前权限 |
 | F1-05 | 计算期间资格集合新增/删除或对象版本变化，检测冲突；无无法说明来源的结果 |
 | F1-06 | 相同命令重复提交、IPC迟到/重复回执、worker重启，不重复写评估结果与outbox |
 | F1-07 | runner 在编译、start、执行、输出各阶段崩溃/超限，宿主保持响应并回收资源；失败状态准确 |

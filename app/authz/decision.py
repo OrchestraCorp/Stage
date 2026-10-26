@@ -69,10 +69,38 @@ class AuthorizationEngine:
             return self._deny(context, now, "assignment.reference.missing")
         if any(not scope or not scope.strip() for scope in (*assignment.scope_refs, *context.resource_scope_refs)):
             return self._deny(context, now, "scope.invalid")
-        try:
-            role = RoleCode(assignment.role_code)
-        except ValueError:
-            return self._deny(context, now, "role.unknown")
+        role_label = assignment.role_code
+        if assignment.permission_actions is None:
+            if any(
+                value is not None
+                for value in (
+                    assignment.role_ref,
+                    assignment.role_revision,
+                    assignment.role_version_digest,
+                    assignment.membership_ref,
+                )
+            ):
+                return self._deny(context, now, "role.version.incomplete")
+            try:
+                granted = frozenset(str(action) for action in permissions_of((RoleCode(role_label),)))
+            except ValueError:
+                return self._deny(context, now, "role.unknown")
+        else:
+            if (
+                not role_label
+                or not assignment.role_ref
+                or not assignment.membership_ref
+                or type(assignment.role_revision) is not int
+                or assignment.role_revision < 1
+                or not assignment.role_version_digest
+                or len(assignment.role_version_digest) != 64
+                or any(ch not in "0123456789abcdef" for ch in assignment.role_version_digest)
+                or not isinstance(assignment.permission_actions, tuple)
+            ):
+                return self._deny(context, now, "role.version.invalid")
+            if any(action not in ACTION_POLICIES for action in assignment.permission_actions):
+                return self._deny(context, now, "role.action.unknown")
+            granted = frozenset(assignment.permission_actions)
 
         effective_subjects: tuple[str, ...] = (context.subject_ref,)
         if principal_type == PrincipalType.AGENT:
@@ -145,9 +173,8 @@ class AuthorizationEngine:
         ):
             return self._deny(context, now, "scope.missing")
 
-        granted = permissions_of((role,))
         if permission not in granted:
-            return self._deny(context, now, "permission.missing", matched_roles=(role.value,))
+            return self._deny(context, now, "permission.missing", matched_roles=(role_label,))
 
         matched_relations: list[str] = []
         for group in policy.relation_any_of:
@@ -163,7 +190,7 @@ class AuthorizationEngine:
                     context,
                     now,
                     "relation.missing:" + "|".join(sorted(group)),
-                    matched_roles=(role.value,),
+                    matched_roles=(role_label,),
                     matched_relations=tuple(matched_relations),
                 )
             matched_relations.append(matched)
@@ -178,7 +205,7 @@ class AuthorizationEngine:
                 context,
                 now,
                 *failed,
-                matched_roles=(role.value,),
+                matched_roles=(role_label,),
                 matched_relations=tuple(matched_relations),
             )
         return AuthorizationDecision(
@@ -186,7 +213,7 @@ class AuthorizationEngine:
             action=context.action,
             subject_ref=context.subject_ref,
             resource_ref=context.resource_ref,
-            matched_roles=(role.value,),
+            matched_roles=(role_label,),
             matched_relations=tuple(matched_relations),
             policy_release_id=BUILTIN_POLICY_RELEASE_ID,
             evaluated_at=now,

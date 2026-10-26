@@ -155,6 +155,31 @@ class OrganizationAuthenticationBindingTable(VersionMixin, StatusMixin, Validity
     constraints_json: Mapped[dict[str, Any]] = mapped_column(_json(), nullable=False)
 
 
+class OrganizationHumanAuthenticationPolicyTable(VersionMixin, TimestampMixin, Base):
+    """Organization-wide human assurance; exact profile rules cannot be selected around."""
+
+    __tablename__ = "organization_human_authentication_policy"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ("organization_ref",),
+            ("organization_root.organization_ref",),
+            name="fk_human_authentication_policy_organization",
+        ),
+        CheckConstraint("version > 0", name="ck_human_authentication_policy_version"),
+        CheckConstraint("mode IN ('disabled', 'required')", name="ck_human_authentication_policy_mode"),
+        CheckConstraint(
+            "(mode = 'disabled' AND max_auth_age_seconds IS NULL) OR "
+            "(mode = 'required' AND max_auth_age_seconds IS NOT NULL AND max_auth_age_seconds BETWEEN 1 AND 86400)",
+            name="ck_human_authentication_policy_age",
+        ),
+    )
+
+    organization_ref: Mapped[str] = mapped_column(ExactString(128), primary_key=True)
+    mode: Mapped[str] = mapped_column(ExactString(32), nullable=False)
+    rules_json: Mapped[list[dict[str, Any]]] = mapped_column(_json(), nullable=False)
+    max_auth_age_seconds: Mapped[int | None] = mapped_column(BigInteger)
+
+
 class ExternalIdentityTable(VersionMixin, StatusMixin, TimestampMixin, Base):
     __tablename__ = "external_identity"
     __table_args__ = (

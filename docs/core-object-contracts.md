@@ -1,7 +1,7 @@
 ---
 title: Stage 核心对象与契约对齐
 status: design-proposal
-implementation_status: p1a-implemented-p1b-first-slice-implemented
+implementation_status: p1b3-human-work-implemented-full-p1-pending
 policy_effect: none
 review_date: 2026-10-24
 revised_date: 2026-10-25
@@ -11,14 +11,16 @@ revised_date: 2026-10-25
 
 当前采用企业私有化部署：一套数据库一个组织授权根和一个环境。以下 `tenant` / `TenantMembership` 等沿用内部存储命名，指服务端确定的组织根；不形成客户端选择组织的协议。集团、子公司、部门等业务组织单元以后按需建模；部门和项目使用 scope，scope 不自动等同组织树。HTTP `/api/v1` 对外使用 `organization_ref`。详见[组织授权根语义](organization-root-semantics.md)和[私有化部署与 API v1](private-deployment-api-v1.md)。
 
-本文统一组件、身份、WASM、发布与后续流程的词汇和责任。字段是完整目标的逻辑契约；P1a 与 P1b 首条认证/成员读取切片已实现，实际 Python 类、数据库 schema 和 API 以各阶段[实施记录](reviews/p1b-first-slice-2026-10-25.md)为准。不能从某个对象名称已有代码推导其全部合同已完成。运行时三层边界和能力组合的阶段决策见[运行时演进与能力组合决策](runtime-evolution-and-composition.md)。
+本文统一组件、身份、WASM、发布与后续流程的词汇和责任。字段是完整目标的逻辑契约；P1a、身份/成员读取、单任职数据库授权及 P1b.3 人员工作项元数据命令已分切片实现。实际 Python 类、schema、API 与验收见[P1b.3 记录](reviews/p1b3-human-work-2026-10-25.md)及其前置记录；不存在从对象名称推导整个目标已完成的约定。三层运行时与能力组合的阶段决策见[演进决策](runtime-evolution-and-composition.md)。
+
+**一期协作边界（2026-10-25 对齐）**：采用“人员—公司—人员”。公司承载共同规则、成员与协作事实，人员持有任职、作出业务决定并承担责任；Agent 仅作为人员监督下的工具，不独立成为公司成员、任职主体或协作者，也不另设 Agent 业务接口。既有 `human / agent / service` 枚举、服务认证和历史数据保留；它们不使独立 Agent 授权成为一期需求。下列 Agent 登记、承载绑定、Delegation 与通用 ServiceGrant 仅为后置候选，不是一期实施约束，也不承诺后续阶段。详见[人员—公司—人员协作边界](people-company-collaboration.md)。
 
 ## 1. 共同约定
 
 - 业务引用包含 `tenant_id + object_id`，保留为内部兼容引用，由宿主填入唯一部署组织并验证所属关系。主体与信任配置在部署级作用域，不能把其 ID 当作任意资源权限。
 - 标识与版本分开：稳定 ID 标识对象；revision 表示可变对象的乐观版本；digest 标识不可变字节；generation 表示组件一次激活。四者不得互相代替。
 - 定义使用稳定 ID 与 schema/接口版本，运行记录使用独立 ID 与因果引用。显示名称、邮箱、角色名称和画布坐标都不是安全标识。
-- 外部输入是请求选择项。身份、部署组织归属、任职、委托、资源属性、信任根与当前授权由服务端构造或从受信任来源验证。
+- 外部输入是请求选择项。一期身份、部署组织归属、当前成员、选定任职、资源属性、信任根与当前授权由服务端构造或从受信任来源验证；Agent 生成内容不能决定身份、授权或人工确认。
 - 所有成功声明说明成功边界：计算返回、宿主验证、数据库提交、外部确认分别表达。时间统一保存 UTC，展示时另用用户时区。
 - P1 拒绝无法解释的额外字段、重复键、未登记版本与无限资源预算。确切序列化、最大长度和算法由各子规格冻结；“有一个 dict”不代表已有稳定协议。
 
@@ -30,6 +32,8 @@ Stage 的三层运行边界是：Component Runtime 管 provider、连接器、WA
 
 ### 2.1 能力定义与运行绑定
 
+本表中 CapabilitySpec/CapabilityBinding 是 P2 通用组合的目标对象，尚无相应运行时类或独立注册表。当前 CommandKernel 只接受显式传入的固定 CommandSpec 集合，其在途调用由外围服务组件租约保护；ServiceKey 与 BindingIdentity 已在 Core 实现。
+
 | 对象 | 关键字段 | 权威与生命周期 |
 |---|---|---|
 | `CapabilitySpec` | capability_id、interface_version、input/output_schema_digest、required_action、effect_kind、implementation_digest、resource_profile | 平台审核的不可变能力定义；声明执行什么，不授予调用权 |
@@ -39,7 +43,7 @@ Stage 的三层运行边界是：Component Runtime 管 provider、连接器、WA
 
 命名避免歧义：某个 Python provider 提供服务对象、某个业务能力已注册、某个主体获准执行动作，是三个独立事实。realm 控制服务解析，兼容字段 tenant 表示部署组织，scope 表示企业内授权范围，三者不可互换。
 
-2026-10-25 的[框架实施规格](framework-foundation.md)进一步规定：Core 的 ServiceLease/CallScope 不含身份，由应用 ExecutionContext 组合持有；每次登记另有 registration_id，旧句柄不得影响同 owner/generation 下重新登记的能力。命令注册和业务 schema 留在应用层，不进入通用 Core。
+2026-10-25 的[框架实施规格](framework-foundation.md)进一步规定：Core 的 ServiceLease/CallScope 不含身份，由应用 ExecutionContext 组合持有；服务与监听登记另有 registration_id，旧句柄不得影响同 owner/generation 下的新登记。未来命令贡献登记和业务 schema 留在应用层，不进入通用 Core；当前固定 CommandSpec 尚无独立登记句柄。
 
 `effect_kind` 草案至少区分 `pure`、`query`、`transactional_command`、`external_delivery`。重试规则、幂等和执行边界与类别关联；能力作者不能通过改标签绕过宿主检查。P1 WASM 仅承载 `pure` 计算，由固定可信 handler 组织输入与提交。
 
@@ -50,15 +54,24 @@ Stage 的三层运行边界是：Component Runtime 管 provider、连接器、WA
 | `Principal / ExternalIdentity` | 内部主体；受信任 issuer/subject 与主体的已验证关联 | 凭据身份与真实自然人关系不是同一保证；多账号关联需单独证据 |
 | `TenantMembership / RoleAssignment` | 一次组织根内成员经历；固定该经历、角色版本和 scope 的具体任职 | 同根/principal 最多一条未终结成员经历，重入使用新 ref；新角色版本不自动迁移旧任职；蓝图岗位不自动生成任职 |
 | `AuthenticationProfile / TenantAuthenticationBinding` | 明确凭据验证语义；企业接受的 profile/version、环境及 client/assurance 条件 | 账号关联不扩大企业接受来源；同 provider/namespace 不跨版本重解释主体类型和映射语义 |
-| `AgentRegistration / AgentWorkloadBinding` | 固定 Agent 成员经历、责任方与实际 service/workload 成员经历、环境 | 重新加入或改责任方新建登记；binding、delegation 不通过稳定 agent_ref 自动跟随恢复 |
-| `Delegation / ServiceGrant` | 谁授权谁、逐条 action-target term、期限、状态、可否再委托 | 动作和目标成对、目标 resource/scope 二选一；不自动合并岗位；Agent 承载和自主服务授权分别表达 |
+| `WorkloadRegistration` | 服务主体、受信任认证来源、client、环境、状态与版本 | 已实现的技术服务认证；不自动成为协作者或获得人类业务权限 |
 | `AuthenticationEvidence` | principal_ref、凭据类型、issuer、audience、认证时间/强度、到期、验证来源 | 记录已验证认证证据，不携带业务 allow 结论；持久记录不保存原始 bearer token |
-| `ExecutionContext` | execution_id、actor、effective_subject、tenant、assignment/delegation/grant_refs、causation、deadline、plan/manifest_refs | 每次宿主执行重新构造，禁止客户端自填可信结果；runner 只获得必要子集 |
+| `ExecutionContext` | execution_id、已认证人员 actor、组织根、当前 membership、选定 assignment、causation、deadline、plan/manifest_refs | 一期人员业务命令由宿主构造；当前兼容类型中的 delegation/grant 不构成一期需求，runner 只获得必要子集 |
 | `AuthorizationContext / Decision` | 当前事实、动作、对象版本、关系、策略/撤销 epoch；allow/deny 与原因码 | 当前事务/动作内有效；历史 allow 不是可重放的授权令牌 |
 
 具体映射、凭据验证、撤销和 Passkey 规则见[身份与授权](identity-and-authorization.md)。已发布计划固定业务规则，运行时安全策略仍可收紧；当前撤销或平台禁用优先，不能靠旧包继续获取执行权。
 
-持久字段、复合租户外键、类型约束与角色版本见[身份表结构](identity-schema-design.md)。外部身份/成员/任职、资源 ACL 与领域关系各有唯一权威，ABAC 从可信领域字段读取。成员重入不得恢复历史授权，未映射旧行阻止后续 NOT NULL 收紧和完整角色 loader 切换；不从旧 scope 字符串猜测 tenant。
+人员通过可信客户端/宿主发起共同的命令，Agent 可以辅助准备输入。用户凭据不交给模型、Agent 沙箱或 WASM；宿主根据真实认证、当前成员与明确任职授权。审计分别表达业务责任人员、技术执行来源和确有证据的人工确认，不能将“自动化辅助”记成“人员已批准”。既有 outbox Worker 执行已提交的投递意图，不需要因此构造一个 Agent 成员；新增后台业务任务须另行定义受限执行与当前重验合同。
+
+以下仅保留**后置候选，非一期实施约束**；是否采用、何时采用，须由新的真实需求重新评审：
+
+| 候选对象 | 待评估内容 | 当前边界 |
+|---|---|---|
+| `AgentRegistration / AgentWorkloadBinding` | 独立 Agent 的登记经历与实际 workload 绑定 | 不建表、不要求一期接口携带 agent_ref、不设一期验收门槛 |
+| `Delegation` | 独立代理主体的有限 action-target 委托 | 人员使用工具不自动产生 Delegation；不由此建设代理业务通道 |
+| `ServiceGrant` | 后台技术任务的明确服务权限 | 已有服务认证继续保留；真实后台需求出现时再决定所需授权合同，不与 Agent 捆绑 |
+
+持久字段、复合组织根外键、类型约束与角色版本见[身份表结构](identity-schema-design.md)。外部身份/成员/任职、资源 ACL 与领域关系各有唯一权威，ABAC 从可信领域字段读取。成员重入不得恢复历史授权；未映射旧行阻止全表 NOT NULL 收紧和历史权限全量切换，内部新 loader 只接受完整新引用。不从旧 scope 字符串猜测组织归属。
 
 平台初始化与身份变更分别保存 `BootstrapRecord` 和 `IdentityControlOperation`：配置摘要及初始授权、平台操作的幂等范围及受限证据/结果同事务保存，不使用假造 tenant。首次身份只读切片不产生业务执行或授予角色。
 
@@ -119,7 +132,7 @@ P1 的 manifest 可直接覆盖固定 WASM 能力而不经过通用编译器；P
 
 P1 的 `EvaluateQualification` 是基座演示，不授予真实岗位或业务权限：
 
-1. 人或服务使用真实协议凭据进入 Stage，得到内部 Principal，加载部署企业中的任职/授权。
+1. 人员通过可信客户端使用真实协议进入 Stage，宿主加载该人员的当前成员与选定任职；Agent 辅助输入不改变调用身份，也不代表已经人工确认。
 2. 校验评估能力、输入读取权和已激活的签名模块；创建稳定 CommandExecution 与 attempt。
 3. 按一期锁序短持相关guard/FactSet锁，一致读取最小FactSnapshot及revision后关闭事务；在租约和预算内送入独立WasmRunner。
 4. runner 返回带 invocation、attempt、模块/输入摘要的结构化计算回执；宿主验大小、类型、关联和状态。

@@ -1,36 +1,18 @@
-import os
 import sqlite3
-import subprocess
-import sys
 from pathlib import Path
 from urllib.parse import unquote
 
 import pytest
 
-ROOT = Path(__file__).resolve().parents[2]
+from tests.support.migrations import (
+    migrate,
+)
+
 INITIAL_REVISION = "870845fbe1f0"
 PRE_IDENTITY_REVISION = "a1c4e7d9b203"
 IDENTITY_REVISION = "b7e1a92c8d40"
 SINGLE_ENTERPRISE_REVISION = "c4f2a89d1e63"
 ORGANIZATION_ROOT_REVISION = "d6a3c5f8e902"
-
-
-def migrate(database: Path, *arguments: str, successful: bool = True) -> subprocess.CompletedProcess[str]:
-    environment = dict(os.environ)
-    environment.update(STAGE_DATABASE_URL=f"sqlite+aiosqlite:///{database}", STAGE_ENV="test")
-    result = subprocess.run(
-        [sys.executable, "-m", "alembic", *arguments],
-        cwd=ROOT,
-        env=environment,
-        text=True,
-        capture_output=True,
-        check=False,
-    )
-    if successful:
-        assert result.returncode == 0, result.stdout + result.stderr
-    else:
-        assert result.returncode != 0
-    return result
 
 
 def test_empty_migration_cycle_and_model_drift(tmp_path: Path) -> None:
@@ -282,8 +264,7 @@ def test_organization_root_rename_preserves_identity_guard_and_audit_history(tmp
         before = {table: connection.execute(f"SELECT * FROM {table}").fetchall() for table in retained_tables}
         root_before = connection.execute("SELECT * FROM tenant").fetchall()
 
-    migrate(database, "upgrade", "head")
-    migrate(database, "check")
+    migrate(database, "upgrade", ORGANIZATION_ROOT_REVISION)
     with sqlite3.connect(database) as connection:
         connection.execute("PRAGMA foreign_keys = ON")
         assert connection.execute("SELECT version_num FROM alembic_version").fetchone() == (ORGANIZATION_ROOT_REVISION,)

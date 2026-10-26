@@ -20,6 +20,8 @@ IDENTITY_PATH = "/api/v1/identity/me?profile_ref=profile&profile_version=1"
     [
         ("GET", "/api/v1/identity/me", {}, 422),
         ("GET", IDENTITY_PATH.replace("profile_version=1", "profile_version=invalid"), {}, 422),
+        ("GET", IDENTITY_PATH.replace("profile_ref=profile", "profile_ref=profile%00"), {}, 422),
+        ("GET", IDENTITY_PATH.replace("profile_ref=profile", "profile_ref=profile%7F"), {}, 422),
         ("GET", IDENTITY_PATH + "&tenant_ref=forged", {}, 422),
         ("GET", IDENTITY_PATH + "&organization_ref=forged", {}, 422),
         ("POST", IDENTITY_PATH, {}, 405),

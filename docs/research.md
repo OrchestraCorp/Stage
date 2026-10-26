@@ -1,22 +1,26 @@
 ---
 title: Stage 可组合架构调研依据与决策
-status: research-record
+status: historical-research-record
 policy_effect: none
 research_date: 2026-10-23
 ---
 
 # Stage 可组合架构调研依据与决策
 
+> **历史研究证据：代码基线与待验证清单截至 2026-10-23/24，另有明确标注的 10-25 补记。** 保留来源 SHA、原测试数和研究结论；正文“当前”“尚未”均受相应研究时点约束，不表示最新开发状态。当前实现看[代码架构](current-code-architecture.md)和[P1b 收尾](reviews/p1b-closeout-2026-10-25.md)，实施约束看[运行时演进决策](runtime-evolution-and-composition.md)与[一期方案](phase-1.md)。
+>
+> 当前 Core、真实人员认证、单任职授权和最小编辑命令已落地；完整人员管理/MFA、WASM、签名和持久工作流不能据此计为完成。存储已收敛为 PostgreSQL＋Redis，一实例一个组织授权根；历史 MySQL/多租户候选不再定义产品目标。Cordis 提供组件组合机制的研究依据，不替代授权、数据库事务、持久恢复或不可信代码隔离。
+
 本记录把已观察的事实、来源作者的主张和 Stage 的工程选择分开。核查使用论文原文、本地固定 DSH/Cordis 源码、当前 Stage 代码及 Python / FastAPI / SQLAlchemy 官方文档。没有把社区项目 README 的功能清单当作等价性证明，也没有安装或运行社区 Python Cordis 移植包。
 
 2026-10-24 增补：一期按Core、真实身份协议、受控WASM及最小签名准入重排，新增依据见[表达修正记录](design-review-2026-10-24.md)、[身份规范](identity-and-authorization.md)和[WASM宿主](wasm-host-design.md)。本文件保留原研究日期和来源快照，不将静态核对或历史底板测试记为新规格已通过。
 
 <a id="current-baseline"></a>
-## 1. 当前代码基线 [L1]
+## 1. 研究时点代码基线 [L1]
 
 Stage 参考提交：`271d175546901832fd699bc570745901a617b03b`。开始本次设计前工作区干净；本次只增改设计、文档入口和图表，没有新增 runtime、业务 API、数据库迁移或包依赖。
 
-| 检查对象 | 当前事实 | 代码依据 |
+| 检查对象 | 研究时点事实 | 代码依据 |
 |---|---|---|
 | 服务 | FastAPI 生命周期、请求 ID、脱敏错误；公开业务路由只有 `/health` | [app/main.py](../app/main.py)、[health.py](../app/api/health.py)、[空业务 router](../app/api/router.py) |
 | 持久模型 | principal、role_assignment、relation_tuple、work_item 四类表 | [models](../app/models/) |
@@ -100,7 +104,9 @@ Stage 参考提交：`271d175546901832fd699bc570745901a617b03b`。开始本次�
 
 领域命令只依赖公开接口，内部实现演进必须通过相同场景验证。当前实施方向是自研组件内核与自研流程运行器；其他项目作为边界案例和语义研究来源，不构成外部框架接入计划。具体决定见[愿景与自研方向](vision-and-runtime-direction.md)。
 
-## 6. 本轮决策与证据强度
+## 6. 研究时点决策与证据强度
+
+以下保留当时决策与缺口；Core 场景、PG 并发、真实身份与 HTTP 的后续证据已转入各实施记录，不能把本节“未验证”当成最新状态。现行存储、人员主体和阶段边界以页首所列规格为准。
 
 | 决策 | 类型 | 理由与复核时机 |
 |---|---|---|

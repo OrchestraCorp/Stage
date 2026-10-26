@@ -7,7 +7,7 @@ from sqlalchemy.engine import Connection
 
 from app.core.config import settings
 from app.core.db import create_engine
-from app.models import identity_foundation  # noqa: F401
+from app.models import identity_foundation, native_auth  # noqa: F401
 from app.models.authorization import RelationTupleTable, RoleAssignmentTable  # noqa: F401
 from app.models.base import Base
 from app.models.execution import (  # noqa: F401

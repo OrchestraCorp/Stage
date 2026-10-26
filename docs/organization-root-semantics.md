@@ -32,7 +32,7 @@ Stage 的私有化部署边界是：**一个部署实例只有一个组织授权
 - 当前组织授权 epoch、撤销、审计和 outbox 的一致性边界；
 - 这个数据库和部署环境是否仍处于 active 状态。
 
-根被停用时，历史引用保留，当前身份入口拒绝新的成员访问；后续业务写入口必须在提交前检查同一根的当前状态。旧 CommandKernel 尚未接入根状态与真实身份 loader，不能将当前身份读取的保证推导为全部内部业务写已经受到该约束。不能通过新建一个根绕过停用、撤销或信任配置。
+根被停用时，历史引用保留，身份读取及 P1b.3 人员工作项入口均在组织 guard 后检查当前根状态。公开命令同时重验 profile/trust/外部映射、来源准入、成员和选定任职；旧 fixture 不能替代真实认证。不能通过新建根或客户端选择参数绕过停用、撤销或信任配置，当前读写及结果恢复范围见[P1b.3 记录](reviews/p1b3-human-work-2026-10-25.md)。
 
 根不负责保存完整组织树、法人登记、财务结算、HR 主数据或跨实例全局人员目录。需要这些事实时，由对应领域表或外部系统提供，再通过受控引用参与授权。
 
@@ -46,9 +46,9 @@ Stage 的私有化部署边界是：**一个部署实例只有一个组织授权
 
 ### 1.3 Principal、成员经历和责任身份
 
-Principal 是单个 Stage 部署内稳定的责任主体。一个 human Principal 可以拥有多条成员经历和多个责任身份，例如研发工程成员、项目负责人和知识审阅人。一次请求选择明确的 assignment、service grant 或 delegation；默认不把主体的全部任职合并。
+Principal 是单个 Stage 部署内稳定的责任主体。一个 human Principal 可以拥有多条成员经历和多个责任身份，例如研发工程成员、项目负责人和知识审阅人。一期人员业务请求选择明确的 assignment，默认不合并全部任职；Agent 只作为受监督工具，不独立入职或任职。
 
-成员经历仍按一次加入/离开周期建模。重新加入创建新的 membership 引用，旧任职和委托不会因为主体重新加入而复活。Agent registration、workload binding 和 grant 同样固定对应的成员经历。
+成员经历仍按一次加入/离开周期建模。重新加入创建新的 membership 引用，旧任职和 ACL 不会自动复活。独立 Agent registration/binding/Delegation 从一期后置；技术 workload 认证保持已有事实，不等于独立业务参与者。详见[一期协作模式](people-company-collaboration.md)。
 
 这里的“稳定”只在一个 Stage 部署内成立。两个独立 Stage 实例分别持有自己的 Principal 映射、成员经历、任职、撤销和审计；相同的人可以在两个实例中通过各自受信任的 IdP 关联到两个本地主体，但 Stage 不提供跨实例的全局身份、全局角色或跨实例 token。
 
@@ -106,4 +106,4 @@ Maestro 可以在界面上帮助用户切换实例，不能把 A 的 access toke
 - 公司切换、SaaS 租户开通和共享数据库控制面；
 - 个人资料、人员列表或任职管理 CRUD。
 
-角色版本、scope/resource、ServiceGrant、Agent 委托和业务领域关系仍按[身份表结构设计](identity-schema-design.md)分阶段建设。本文只确定根的语义，不能被解读为这些后续模型已经实现。
+人员角色版本、scope/resource 已有内部切片，业务领域关系按[身份表结构设计](identity-schema-design.md)继续推进。独立 Agent 委托和 ServiceGrant 属于后置候选，不构成一期门槛；本文不宣称完整协作业务已经实现。

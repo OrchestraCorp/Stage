@@ -1,7 +1,7 @@
 ---
 title: Stage 可组合运行时与业务执行架构
 status: design-proposal
-implementation_status: p1a-implemented-p1b-p1d-pending
+implementation_status: p1b3-human-work-implemented-full-p1-pending
 policy_effect: none
 research_date: 2026-10-23
 specification: stage-runtime-core-v1
@@ -11,17 +11,19 @@ specification: stage-runtime-core-v1
 
 企业私有化部署是当前产品边界：一套实例一个组织授权根、专属数据库和固定环境。根是信任与治理边界，不等同于一个法人公司；现有 tenant 类型保留为组织根的内部兼容名称。没有多租户控制面、组织选择或 SaaS 共享数据库目标；集团、子公司、部门等业务组织单元以后按需建模。HTTP 业务合同使用 `/api/v1`，见[组织授权根语义](organization-root-semantics.md)和[部署与版本约定](private-deployment-api-v1.md)。
 
+早期协作遵循[人员—公司—人员](people-company-collaboration.md)：人员通过公司的规则、任职、工作对象与审计进行协作，Agent 由人员监督使用，只提供辅助能力。第一期不让 Agent 独立入职、持有任职、承接任务或参与验收，也不增加独立 Agent 业务入口。技术服务与 worker 是执行设施；其凭据和运行权限不构成人员的业务权限或确认。
+
 ## 1. 目标与现状
 
 Stage 使用 Python 实现可组合的组织协作服务。组件通过声明依赖取得能力，运行时记录资源归属、协调启停与依赖替换；业务命令通过可信身份、组织范围、授权和事务改变持久事实。两类机制各有验证标准，不相互替代。
 
-2026-10-24 明确自研方向：Stage 从初期实现自己的组件运行时与业务流程运行器，不采用 Graphon 作为产品依赖。两者共享能力目录、身份上下文、版本绑定与结果契约，分别管理资源生命周期与持久流程状态；Graphon / Dify 保留为研究对照。该方向服务于 OrchestraCorp 的 AI 驱动、安全可靠的分布式工作协作愿景，详见[方向与边界](vision-and-runtime-direction.md)。
+2026-10-24 明确自研方向：Stage 从初期实现自己的组件运行时，持久业务流程运行器按 P3 建设，不采用 Graphon 作为产品依赖。目标是共用能力定义、身份上下文、版本绑定与结果契约，分别管理资源生命周期与持久流程状态；当前通用能力目录与流程运行器尚未实现。Graphon / Dify 保留为研究对照。该方向服务于 OrchestraCorp 的 AI 驱动、安全可靠的分布式工作协作愿景，分阶段范围以[演进决策](runtime-evolution-and-composition.md)为准，长期方向见[方向与边界](vision-and-runtime-direction.md)。
 
-本文件描述目标架构。当前已实现纯授权、内部命令/审计/outbox、P1a RuntimeHost 与 PG/Redis providers，命令和投递可经可信组件装配；HTTP 提供 `/health` 和 `/ready`。真实身份 adapter、WASM、任务业务和生产 sink 尚待后续阶段，证据见[P1a 验证](reviews/p1a-validation-2026-10-25.md)。
+本文件描述目标架构。当前已有 P1a RuntimeHost/PG/Redis provider、真实身份与成员读取、单任职/角色版本/scope/resource/direct ACL 及命令/审计/outbox 底座。P1b.3 将真实人员认证证据接入当前授权和提交前重验，默认装配已有工作项读取、标题/说明编辑、原 key 结果查询。WASM、签名准入、完整任务业务与生产 sink 仍按后续阶段实施，实际边界见[当前代码架构](current-code-architecture.md)与[P1b.3 记录](reviews/p1b3-human-work-2026-10-25.md)。
 
 2026-10-24 进一步按基座优先重排 P1：自研 Core、真实身份协议、当前授权、受控 WASM 和签名准入先贯通，完整任务业务后置。共同对象见[核心对象契约](core-object-contracts.md)，核对和纠正见[设计复核](design-review-2026-10-24.md)。
 
-2026-10-25 用户确定 PostgreSQL＋Redis 长期组合，本轮工程基线采用 PostgreSQL 17 为唯一主库、Redis 8 为辅助缓存/短期协调/唤醒，取消 MySQL 生产兼容要求。存储策略与 Core 的 P1a 接入已验证；真实身份、WASM 与业务使用方仍按后续阶段实施。
+2026-10-25 用户确定 PostgreSQL＋Redis 长期组合，工程基线采用 PostgreSQL 17 为唯一主库、Redis 8 为辅助缓存/短期协调/唤醒。Core、身份、授权与最小人员命令分别有实施记录；WASM、签名与完整任务业务继续按后续阶段实施，不恢复 MySQL 生产兼容或 SaaS 多租户目标。
 
 P1a 的接口、两张运行图、关闭阶段、事件调用 pin 和 readiness 以[框架实施规格](framework-foundation.md)为准；C1–C8 的 34 项加 S1 的 12 项已通过 Python 映射验收，固定 Cordis 共享行为与差异另行留证。
 
@@ -33,12 +35,12 @@ P1a 的接口、两张运行图、关闭阶段、事件调用 pin 和 readiness 
 
 [SVG 矢量版](diagrams/stage-architecture.svg) · [Mermaid 源文件](diagrams/stage-architecture.mmd) · [图例与复现](diagrams/README.md)
 
-图的实线表示请求、持久状态或投递路径；虚线表示装配、资源管理或后续集成。这是整个一期的目标图：Core 与存储装配已完成，身份、发布准入与 WASM 仍待实现。默认进程的实际装配范围见[当前代码架构](current-code-architecture.md)。
+图的实线表示请求、持久状态或投递路径；虚线表示装配、资源管理或后续集成。这是整个一期的目标图，不能代替当前部署证据。当前人员元数据命令已经接通真实认证与授权；发布准入、WASM 及完整业务仍待完成。默认进程实际装配见[当前代码架构](current-code-architecture.md)。
 
 | 层 | 第一期开出的接口与职责 | 生命周期 |
 |---|---|---|
-| 入口适配 | HTTP 输入校验、CLI 请求、受管 worker 的服务身份；将外部请求转换为命令 envelope | 宿主或请求 |
-| 可信上下文 | 验证认证证据，加载企业成员、选定任职、委托与读者范围；生成 ExecutionContext | 每请求 / 每消息尝试 |
+| 入口适配 | HTTP 输入校验、CLI 人员请求；受管 worker 核验技术来源和已受权任务引用；转换为命令 envelope | 宿主或请求 |
+| 可信上下文 | 验证人员认证证据，加载成员经历、选定任职和读者范围；生成 ExecutionContext；技术恢复另保留原人员命令的因果链 | 每请求 / 每消息尝试 |
 | 命令注册与执行 | 注册带版本的命令；获取当前有效 handler/provider 租约；事务内重验并执行领域不变式 | 注册属组件，执行属请求 |
 | 领域能力 | 一期提供身份/授权、制品批准与资格评估演示；任务、承诺、容量、交付与验收在后续切片扩展 | 组件提供能力，数据长期存在 |
 | WASM 宿主与准入 | 固定签名模块、能力与ABI、预算、独立runner、输入输出与回执核验 | provider 管runner；每次调用独立实例 |
@@ -58,7 +60,7 @@ FastAPI lifespan 持有根 RuntimeHost，HTTP API 在启动时定义。路由调
 | 对象 | 内容与作用 | 不应承担的职责 |
 |---|---|---|
 | `ComponentContext` | 服务键、realm、intercept、组件 owner、配置、注册句柄、代次、资源清单 | 不存当前登录主体，不提供可任意使用的全局业务权限 |
-| `ExecutionContext` | 应用层 request / execution ID、认证主体、tenant、任职 / 委托引用、deadline、调用来源；组合 Core 的 CallScope | 不属于 Core 类型；不允许调用方变更插件树，身份事实由服务端构造 |
+| `ExecutionContext` | 应用层 request / execution ID、认证人员、组织根、成员经历与选定任职引用、deadline、调用来源；组合 Core 的 CallScope；技术任务保留原命令因果链 | 不属于 Core 类型；不允许调用方变更插件树，身份事实由服务端构造；技术执行来源不替代人员确认 |
 | `AuthorizationContext` | 现有纯判定引擎使用的可信事实：主体、有效任职、对象范围、关系、分类、当前 / 预期版本 | 不是客户端 DTO，也不是可持久复用的允许令牌 |
 
 ExecutionContext 中的引用用于定位权威记录，写命令在事务内重读关键事实，再构造 AuthorizationContext。入队或请求开始时的允许结果，不能替代写入时的撤销、到期和版本核验。
@@ -69,9 +71,9 @@ ExecutionContext 中的引用用于定位权威记录，写命令在事务内重
 
 ## 4. Runtime Core 的职责
 
-Core 是小型独立基础库，建议位于 `app/runtime/`，不导入 FastAPI Request、具体 ORM 模型或组织角色名。
+Core 已实现于独立 `app/runtime/`，不导入 FastAPI Request、具体 ORM 模型或组织角色名。
 
-Core 定义无身份字段的 ServiceLease/CallScope，不导入 execution/authz。owner 树表达结构归属，服务依赖图表达 committed binding；关闭同时协调两者。命令注册表属于应用执行层，借用 Core 的 owned registration，不把业务 schema 放进 registry。
+Core 定义无身份字段的 ServiceLease/CallScope，不导入 execution/authz。owner 树表达结构归属，服务依赖图表达 committed binding；关闭同时协调两者。当前应用执行层显式传入固定 CommandSpec 集合，并借助外围服务租约保护调用；通用命令贡献注册/CapabilityBinding 是后续目标，不把业务 schema 放进 Core registry。
 
 | 对象 | 设计约束 |
 |---|---|
@@ -80,7 +82,7 @@ Core 定义无身份字段的 ServiceLease/CallScope，不导入 execution/authz
 | `PluginSpec` / `Fiber` | 分开插件定义与运行实例；声明 required/provided services；记录激活代次与状态 |
 | `ServiceBinding` | `(realm, key, provider identity, generation, registration_id)`；消费者激活时保存 committed view，同代次重登不复用 ID |
 | `EffectScope` | 记录原子资源建立与清理，失败时释放已登记资源，禁止退出期间再产生无主资源 |
-| owned registration / `EventBus` | 贡献有 owner 和注册代次；应用 CommandRegistry 复用此机制，旧 disposer 不能删除新 handler |
+| owned registration / `EventBus` | 当前服务/监听有 owner 和注册代次；未来应用命令贡献登记应复用归属和退役原则，当前没有独立 CommandRegistry/handler 登记句柄 |
 | 请求 / 任务租约 | 在途命令固定所用依赖；drain 后禁止取得旧代次新租约，原租约释放前不能关资源 |
 
 Python 层用显式 `ctx.require(key)`、返回 disposer 的注册接口、异步上下文管理器和结构化任务管理实现，不要求模拟全部 JS Proxy 语法。调用共享服务创建资源时，服务接收明确的 owner 或使用绑定到调用者的 wrapper；不能修改共享 provider 的 `self.ctx` 来假装调用方作用域。[S1][L2]
@@ -115,7 +117,7 @@ Stage 采用 provider 整体 drain 屏障及满足停止/依赖前置条件后�
 
 ## 5. 领域命令与事务
 
-命令注册是 runtime effect；命令执行产生的是业务事实。一期以固定 `EvaluateQualification` handler 验证版本化能力、当前授权及持久结果，后续 `work` 模块在同一契约下提供任务命令。HTTP、CLI、Agent 和 worker 经过同一查询/命令入口，不分别实现自己的授权分支。能力定义、权限action和运行绑定的区别见[核心对象](core-object-contracts.md)。
+命令实现的装配与业务执行产生的事实分别管理。当前由 HumanWorkService 显式传入固定的元数据 CommandSpec；动态命令注册作为受管 effect 的机制仍属后续目标。P1c/P1d 计划用 `EvaluateQualification` 验证计算、当前授权与持久结果，P2 再扩展完整任务命令。受信业务模块可以提供领域规则实现，但不能自行改变平台授权强制入口。人员通过 HTTP、CLI 或受监督工具使用同一业务契约；目前只有人员 HTTP 元数据入口已实际接通。人员队列动作尚未启用，未来须保留原人员/任职/命令因果链并重验；内部 Outbox 投递不能当作该队列已实现。能力定义、权限 action 和运行绑定的区别见[核心对象](core-object-contracts.md)。
 
 CommandKernel 为每个并发命令创建独立 UoW / AsyncSession。组件只发布 factory，不共享单个 AsyncSession。业务事务明确控制 commit / rollback，请求依赖不会自动提交。[S6][L1]
 
@@ -157,15 +159,15 @@ Redis 8 只提供可重建缓存、非权威短期协调和可丢失唤醒。当
 |---|---|---|
 | ScoreBook | 批准规则、岗位契约、知识和准确版本 | 保存 release 引用、摘要、批准与实际 activation 回执；后续受控加载结构化规则 |
 | Stage | 任职、任务、承诺、容量、授权、业务事件、审计与运行记录 | 所有业务入口调用其受权查询与命令 |
-| Maestro | 组织理解、配置与知识提案、协调动作 | 通过被授权 API 提案和执行；生成蓝图不直接修改运行数据库 |
-| Virtuoso | 员工工作入口、个人 Agent 与私人工作上下文 | 按需提交任务相关最小上下文；私人会话不自动复制进 Stage |
+| Maestro | 人员监督下的组织理解、配置与知识提案、协调辅助 | 经人员认证与当前授权使用统一 API；生成蓝图不直接修改运行数据库，不自动代表人员批准 |
+| Virtuoso | 员工工作入口、受人员监督的个人 Agent 与私人工作上下文 | 按需提交任务相关最小上下文；私人会话不自动复制进 Stage；工具辅助不改变业务责任人 |
 | GitLab / 专业系统 | 实际仓库 ACL、MR、行业领域事实 | 连接器保存请求、外部引用、核验时间与漂移结果，不把 Stage 期望当作已生效 |
 
 Stage 不承担 MaaS、模型 API Key 托管或模型路由平台。Maestro / Virtuoso 继续保有各自模型能力；Stage 只保存业务授权下必要的运行身份、任务与回执引用。
 
 ## 7. 建议代码边界
 
-以下是待实施目录，不表示文件已经存在；优先按职责拆分，不要求每项单独发布一个 Python 包。
+以下是目标职责分布；runtime、bootstrap、execution、identity、authz 等已有实现，部分目录名和 release/wasm 等仍为目标。以[当前代码架构](current-code-architecture.md)为实际清单；优先按职责拆分，不要求每项单独发布一个 Python 包。
 
 ```text
 app/
@@ -173,7 +175,7 @@ app/
   bootstrap/          # 固定组合入口、配置校验、宿主启动与关闭
   interfaces/         # HTTP、CLI、worker transport 与认证适配
   execution/          # ExecutionContext、CommandBus、UoW 与执行协议
-  identity/           # 认证协议、主体映射、可信身份与任职/委托加载
+  identity/           # 认证协议、主体映射、组织成员、人员可信身份
   release/            # 固定制品清单、批准证据、签名准入和激活记录
   wasm/               # 受控runner协议、ABI、预算、回执与生命周期
   authz/              # 保留现有纯授权判定；追加职责分离等条件

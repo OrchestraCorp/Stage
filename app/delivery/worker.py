@@ -420,6 +420,10 @@ class OutboxWorker:
             and receipt.dedupe_key == envelope.dedupe_key
             and bool(receipt.receipt_ref and receipt.receipt_ref.strip())
             and len(receipt.receipt_ref) <= 256
+            # External acknowledgement identifiers must be storable as PG
+            # text. An invalid reference leaves delivery uncertain; it must
+            # not crash receipt persistence or be silently normalized.
+            and not any(char == "\x00" or 0xD800 <= ord(char) <= 0xDFFF for char in receipt.receipt_ref)
         )
 
     async def _send(self, claim: _Claim) -> str:

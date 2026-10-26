@@ -63,22 +63,22 @@ Core 不导入 FastAPI、ORM、角色名、授权投影或业务 ExecutionContex
 
 ## 3. 最小模块与接口
 
-下列逻辑接口已由 P1a 实现；registry/tasks 协调合并在 host.py，公开用法见[Core README](../app/runtime/README.md)。P1a 使用显式组合代码；配置 Loader、源码 HMR、通用 DSL、插件上传和多 ASGI worker 后置。
+下表记录 P1a 的实际接口和实现落点；registry/tasks 协调合并在 host.py，公开用法见[Core README](../app/runtime/README.md)。通用 CapabilityBinding/命令贡献目录未实现，不列入 P1a 交付。P1a 使用显式组合代码；配置 Loader、源码 HMR、通用 DSL、插件上传和多 ASGI worker 后置。
 
 | 文件 / 对象 | 必要表面与义务 |
 |---|---|
 | `runtime/contracts.py` | `ServiceKey[T]`、`BindingIdentity`、`PluginSpec`、状态与结构化报告；服务键固定 namespace/name/interface version |
 | `runtime/effects.py` | `EffectScope`、`EffectHandle`；登记先于 setup，支持同步/异步/生成器适配，统一管理关闭操作 |
 | `runtime/context.py` | `require/get/provide/isolate/intercept/plugin/effect`；上下文视图不可变，明确 owner/generation |
-| `runtime/registry.py` | 内部 binding、键预留、依赖索引、committed/target view；外部只能取得只读诊断 |
+| `runtime/host.py` 中的 registry 协调 | 内部 binding、键预留、依赖索引、committed/target view；没有独立 registry.py |
 | `runtime/leases.py` | `ServiceLease[T]` / `CallScope`；固定绑定与调用 owner，原子取得/释放，不含 actor/tenant |
 | `runtime/host.py` | `load/retire/restart/replace/await_ready/snapshot/close`；操作由 host 跟踪，每实例转换串行 |
 | `runtime/events.py` | 类型化 `EventKey`、显式 Continue/Stop、监听登记及在途 dispatch 归属 |
-| `runtime/tasks.py` | owner 内后台任务的停止信号、取消、完成与故障通知；故障不越过既定组件监督边界 |
+| `runtime/host.py` 中的任务监督 | owner 内后台任务的停止信号、取消、完成与故障通知；没有独立 tasks.py |
 | `bootstrap/`、`providers/` | 固定组合与应用适配；复用现有 DB/Redis 工厂，部署迁移不放入组件启动/卸载 |
-| `execution/` | 业务命令注册表、CapabilityBinding、事务协调；贡献使用 Core 的 owned registration，Core 不解释命令 payload |
+| `execution/` | 显式传入的版本化 CommandSpec 固定集合、事务协调；外围服务组件的调用租约保护操作，Core 不解释命令 payload；独立 CapabilityBinding 留待 P2 |
 
-文件可以在首次实现时合并，接口不能形成两套竞争的 owner 或状态机。`PluginSpec` 固定 plugin/version、required/provided 服务声明、配置校验和启动回调；提前声明 provided 集合用于冲突与等待环诊断。实例配置由组合入口验证，任意 Python callable 仅来自可信代码。
+接口不能形成两套竞争的 owner 或状态机。`PluginSpec` 固定 plugin/version、required/provided 服务声明、配置映射和启动回调；Core 只检查基本声明一致性，提前声明 provided 集合用于冲突与等待环诊断。配置值的 schema/业务校验由受控组合入口或具体组件承担，没有通用配置审批/发布机制；任意 Python callable 仅来自可信代码。
 
 `load()` 验证并登记实例，返回 handle，缺依赖时保持 PENDING，不阻塞等待其未来 provider。`await_ready(required, deadline)` 与加载分开；required 集合及预算来自可信组合入口。`snapshot()` 不等待；`retire/close` 触发由 host 持有的关闭操作；`restart` 必须先安全结束旧代次；`replace` 默认结束旧实例后再加载新实例。没有隐式无限重试。
 
@@ -89,7 +89,7 @@ Core 不导入 FastAPI、ORM、角色名、授权投影或业务 ExecutionContex
 - `isolate(key, label)` 和 `intercept(key, config)` 只创建同 owner/generation 的上下文视图；`plugin(spec)` 才建立 child Fiber。realm 按服务键隔离，不能当作租户数据隔离。
 - intercept 顺序为 base → 祖先 → 后代/inject 配置 → head；默认浅覆盖，有特定 merge 的服务自行定义并测试。共享服务不修改 `self.ctx`，caller owner 与 provider 自身依赖视图分别保存。
 - 一个 `(realm, key)` 的登记槽只能有一个 owner，包括尚在 LOADING 的预留项；check=false 不释放槽。启动时服务先暂存，整个 provider 成功进入 ACTIVE 才对消费者发布。ACTIVE 后按声明逐项 provide 是单项操作，不承诺多项注册原子事务。
-- 每次 provide/监听/命令贡献均取得不可复用的 registration_id；更新、撤销句柄和调用 pin 绑定该登记身份。同 owner/generation 手工注销后再次登记同 key，也必须生成新 ID，旧句柄不能更新或删除它。
+- 每次 provide/监听登记取得不可复用的 registration_id；更新、撤销句柄和调用 pin 绑定该登记身份。同 owner/generation 手工注销后再次登记同 key，也必须生成新 ID，旧句柄不能更新或删除它。当前 CommandSpec 没有独立 Core registration_id；其稳定命令名/版本与外围服务代次是不同标识。
 - availability predicate 是纯本地、快速同步判断；异常记为不可用。网络 PING、schema 探测由受管 provider 任务执行，并显式发布可用性变化；不在 registry 锁内调用任意用户代码，也不因每次 get 触发网络探测。
 - committed view 固定 binding 身份，不冻结对象内容。`ProviderHandle.update_value()` 只允许当前 owner/generation 更新自身绑定，不自动 notify 或重启消费者；再次 require 看到新 value，既有对象引用保留原值。它仅适合明确允许更新的值型服务；连接池、runner、handler 等资源实现必须走换代，不能借此提前关闭旧资源。
 - change_revision 随目标/配置/关闭意图单调增加；generation 随启动尝试单调增加。所有 await 返回、发布和撤销句柄核对所属代次及变更序号，防止 A→B→A 与无依赖组件配置变化让旧启动重新生效。旧 disposer 只能撤销自己的登记。
@@ -136,13 +136,13 @@ ReadyReport 至少包含 outcome（ready/pending/failed/timeout/stopping）、�
 |---|---|
 | PostgreSQL | 复用 `create_engine`；启动前做有界连接/schema 检查，发布 session/UoW factory。池大小、溢出、获取等待和探测预算显式配置；每命令独立 session，所有 pins 释放后 dispose engine。迁移单独执行 |
 | Redis | 复用 `create_redis_client`；显式配置池上限、获取/命令预算和用途故障策略，禁止 URL 绕过限制。没有业务消费者时可不装配；接入后只有依赖入口受其可用性影响 |
-| 命令注册 | 应用层 owner 登记带版本的 handler，能力摘要与当前 provider generation 分开。统一租约覆盖一次受控调用，结束后释放；不按请求创建一棵组件树 |
+| 固定命令装配 | 应用层显式传入带版本的 CommandSpec 集合。外围组件租约覆盖一次受控调用，命令名/版本与 provider generation 分开；无独立命令贡献登记，不按请求创建一棵组件树 |
 | Outbox worker | 注册受管任务、运行故障通知、stop 与 close；取消后的 unknown/回执记账通过旧 DB 依赖完成。drain 失败阻止 storage 退役；原审查 R1/R2 在装配前修复 |
 | Connector / durable worker | 连接器调用使用稳定幂等键、截止时间、回执查询和 `unknown`；Worker 从 PostgreSQL outbox/attempt 领取持久工作并保存 lease/fencing，重启后先对账再重试。停止顺序是停止新领取、排空在途调用、释放客户端；不在数据库事务中等待外部网络 |
 | FastAPI / CLI | HTTP 路由静态定义，lifespan 管 RuntimeHost；CLI 复用组合与执行服务。启动失败清理已成功启动部分；不在组件启停时修改路由/OpenAPI |
 | P1a 验收 consumer | 使用虚构数据和内部可信 fixture 验证事务、取消及关闭，不开放临时业务 HTTP。真实 IAM 在 P1b 验收 |
 
-现有短命令 Kernel、幂等/审计/outbox 与 PostgreSQL 测试继续使用。真实 IAM 接入前，应把 TrustState → 全局 Principal → tenant guard → 领域对象的锁协调放在应用层；不得把新锁塞到已先获取 tenant guard 的旧 loader 后面。P1c/P1d 的 WASM 必须经过快照事务 → 无锁计算 → 重验提交三段；P1a 只冻结接缝，不提前构建通用流程引擎。
+现有短命令 Kernel、幂等/审计/outbox 与 PostgreSQL 测试继续使用。锁协调位于应用层：P1b.3 人员命令按 TrustState SHARE→Principal SHARE→组织 guard→授权/领域对象协调，不能先取 guard 再补前置锁。认证包装 loader 联合重验 profile/trust/映射、来源准入、固定成员经历和当前单任职，最终提交前再次校验，实际公开范围是已有工作项元数据读写与恢复，见[P1b.3 记录](reviews/p1b3-human-work-2026-10-25.md)。P1c/P1d WASM 仍须经过快照事务→无锁计算→重验提交三段；不提前构建通用流程引擎。
 
 ## 8. 分段交付与补充验收
 

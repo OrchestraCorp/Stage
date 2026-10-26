@@ -6,8 +6,11 @@ import asyncio
 from typing import Any
 
 from app.core.config import Settings
+from app.providers.assignments import assignments_plugin
 from app.providers.identity import identity_plugin
+from app.providers.native_auth import native_auth_plugin
 from app.providers.storage import REDIS, STORAGE, DependencyHealth, database_plugin, redis_plugin
+from app.providers.work import human_work_plugin
 from app.runtime import CloseReport, PluginHandle, PluginSpec, RuntimeHost, ServiceKey
 
 
@@ -42,6 +45,10 @@ class ApplicationRuntime:
                 if self.config.redis_url is not None:
                     self.host.load(redis_plugin(self.config, self.redis_health))
                 self._required.append(self.host.load(identity_plugin(self.config)))
+                if self.config.native_auth_enabled:
+                    self._required.append(self.host.load(native_auth_plugin(self.config)))
+                self._required.append(self.host.load(assignments_plugin(self.config)))
+                self._required.append(self.host.load(human_work_plugin(self.config)))
                 for plugin in self._plugins:
                     self._required.append(self.host.load(plugin))
                 for plugin in self._optional_plugins:

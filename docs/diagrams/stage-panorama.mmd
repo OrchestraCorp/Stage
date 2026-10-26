@@ -1,0 +1,57 @@
+flowchart TB
+    CLIENT["Maestro / Virtuoso / 管理员登记应用<br/>产品接入仍需各自联调"]
+    OP["受控开发操作者<br/>安装 / 版本化配置 / 撤销"]
+    subgraph STAGE["Stage：一个组织根 · 一个环境 · 当前模块化单体"]
+        HTTP["FastAPI / 静态路由<br/>OAuth 协议 + /api/v1 + 健康探针"]
+        BOOT["ApplicationRuntime<br/>明确装配 / readiness / shutdown"]
+        RT["RuntimeHost<br/>requires / provides / lease / effect<br/>成功卸载摘要与观察记录有界"]
+        NATIVE["原生认证应用服务<br/>密码 TOTP · OAuth/OIDC · SSO · 同意 · 退出"]
+        FACTS["current_session<br/>当前账号 / 会话 / 客户端版本重验"]
+        CONTROL["control operations<br/>本地管理互斥 / 幂等 / journal / unknown"]
+        HUMAN["HumanOperations<br/>人员认证 / 截止 / 租约 / kernel 装配"]
+        ID["IdentityService<br/>可信来源 → 人员映射 → 成员 → MFA → evidence"]
+        APP["人员应用服务<br/>任职发现 · 工作项查询/编辑/结果恢复"]
+        AZ["AuthenticatedAuthorizationLoader<br/>单任职 RBAC + 直接关系 ReBAC + ABAC"]
+        KERNEL["CommandKernel / UnitOfWork<br/>当前授权 · 版本 · 幂等 · 原子提交"]
+        DOMAIN["WorkDetails handler<br/>标题/说明编辑；无完整任务流"]
+        MODELS["SQLAlchemy models / 存储适配<br/>37 张表 · Alembic 增量迁移"]
+        KEYS["数据库外私有密钥<br/>RSA 签名 / TOTP 加密"]
+        WORKER["可选内部 OutboxWorker<br/>领取 / 投递 / unknown 对账<br/>默认未装配，无生产 sink"]
+    end
+    PG[("PostgreSQL 17<br/>权威身份 / 当前授权 / 命令 / 审计 / 会话")]
+    REDIS[("Redis 8 · 可选<br/>连接与探测；未接业务缓存/队列")]
+    IDP["Keycloak 兼容来源<br/>是否准入由当前策略决定"]
+    SINK["未来真实连接器 / 外部系统"]
+    CLIENT --> HTTP
+    OP -->|本地受控 CLI| CONTROL
+    CONTROL --> MODELS
+    BOOT --> RT
+    RT -. 生命周期与调用租约 .-> NATIVE
+    RT -. 生命周期与调用租约 .-> ID
+    RT -. 生命周期与调用租约 .-> APP
+    RT -. 资源管理 .-> MODELS
+    RT -. 可选 provider .-> REDIS
+    HTTP --> NATIVE
+    HTTP --> APP
+    HTTP --> ID
+    NATIVE --> KEYS
+    NATIVE --> MODELS
+    NATIVE --> FACTS
+    ID -->|原生 token 验证后| FACTS
+    FACTS --> MODELS
+    ID -->|兼容 JWKS 验签| IDP
+    ID --> MODELS
+    APP -->|任职发现| ID
+    APP --> HUMAN
+    HUMAN --> ID
+    HUMAN --> KERNEL
+    KERNEL --> AZ
+    AZ -->|锁后 / 提交前证据重验| ID
+    AZ --> MODELS
+    KERNEL --> DOMAIN
+    DOMAIN --> MODELS
+    KERNEL -->|结果 + 审计 + 可选 outbox 同事务| MODELS
+    MODELS --> PG
+    RT -. 显式装配才管理 .-> WORKER
+    WORKER -->|持久领取 / 回执| MODELS
+    WORKER -. 事务外 I/O，生产待接 .-> SINK

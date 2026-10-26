@@ -74,6 +74,16 @@ class Settings(BaseSettings):
     runtime_startup_timeout_seconds: float = Field(default=10.0, gt=0, le=120, allow_inf_nan=False)
     runtime_shutdown_timeout_seconds: float = Field(default=10.0, gt=0, le=120, allow_inf_nan=False)
     identity_request_timeout_seconds: float = Field(default=10.0, gt=0, le=60, allow_inf_nan=False)
+    command_request_timeout_seconds: float = Field(default=10.0, gt=0, le=60, allow_inf_nan=False)
+    native_auth_enabled: bool = False
+    native_auth_issuer: str | None = None
+    native_auth_organization_ref: str | None = None
+    native_auth_key_file: str | None = Field(default=None, repr=False, exclude=True)
+    native_auth_encryption_key_file: str | None = Field(default=None, repr=False, exclude=True)
+    native_auth_request_timeout_seconds: float = Field(default=15.0, gt=0, le=60, allow_inf_nan=False)
+    native_auth_peer_attempt_limit: int = Field(default=300, ge=1, le=10000)
+    native_auth_authorization_attempt_limit: int = Field(default=300, ge=1, le=10000)
+    native_auth_rate_window_seconds: int = Field(default=600, ge=60, le=3600)
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
 
     @field_validator("database_url")
@@ -88,6 +98,24 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def _production_database(self) -> "Settings":
+        if self.native_auth_enabled:
+            from app.native_auth.config import NativeAuthConfig
+
+            if not all(
+                (
+                    self.native_auth_issuer,
+                    self.native_auth_organization_ref,
+                    self.native_auth_key_file,
+                    self.native_auth_encryption_key_file,
+                )
+            ):
+                raise ValueError("native_auth_requires_explicit_issuer_organization_and_key_files")
+            NativeAuthConfig(
+                issuer=self.native_auth_issuer or "",
+                organization_ref=self.native_auth_organization_ref or "",
+                environment=self.env,
+                request_timeout_seconds=self.native_auth_request_timeout_seconds,
+            )
         if self.redis_required and self.redis_url is None:
             raise ValueError("required Redis needs an explicit STAGE_REDIS_URL")
         if self.env == "prod":

@@ -2,6 +2,9 @@ flowchart TB
     HTTP["HTTP 客户端 / 运维探针"] --> API["FastAPI · app/main.py<br/>Request ID / 脱敏错误 / 静态路由"]
     API --> PROBE["/health：进程存活<br/>/ready：必需组件与依赖就绪"]
     API --> IDENTITY["GET /api/v1/identity/me<br/>身份 provider / 本组织根最小自身投影"]
+    API --> ASSIGNMENTS["GET /api/v1/identity/assignments<br/>本人当前任职 / 有界候选分页"]
+    API --> HUMAN_WORK["HumanWorkService · 默认装配<br/>工作项读 / 标题说明编辑 / 原 key 结果读"]
+    API --> NATIVE_ROUTES["固定 OAuth/OIDC 根路由<br/>/oauth/* · /.well-known/*<br/>/api/v1/account/*"]
     API -->|lifespan| BOOT["ApplicationRuntime<br/>可信装配 / 必需与可选组件 / 启停"]
 
     subgraph CORE["Runtime Core · Python 标准库 / 单事件循环"]
@@ -21,22 +24,42 @@ flowchart TB
     HOST -.管理.-> STORAGE["PostgreSQL provider<br/>连接池 / session factory / schema 与连接探测"]
     HOST -.管理.-> CACHE["Redis provider · 配置后装配<br/>客户端 / 有限连接与超时 / PING"]
     HOST -.管理.-> IDENTITY
+    HOST -.管理.-> ASSIGNMENTS
+    ASSIGNMENTS -->|真实人员证据与当前策略| IDENTITY
+    ASSIGNMENTS -->|组织 guard / 当前任职角色 scope| STORAGE
+    HOST -.管理.-> HUMAN_WORK
+    HUMAN_WORK -->|事务外人员认证 / 固定依赖租约| IDENTITY
+    HOST -.明确启用后管理.-> NATIVE["NativeAuthFacade<br/>密码＋TOTP / 发行配置 / 存储调用租约"]
+    NATIVE_ROUTES --> NATIVE
+    NATIVE --> CREDENTIALS["NativeCredentials<br/>绑定与恢复 / 一次性 OTP / 凭据变更 / 撤会话"]
+    NATIVE --> OAUTH["NativeOAuth<br/>多客户端 / PKCE / refresh 缩权与重用检测"]
+    CREDENTIALS -->|短事务 / 共同锁序 / 审计| STORAGE
+    OAUTH -->|持久请求 / code / session / refresh| STORAGE
+    NATIVE --> BROWSER["BrowserAuthorization / NativeLogout<br/>SSO / 同意 / 确认退出"]
+    NATIVE --> SESSIONS["AccountSessions<br/>本人会话 / 应用授权撤销"]
+    BROWSER --> STORAGE
+    SESSIONS --> STORAGE
+    OAUTH --> KEYS["部署私有密钥文件 / KeyRing<br/>签名 / 公钥发布 / 保留旧公钥轮换"]
     IDENTITY --> AUTHN["Keycloak access-token adapter<br/>事务外验签 / 有界 JWKS"]
-    AUTHN --> IDP["明确登记的测试 IdP<br/>human / workload 分开验证"]
-    IDENTITY -->|锁后重验映射 / 来源 / 成员| STORAGE
-    ADMIN["离线 dev/test 管理 CLI<br/>bootstrap / 撤销 / 幂等结果查询"] -->|共同锁序 / 同事务 journal| STORAGE
+    AUTHN --> IDP["明确登记的 Keycloak 对照来源<br/>human / workload 分开验证"]
+    IDENTITY --> NATIVE_AUTHN["NativeAuthenticator<br/>固定 native profile / 本地 access JWT 验签"]
+    NATIVE_AUTHN -->|已加载公钥| KEYS
+    IDENTITY -->|native 账号 / 会话 / client / 凭据版本重验| STORAGE
+    IDENTITY -->|锁后重验映射 / 成员 / 组织 MFA 策略| STORAGE
+    ADMIN["离线受控管理 CLI<br/>bootstrap / native 安装 / 撤销 / MFA 配置"] -->|共同锁序 / 同事务 journal| STORAGE
     STORAGE --> PG[("PostgreSQL<br/>当前事实 / 命令结果 / 审计 / outbox / attempts")]
     CACHE --> REDIS[("Redis<br/>辅助存储；业务缓存尚未接入")]
 
-    subgraph INTERNAL["已实现的内部执行组件 · 默认 HTTP 服务未装配"]
-        COMMAND["CommandService<br/>每次操作持有存储租约"]
-        KERNEL["CommandKernel / UnitOfWork<br/>幂等 / 版本 / 同事务结果＋审计＋outbox"]
-        AUTHZ["AuthorizationLoader 接口<br/>＋ RBAC / ReBAC / ABAC 纯判定"]
+    HUMAN_WORK --> KERNEL["CommandKernel / UnitOfWork<br/>幂等 / 版本 / 同事务结果＋认证授权审计"]
+    KERNEL --> AUTHZ["AuthenticatedAuthorizationLoader<br/>固定证据 / 单任职 / 当前权限 / 提交前重验"]
+    AUTHZ -->|锁后证据重验 · 无网络| IDENTITY
+
+    subgraph INTERNAL["需显式装配的通用命令与投递适配器"]
+        COMMAND["通用 CommandService<br/>可信命令 / loader 注入"]
         WORKER["OutboxWorker<br/>租约 / 去重 / unknown / 显式对账"]
-        COMMAND --> KERNEL
-        KERNEL --> AUTHZ
     end
 
+    COMMAND --> KERNEL
     HOST -.显式装配与监督.-> COMMAND
     HOST -.显式装配与监督.-> WORKER
     KERNEL -->|独立事务| STORAGE
@@ -47,5 +70,5 @@ flowchart TB
     classDef adapter fill:#edf8f2,stroke:#4d8a68,color:#203d2b;
     classDef internal fill:#fff5e5,stroke:#b87b24,color:#51350d;
     class HOST,CTX,EFFECT,CALL,EVENT core;
-    class BOOT,STORAGE,CACHE,PG,REDIS,IDENTITY,AUTHN,IDP,ADMIN adapter;
-    class COMMAND,KERNEL,AUTHZ,WORKER,SINK internal;
+    class BOOT,STORAGE,CACHE,PG,REDIS,IDENTITY,AUTHN,IDP,ADMIN,ASSIGNMENTS,HUMAN_WORK,KERNEL,AUTHZ,NATIVE_ROUTES,NATIVE,CREDENTIALS,OAUTH,KEYS,NATIVE_AUTHN,BROWSER,SESSIONS adapter;
+    class COMMAND,WORKER,SINK internal;

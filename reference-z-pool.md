@@ -2,7 +2,7 @@
 title: z-pool 参考实现对 Stage 的设计启发
 date: 2026-10-19
 version: 0.1
-status: design-reference
+status: historical-design-reference
 classification: internal
 policy_effect: none
 source_repository: /path/to/z-pool-backend-v2
@@ -11,11 +11,13 @@ source_revision: eebab09
 
 # z-pool 参考实现对 Stage 的设计启发
 
+> **固定来源的历史工程参考，不是当前产品规格。** 本文保留 2026-10-19/24 对 Z Pool 的观察、原始引用与纠正记录，不据旧源码路径或原项目测试推断当前环境和 Stage 完成度。实施范围以[一期方案](docs/phase-1.md)、[存储策略](docs/storage-strategy.md)及[一期协作边界](docs/people-company-collaboration.md)为准，实际实现见[当前代码架构](docs/current-code-architecture.md)。Stage 已确定 PG＋Redis、私有单组织根和人员单任职授权；Agent 委托、完整任务领取与审批在本文仅作后续候选，不能作为 P1b 前置要求。
+
 ## 1. 阅读范围
 
 本记录基于本地仓库 `/path/to/z-pool-backend-v2` 在提交 `eebab09`（2026-10-08）时的代码、测试和机器契约。它是 Stage 的工程参考，不是把 z-pool 的供应商、渠道、代理或结算业务搬进 OrchestraCorp。
 
-2026-10-24 复核：同一提交的源码现位于 iCloud 文稿目录，完整对照见[当前 Stage 与 Z Pool 架构比较](docs/z-pool-architecture-comparison.md)。下文保留原研究结构，已纠正钱包写入入口的过度概括；首轮实施顺序由最新[一期基座方案](docs/phase-1.md)替代。当前源码核对不等于重新执行原项目测试。
+2026-10-24 复核时，同一提交的源码位于研究设备的 iCloud 文稿目录；这不表示当前云开发设备具备该路径。完整对照见[2026-10-24 Stage 与 Z Pool 架构比较](docs/z-pool-architecture-comparison.md)。下文保留原研究结构，已纠正钱包写入入口的过度概括；首轮实施顺序由最新[一期基座方案](docs/phase-1.md)替代。该次源码核对不等于重新执行原项目测试。
 
 最有价值的部分是它如何把业务边界写进模型、数据库约束、事务和测试。Stage 应吸收这些方法，再用自己的组织、任务、授权和接管对象表达。
 

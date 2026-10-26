@@ -2,20 +2,49 @@
 
 from __future__ import annotations
 
-import hashlib
-from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
 from datetime import UTC, datetime
-from typing import Annotated, Any, Literal, Self
+from typing import Any, Literal, Self
 from uuid import uuid4
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
-from sqlalchemy import select, text
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from pydantic import Field, model_validator
+from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from app.control.contracts import (
+    BOOTSTRAP_TYPE as BOOTSTRAP_TYPE,
+)
+from app.control.contracts import (
+    AdministrationError as IdentityAdministrationError,
+)
+from app.control.contracts import (
+    AdministrationResult as AdministrationResult,
+)
+from app.control.contracts import (
+    Environment as Environment,
+)
+from app.control.contracts import (
+    OperationUnknown as IdentityOperationUnknown,
+)
+from app.control.contracts import (
+    Reference as Reference,
+)
+from app.control.contracts import (
+    StrictPlan as StrictPlan,
+)
+from app.control.operations import (
+    acquire_admin_lock,
+    append_journal,
+    check_database_environment,
+    find_replay,
+    operation_transaction,
+    validate_operator,
+)
+from app.control.operations import (
+    operation_result as operation_result,
+)
 from app.execution.storage import lock_tenant
-from app.identity.authentication import KeycloakProfile
+from app.identity.authentication import AccessTokenProfile
 from app.identity.service import (
     PROFILE_SCHEMA,
     AdmissionConstraints,
@@ -38,30 +67,22 @@ from app.models.identity_foundation import (
     WorkloadRegistrationTable,
 )
 
-Reference = Annotated[str, Field(min_length=1, max_length=128, pattern=r"^\S+$")]
-Environment = Literal["dev", "test"]
-BOOTSTRAP_TYPE = "identity-foundation"
-
-
-class IdentityAdministrationError(Exception):
-    """Stable public error code; underlying database or configuration data stays private."""
-
-    def __init__(self, code: str) -> None:
-        self.code = code
-        super().__init__(code)
-
-
-class IdentityOperationUnknown(Exception):
-    """A database failure does not prove whether the operation committed."""
-
-    def __init__(self, operation_type: str, idempotency_key: str) -> None:
-        self.operation_type = operation_type
-        self.idempotency_key = idempotency_key
-        super().__init__("result_unknown")
-
-
-class StrictPlan(BaseModel):
-    model_config = ConfigDict(extra="forbid", frozen=True)
+__all__ = [
+    "BOOTSTRAP_TYPE",
+    "AdministrationResult",
+    "Environment",
+    "IdentityAdministrationError",
+    "IdentityOperationUnknown",
+    "Reference",
+    "StrictPlan",
+    "ProfilePlan",
+    "IdentityPlan",
+    "BootstrapPlan",
+    "RevocationRequest",
+    "bootstrap",
+    "revoke",
+    "operation_result",
+]
 
 
 class ProfilePlan(StrictPlan):
@@ -131,7 +152,7 @@ class BootstrapPlan(StrictPlan):
             previous = namespaces.setdefault(profile.subject_namespace, profile.credential_kind)
             if previous != profile.credential_kind:
                 raise ValueError("namespace_semantics_conflict")
-            KeycloakProfile(
+            AccessTokenProfile(
                 profile_ref=profile.profile_ref,
                 profile_version=profile.profile_version,
                 issuer=self.issuer,
@@ -157,7 +178,12 @@ class BootstrapPlan(StrictPlan):
             if identity.principal_type != expected or (identity.workload_ref is not None) != (expected == "service"):
                 raise ValueError("identity_type_mismatch")
             subject = (selected_profile.subject_namespace, identity.subject)
-            if subject in subjects or not identity.subject.strip() or len(identity.subject.encode()) > 256:
+            if (
+                subject in subjects
+                or not identity.subject.strip()
+                or "\x00" in identity.subject
+                or len(identity.subject.encode()) > 256
+            ):
                 raise ValueError("invalid_or_duplicate_subject")
             subjects.add(subject)
         return self
@@ -199,128 +225,6 @@ class RevocationRequest(StrictPlan):
         return data
 
 
-class AdministrationResult(StrictPlan):
-    operation_ref: str
-    result: dict[str, Any]
-
-
-def _public_result(operation_ref: str, value: dict[str, Any]) -> AdministrationResult:
-    # Adapt immutable historical journal fields at the operator boundary.
-    result = dict(value)
-    for old, new in (("tenant_ref", "organization_ref"), ("tenant_authz_epoch", "organization_authz_epoch")):
-        if old in result:
-            result[new] = result.pop(old)
-    if result.get("kind") == "tenant":
-        result["kind"] = "organization"
-    return AdministrationResult(operation_ref=operation_ref, result=result)
-
-
-def _validate_operator(actor_ref: str, idempotency_key: str) -> None:
-    if any(not value.strip() or len(value) > 128 for value in (actor_ref, idempotency_key)):
-        raise IdentityAdministrationError("invalid_operation_identity")
-
-
-async def _admin_lock(session: AsyncSession) -> None:
-    # A single offline installation/operator mutex also serializes journal lookup.
-    # PostgreSQL reads still coordinate through the trust/principal/tenant row locks.
-    if session.get_bind().dialect.name == "postgresql":
-        key = int.from_bytes(hashlib.sha256(b"stage-development-identity-admin").digest()[:8], signed=True)
-        await session.execute(text("SELECT pg_advisory_xact_lock(:key)"), {"key": key})
-    else:
-        await session.execute(text("BEGIN IMMEDIATE"))
-
-
-async def _check_database_environment(session: AsyncSession, environment: Environment) -> None:
-    # A Stage database belongs to one deployment environment. Check under the
-    # installation mutex, before replay as well as before changing identity facts.
-    environments = set(
-        (
-            await session.scalars(
-                select(BootstrapRecordTable.environment)
-                .where(BootstrapRecordTable.bootstrap_type == BOOTSTRAP_TYPE)
-                .distinct()
-            )
-        ).all()
-    )
-    if len(environments) > 1:
-        raise IdentityAdministrationError("identity_database_environment_conflict")
-    if environments and environment not in environments:
-        raise IdentityAdministrationError("identity_database_environment_mismatch")
-
-
-@asynccontextmanager
-async def _operation_transaction(
-    sessions: async_sessionmaker[AsyncSession],
-    operation_type: str,
-    idempotency_key: str,
-) -> AsyncIterator[AsyncSession]:
-    try:
-        async with sessions() as session, session.begin():
-            yield session
-    except IntegrityError:
-        # A rejected uniqueness/foreign-key statement cannot have committed this transaction.
-        raise
-    except SQLAlchemyError:
-        # Connection loss may occur after COMMIT. Recover with the original operator/key.
-        raise IdentityOperationUnknown(operation_type, idempotency_key) from None
-
-
-async def _replay(
-    session: AsyncSession,
-    actor_ref: str,
-    operation_type: str,
-    idempotency_key: str,
-    digest: str,
-) -> AdministrationResult | None:
-    row = await session.scalar(
-        select(IdentityControlOperationTable).where(
-            IdentityControlOperationTable.actor_kind == "bootstrap_operator",
-            IdentityControlOperationTable.actor_ref == actor_ref,
-            IdentityControlOperationTable.operation_type == operation_type,
-            IdentityControlOperationTable.idempotency_key == idempotency_key,
-        )
-    )
-    if row is None:
-        return None
-    if row.input_digest != digest:
-        raise IdentityAdministrationError("idempotency_conflict")
-    return _public_result(row.operation_ref, row.result_json)
-
-
-def _journal(
-    session: AsyncSession,
-    *,
-    actor_ref: str,
-    operation_type: str,
-    idempotency_key: str,
-    digest: str,
-    environment: str,
-    target_ref: str,
-    result: dict[str, Any],
-    before: dict[str, Any] | None = None,
-    after: dict[str, Any] | None = None,
-    operation_ref: str | None = None,
-) -> AdministrationResult:
-    reference = operation_ref or str(uuid4())
-    session.add(
-        IdentityControlOperationTable(
-            operation_ref=reference,
-            operation_type=operation_type,
-            idempotency_key=idempotency_key,
-            input_digest=digest,
-            actor_kind="bootstrap_operator",
-            actor_ref=actor_ref,
-            authentication_json={"source": "local_os_operator", "environment": environment},
-            target_ref=target_ref,
-            before_json=before,
-            after_json=after,
-            result_json=result,
-            completed_at=datetime.now(UTC),
-        )
-    )
-    return _public_result(reference, result)
-
-
 async def bootstrap(
     sessions: async_sessionmaker[AsyncSession],
     plan: BootstrapPlan,
@@ -329,18 +233,18 @@ async def bootstrap(
     idempotency_key: str,
 ) -> AdministrationResult:
     """Install one explicit development/test identity foundation, with no business grants."""
-    _validate_operator(actor_ref, idempotency_key)
+    validate_operator(actor_ref, idempotency_key)
     # The digest deliberately preserves the legacy wire encoding for old
     # tenant_ref plans, so replaying a committed operation remains exact.
     digest = content_digest(plan.digest_payload())
     try:
-        async with _operation_transaction(sessions, "bootstrap.identity-foundation", idempotency_key) as session:
-            await _admin_lock(session)
-            await _check_database_environment(session, plan.environment)
+        async with operation_transaction(sessions, "bootstrap.identity-foundation", idempotency_key) as session:
+            await acquire_admin_lock(session)
+            await check_database_environment(session, plan.environment)
             organization_ref = await session.scalar(select(OrganizationRootTable.organization_ref))
             if organization_ref is not None and organization_ref != plan.organization_ref:
                 raise IdentityAdministrationError("identity_database_organization_mismatch")
-            replay = await _replay(session, actor_ref, "bootstrap.identity-foundation", idempotency_key, digest)
+            replay = await find_replay(session, actor_ref, "bootstrap.identity-foundation", idempotency_key, digest)
             if replay is not None:
                 return replay
             previous = await session.scalar(
@@ -363,7 +267,7 @@ async def bootstrap(
                 )
                 if operation is None:
                     raise IdentityAdministrationError("bootstrap_record_incomplete")
-                return _journal(
+                return append_journal(
                     session,
                     actor_ref=actor_ref,
                     operation_type="bootstrap.identity-foundation",
@@ -494,7 +398,7 @@ async def _install(
         "principal_refs": [i.principal_ref for i in plan.identities],
         "business_grants": [],
     }
-    return _journal(
+    return append_journal(
         session,
         actor_ref=actor_ref,
         operation_type="bootstrap.identity-foundation",
@@ -515,15 +419,15 @@ async def revoke(
     idempotency_key: str,
 ) -> AdministrationResult:
     """Terminal local revocation with expected version, current row locks and atomic journal."""
-    _validate_operator(actor_ref, idempotency_key)
+    validate_operator(actor_ref, idempotency_key)
     digest = content_digest(request.digest_payload())
     # The old tenant operation name remains the durable journal identity. New
     # callers use revoke.organization; operation_result accepts both forms.
     operation_type = f"revoke.{request.journal_kind}"
-    async with _operation_transaction(sessions, operation_type, idempotency_key) as session:
-        await _admin_lock(session)
-        await _check_database_environment(session, request.environment)
-        replay = await _replay(session, actor_ref, operation_type, idempotency_key, digest)
+    async with operation_transaction(sessions, operation_type, idempotency_key) as session:
+        await acquire_admin_lock(session)
+        await check_database_environment(session, request.environment)
+        replay = await find_replay(session, actor_ref, operation_type, idempotency_key, digest)
         if replay is not None:
             return replay
         installed = await session.scalar(
@@ -565,7 +469,7 @@ async def revoke(
             result["tenant_ref"] = request.organization_ref
         if request.profile_version is not None:
             result["profile_version"] = request.profile_version
-        return _journal(
+        return append_journal(
             session,
             actor_ref=actor_ref,
             operation_type=operation_type,
@@ -668,32 +572,3 @@ async def _lock_target(
     if row is None:
         raise IdentityAdministrationError("target_not_found")
     return row
-
-
-async def operation_result(
-    sessions: async_sessionmaker[AsyncSession],
-    *,
-    environment: Environment,
-    actor_ref: str,
-    operation_type: str,
-    idempotency_key: str,
-) -> AdministrationResult:
-    """Recover only the original operator's result in its recorded environment.
-
-    This read remains available when mixed installation environments block all
-    writes; a historical committed result must not disappear during recovery.
-    """
-    _validate_operator(actor_ref, idempotency_key)
-    async with sessions() as session:
-        journal_type = "revoke.tenant" if operation_type == "revoke.organization" else operation_type
-        row = await session.scalar(
-            select(IdentityControlOperationTable).where(
-                IdentityControlOperationTable.actor_kind == "bootstrap_operator",
-                IdentityControlOperationTable.actor_ref == actor_ref,
-                IdentityControlOperationTable.operation_type == journal_type,
-                IdentityControlOperationTable.idempotency_key == idempotency_key,
-            )
-        )
-        if row is None or row.authentication_json.get("environment") != environment:
-            raise IdentityAdministrationError("operation_not_found")
-        return _public_result(row.operation_ref, row.result_json)

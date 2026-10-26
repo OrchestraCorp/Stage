@@ -1,0 +1,7 @@
+{
+  "name": "stage-browser-acceptance",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Pinned development-only Chromium acceptance runner",
+  "devDependencies": { "playwright": "1.58.2" }
+}

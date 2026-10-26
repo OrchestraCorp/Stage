@@ -1,4 +1,4 @@
-"""One explicitly admitted Keycloak access-token profile, outside database transactions."""
+"""Shared access-token profile and external Keycloak verification outside database transactions."""
 
 from __future__ import annotations
 
@@ -33,8 +33,17 @@ class AuthenticationUnavailable(Exception):
         super().__init__(code)
 
 
+class AuthenticationAssuranceRequired(AuthenticationRejected):
+    """A valid human token did not satisfy the current login assurance policy."""
+
+    def __init__(self) -> None:
+        super().__init__("authentication_assurance_required")
+
+
 @dataclass(frozen=True, slots=True)
-class KeycloakProfile:
+class AccessTokenProfile:
+    """Source-neutral trust metadata; each authenticator defines its accepted token semantics."""
+
     profile_ref: str
     profile_version: int
     issuer: str
@@ -71,6 +80,10 @@ class KeycloakProfile:
                 raise ValueError("trusted_endpoint_requires_https")
 
 
+# Keep historical trusted callers source-compatible; stored profile schemas are unchanged.
+KeycloakProfile = AccessTokenProfile
+
+
 @dataclass(frozen=True, slots=True)
 class VerifiedCredential:
     evidence_ref: str
@@ -92,6 +105,9 @@ class VerifiedCredential:
     acr: str | None
     amr: tuple[str, ...]
     key_id: str
+    native_session_ref: str | None = None
+    native_credential_version: int | None = None
+    native_issued_at: datetime | None = None
 
 
 class KeycloakAuthenticator:
@@ -104,7 +120,7 @@ class KeycloakAuthenticator:
 
     def __init__(
         self,
-        profile: KeycloakProfile,
+        profile: AccessTokenProfile,
         *,
         http_client: httpx.AsyncClient | None = None,
         jwks_cache_seconds: float = 60,
@@ -280,7 +296,9 @@ class KeycloakAuthenticator:
 
 
 def _bounded_string(value: Any, limit: int) -> str:
-    if not isinstance(value, str) or not 1 <= len(value.encode("utf-8")) <= limit:
+    # These identifiers can become exact PostgreSQL text lookup parameters.
+    # JSON allows NUL, but PostgreSQL text does not: reject at authentication.
+    if not isinstance(value, str) or "\x00" in value or not 1 <= len(value.encode("utf-8")) <= limit:
         raise ValueError("invalid_string_claim")
     return value
 

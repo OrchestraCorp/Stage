@@ -4,7 +4,15 @@ from collections.abc import Mapping, Sequence
 
 from app.delivery.contracts import CurrentDeliveryAuthorizer, DeliverySink
 from app.delivery.worker import OutboxWorker
-from app.execution.contracts import AuthorizationLoader, CommandEnvelope, CommandResult, CommandSpec, ExecutionContext
+from app.execution.contracts import (
+    AuthorizationLoader,
+    AuthorizationLockCoordinator,
+    CommandEnvelope,
+    CommandIdentityValidator,
+    CommandResult,
+    CommandSpec,
+    ExecutionContext,
+)
 from app.execution.kernel import CommandKernel
 from app.providers.storage import STORAGE
 from app.runtime import ComponentContext, PluginSpec, ServiceKey
@@ -16,25 +24,52 @@ DELIVERY: ServiceKey[OutboxWorker] = ServiceKey("stage", "delivery", "1")
 class CommandService:
     """Command facade that holds a storage lease for each operation."""
 
-    def __init__(self, context: ComponentContext, loader: AuthorizationLoader, commands: Sequence[CommandSpec]) -> None:
+    def __init__(
+        self,
+        context: ComponentContext,
+        loader: AuthorizationLoader,
+        commands: Sequence[CommandSpec],
+        coordinator: AuthorizationLockCoordinator | None = None,
+        identity_validator: CommandIdentityValidator | None = None,
+    ) -> None:
         self._context = context
         self._loader = loader
         self._commands = tuple(commands)
+        self._coordinator = coordinator
+        self._identity_validator = identity_validator
 
     async def execute(self, context: ExecutionContext, command: CommandEnvelope) -> CommandResult:
         async with self._context.call(STORAGE) as call:
-            kernel = CommandKernel(call.require(STORAGE).sessions, loader=self._loader, commands=self._commands)
+            kernel = CommandKernel(
+                call.require(STORAGE).sessions,
+                loader=self._loader,
+                commands=self._commands,
+                coordinator=self._coordinator,
+                identity_validator=self._identity_validator,
+            )
             return await kernel.execute(context, command)
 
     async def get_result(self, context: ExecutionContext, execution_id: str) -> CommandResult:
         async with self._context.call(STORAGE) as call:
-            kernel = CommandKernel(call.require(STORAGE).sessions, loader=self._loader, commands=self._commands)
+            kernel = CommandKernel(
+                call.require(STORAGE).sessions,
+                loader=self._loader,
+                commands=self._commands,
+                coordinator=self._coordinator,
+                identity_validator=self._identity_validator,
+            )
             return await kernel.get_result(context, execution_id)
 
 
-def command_plugin(loader: AuthorizationLoader, commands: Sequence[CommandSpec]) -> PluginSpec:
+def command_plugin(
+    loader: AuthorizationLoader,
+    commands: Sequence[CommandSpec],
+    *,
+    coordinator: AuthorizationLockCoordinator | None = None,
+    identity_validator: CommandIdentityValidator | None = None,
+) -> PluginSpec:
     def setup(ctx: ComponentContext) -> None:
-        ctx.provide(COMMANDS, CommandService(ctx, loader, commands))
+        ctx.provide(COMMANDS, CommandService(ctx, loader, commands, coordinator, identity_validator))
 
     return PluginSpec("commands", setup, requires=(STORAGE,), provides=(COMMANDS,))
 

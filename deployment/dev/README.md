@@ -1,12 +1,14 @@
 # 当前云开发设备
 
+2026-10-26 已完成本人任职发现及密码＋TOTP 登录 MFA。常驻 `stage-development` 的 human policy 为 required/version 2，最大认证年龄 900 秒；原 issuer/client/人员 subject 保留，原 service client 仍独立。Stage schema head 为 `9c2e7a4b6d10`（26 张应用表）。本次已经显式启用，其他部署升级迁移默认 disabled，不会自动开启。实施与回退材料见[P1b.4 记录](../../docs/reviews/p1b4-assignments-mfa-2026-10-26.md)。
+
 运行模型为企业私有化部署：**一套 Stage、一个组织授权根、一套数据库、一个环境**；授权根是信任与治理边界，不等同于一个法人公司。客户端不选择组织，部门/项目以后按需用组织单元和 scope 管理。当前公开身份 API 为 v1，见[组织授权根语义](../../docs/organization-root-semantics.md)和[部署与 API 合同](../../docs/private-deployment-api-v1.md)。
 
-本设备已运行 P1a 与 P1b 首条身份切片，Stage 使用单 ASGI worker，源码路径 `/root/OrchestraCorp/Stage`。Stage/PostgreSQL/Redis 以 `orchstage` 非登录系统用户运行，隔离测试 IdP 以 `orchidp` 运行，四个 systemd 服务均启用开机启动和失败重启：
+本设备运行单 ASGI worker 的 Stage，源码路径 `/root/OrchestraCorp/Stage`。本轮工作区增加 P1b.3 人员工作项 provider，重启后的实际验收以[P1b.3 记录](../../docs/reviews/p1b3-human-work-2026-10-25.md)为准。Stage/PostgreSQL/Redis 以 `orchstage` 非登录用户运行，隔离测试 IdP 以 `orchidp` 运行；四个 systemd 服务均启用开机启动和失败重启：
 
 | 服务 | 监听 | 用途 |
 |---|---|---|
-| `orchestra-stage-dev` | `127.0.0.1:8080` | Stage `/health`、`/ready`、`/api/v1/identity/me`、开发 OpenAPI |
+| `orchestra-stage-dev` | `127.0.0.1:8080` | Stage 探针、v1 身份/人员工作项接口、开发 OpenAPI；实际重启验收见本轮记录 |
 | `orchestra-stage-postgres-dev` | `127.0.0.1:15432` | PostgreSQL 17.11，开发库 `stage` |
 | `orchestra-stage-redis-dev` | `127.0.0.1:16379` | Redis 8.2.3，缓存/辅助基础设施 |
 | `orchestra-stage-idp-dev` | `127.0.0.1:18080` | Keycloak 26.4.7 + OpenJDK 21，隔离真实协议测试 IdP |
@@ -33,11 +35,25 @@ cd /root/OrchestraCorp/Stage
 
 迁移是独立部署操作，Core 启动仅核验 schema，不自动迁移或创建业务表。测试使用另一个 `stage_test_core` 库及显式重置授权，不能把 `stage` 开发库传给重置测试。Docker 可用的其他设备继续使用仓库 `compose.yaml`，不需复制此机数据或凭据。
 
-`/health` 只报告进程存活。必需 PG 或 schema 不可用使 `/ready` 返回 503，连接恢复后探测自动恢复就绪；默认 Redis 可选，故障只标记 Redis unavailable。需要 Redis 的应用组合须明确设置 required 或声明相应组件依赖。基础 ready 只说明 runtime、依赖与 schema 可用，不代表部署企业身份已登记；身份入口会拒绝未知 profile/来源/成员。命令/投递组件仍只接受可信组合提供的 loader、authorizer、sink 和部署组织配置，完整业务写 API 尚未开放。
+`/health` 只报告进程存活；PG/schema 或必需组件不可用使 `/ready` 返回 503，Redis 默认可选。默认装配包括身份与人员工作项服务，ready 不证明组织成员、任职或资源已登记，也不会自动授予权限。元数据入口每次验证真实人员凭据与明确任职；通用命令/投递适配仍由可信组合提供 loader、authorizer 和 sink，生产投递尚未接入。
 
-`GET /api/v1/identity/me` 要求 Bearer access token，query 仅接受 `profile_ref`、`profile_version`。服务端读取唯一部署组织，响应使用 `organization_ref`。额外 `tenant_ref`、`organization_ref` 等 query 返回 422；旧 `/api/identity/me` 和未支持的 `/api/v2/identity/me` 返回 404；`/health`、`/ready` 保留根路径。身份响应使用 `Cache-Control: no-store`。角色、Agent 委托与业务授权仍待后续 P1b 切片。
+`GET /api/v1/identity/me` 要求 Bearer access token，query 仅为 `profile_ref/profile_version`，返回服务端确定的组织根和当前成员。新增 `/api/v1/work-items/{work_item_id}` 的读取、`/details` 编辑与 `/operations/{idempotency_key}` 结果查询另要求当前 `assignment_ref`。这些人员入口不接受客户端组织选择或 service token，不把身份读取响应当作权限票据。接口细则见[授权开发操作](../../docs/authorization-development.md)。
 
-身份路径的全部响应统一设置 `Cache-Control: no-store`，包括框架生成的 422、404/405 与通用 500。`STAGE_IDENTITY_REQUEST_TIMEOUT_SECONDS` 默认 10 秒，允许大于 0 且不超过 60 秒；共同限制连接池、JWKS 和数据库锁/查询等待。到期后取消工作、完成事务清理并返回 503，不延长身份有效期。
+身份与工作项路径的全部响应统一设置 `Cache-Control: no-store`，包括框架生成的 422、404/405 与通用 500。身份预算由 `STAGE_IDENTITY_REQUEST_TIMEOUT_SECONDS` 控制；人员命令另由 `STAGE_COMMAND_REQUEST_TIMEOUT_SECONDS` 限制全程，默认均 10 秒、允许大于 0 且不超过 60 秒。预算包含依赖获取、认证和数据库锁/查询等待；预算到期返回 503，认证证据到期返回 401，均不延长身份有效期。提交已开始后的不确定结果沿原幂等键恢复。
+
+## 独立测试库的真实人员写入验收
+
+[真实人员工作项集成测试](../../tests/integration/test_human_work_live.py)使用已配置的隔离 Keycloak，但自行启动临时 loopback Stage 监听；不向常驻开发服务或 `stage` 开发库安装角色和工作项。它在显式可丢弃 PostgreSQL 测试库运行 Alembic head、身份 bootstrap、有限授权安装与合成 WorkItem，结束后清理测试表和 Alembic 版本表。
+
+先在受信任终端将 `TEST_DATABASE_URL` 设为独立的 `stage_test*` 或 `stage_ci*` 数据库；不要从常驻服务的 `STAGE_DATABASE_URL` 默认复制。确认该库可以被重置后单独执行，不能与使用同一测试库的其他测试并行：
+
+```bash
+STAGE_ALLOW_TEST_DATABASE_RESET=1 \
+STAGE_HUMAN_WORK_SMOKE_CREDENTIALS=/root/.local/state/orchestra-stage/identity/credentials.json \
+uv run pytest -q tests/integration/test_human_work_live.py
+```
+
+凭据文件必须属于执行操作者且权限为 0600；测试只接受本地 IdP/回调。未显式设置测试数据库和凭据路径时跳过，不计通过。它验证真实授权码＋PKCE、HTTP 编辑、token 刷新后原 key 重放、查询结果、版本/输入冲突、身份字段注入、ID token/service token 拒绝及任职撤销后的 403；数据库最终核验单次版本变化、一个命令和审计、零 Outbox。与[只读服务冒烟](../../tests/smoke/README.md)分别运行、分别留证。
 
 本机虚构组织 `stage-development` 已通过受控离线工具登记 human/service 主体和成员，未授予任何角色或业务 grants。私有目录 `/root/.local/state/orchestra-stage/identity` 保存 `credentials.json`、`realm-import.json`、`keycloak.env`、已验证 `metadata.json` 和显式初始化计划 `stage-bootstrap.json`；bootstrap 前开发库备份为 `stage-before-identity-bootstrap.dump`。文件不进入仓库，凭据不粘贴到日志。初始化不是首个登录自动开权；工具仅限 dev/test、本机 OS 操作者、显式数据库配置。
 
@@ -65,4 +81,25 @@ uv run python scripts/identity_idp_smoke.py \
 
 `--organization-ref` 只核对响应组织，不传给 Stage 作为选择参数。首条切片的 15 项记录保留为历史结果；更新后的 v1/单组织根验收见[本轮记录](../../docs/private-deployment-api-v1.md)。本机 IdP 的精确 profile、重建方式与凭据边界见[身份开发环境](../identity/README.md)。Maestro 的实际登录 UI、回调与 token 保管仍由客户端联调验收。
 
-本地访问可使用现有 SSH 通道转发 8080；18080 只作本机协议测试，不把数据库、Redis 或测试 IdP 暴露公网。P1b 后续任职/服务/委托、P1c WASM/签名以及生产备份恢复继续按各自验收推进。
+本地访问可使用现有 SSH 通道转发 8080；18080 只作本机协议测试，不公开数据库、Redis 或测试 IdP。用户已恢复人员路径开发，当前元数据命令与真实联调范围见[P1b.3](../../docs/reviews/p1b3-human-work-2026-10-25.md)；WASM/签名与生产恢复按各阶段验收。[人员—公司—人员边界](../../docs/people-company-collaboration.md)保持。
+
+## 人类授权开发工具
+
+联调前的身份与权限复查、组织锁基线和后续边界见[P1b 收尾](../../docs/reviews/p1b-closeout-2026-10-25.md)；客户端配置与恢复协议见[Maestro 合同](../../docs/maestro-stage-p1b-handoff.md)。
+
+基于冻结身份基线，已有 HUMAN/WorkItem 数据库授权及离线 `scripts/authorization_admin.py`。安装、撤销、角色新版本和原 key 恢复见[开发说明](../../docs/authorization-development.md)；工具仅在显式 dev/test 环境由本机 OS 操作者运行，没有公开授予权限 API。P1b.3 当时沿用 `f4c7b2a1e903`；当前 P1b.4 已迁移到 `9c2e7a4b6d10`，MFA 不为已有成员自动赋权。真实编辑联调在独立可丢弃测试库安装虚构 WorkItem/角色/ACL，开发库保持原有业务授权事实。
+
+## 组织 guard 的独立并发基线
+
+先明确设置独立 PostgreSQL `TEST_DATABASE_URL`（可重置的 `stage_test*`/`stage_ci*` 数据库）。以下脚本前后清理该库的应用表，不能与同库测试并行；为获得可比较数值，也应避开其它压测/全量回归：
+
+```bash
+STAGE_ALLOW_TEST_DATABASE_RESET=1 uv run python scripts/benchmark_human_work.py \
+  --requests 48 --output /tmp/stage-human-work-baseline.json
+```
+
+脚本实际运行 ASGI、Runtime、人员认证、授权与 PG；使用合成单人员、真实测试签名和模拟 JWKS，不测真实 IdP/TCP/TLS/Redis。报告带软件版本、源码摘要、并发/连接池配置、延迟/吞吐、guard/连接获取耗时及一致性断言。超时/取消用 `pg_blocking_pids` 确认真实阻塞并核验释放。基线只是当前短操作的观测，不作生产容量承诺；数据库正确性仍由独立迁移、撤权竞争与真实协议用例证明。
+
+## 交付冻结与浏览器 CI
+
+本机工作区开发服务与可重现交付版本分别识别。冻结工具、源码/依赖/迁移/制品摘要及真实 Chromium CI 的运行方法见[冻结说明](release-freeze.md)。完成审计整改不表示产品路线图 P2/P3 已交付；本轮证据见[整改复查](../../docs/reviews/p2p3-architecture-closeout-2026-10-26.md)。

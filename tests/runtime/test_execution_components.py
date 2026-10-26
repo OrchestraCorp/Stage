@@ -6,13 +6,27 @@ from datetime import UTC, datetime
 from typing import Any
 
 import pytest
+from cryptography.hazmat.primitives.asymmetric import rsa
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from app.authz.authenticated import AuthenticatedAuthorizationLoader
 from app.delivery.worker import OutboxWorker
+from app.features.work.details import WORK_DETAILS_COMMAND
+from app.identity.service import IdentityDenied
+from app.models.identity import PrincipalTable
 from app.providers.execution import COMMANDS, DELIVERY, command_plugin, delivery_plugin
 from app.providers.storage import STORAGE, Storage
 from app.runtime import ComponentContext, PluginSpec, RuntimeHost
-from tests.delivery.test_worker import (
+from tests.support.authenticated_commands import (
+    authenticated_context,
+    identity_service,
+    jwt_client,
+    seed_authenticated_command,
+)
+from tests.support.command_kernel import TestFactsLoader as FixtureFactsLoader
+from tests.support.command_kernel import command, context, counts, seed, spec
+from tests.support.delivery import (
     SERVICE,
     TENANT_A,
     Clock,
@@ -21,8 +35,8 @@ from tests.delivery.test_worker import (
     message_state,
     seed_message,
 )
-from tests.execution.test_kernel import TestFactsLoader as FixtureFactsLoader
-from tests.execution.test_kernel import command, context, counts, seed, spec
+from tests.support.identity_tokens import token
+from tests.support.work_details import command as work_command
 
 
 def storage_component(
@@ -68,6 +82,39 @@ async def test_command_component_uses_core_lease_and_preserves_persistent_idempo
         report = await host.close(timeout=5)
         assert report.successful, report
     assert events == ["storage.cleanup"]
+
+
+async def test_command_component_preserves_authenticated_identity_hooks(
+    persistence_sessions: async_sessionmaker[AsyncSession],
+) -> None:
+    await seed_authenticated_command(persistence_sessions)
+    signing_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    async with jwt_client(signing_key) as client:
+        identity = identity_service(persistence_sessions, client)
+        authenticated = await authenticated_context(identity, token(signing_key))
+        loader = AuthenticatedAuthorizationLoader(identity)
+        host = RuntimeHost()
+        events: list[str] = []
+        host.load(storage_component(persistence_sessions, events))
+        host.load(command_plugin(loader, [WORK_DETAILS_COMMAND], coordinator=loader, identity_validator=loader))
+        try:
+            assert (await host.await_ready([COMMANDS], timeout=5)).ready
+            async with host.call(COMMANDS) as call:
+                service = call.require(COMMANDS)
+                first = await service.execute(authenticated, work_command())
+                recovered = await service.get_result(authenticated, first.execution_id)
+                assert recovered.replayed and recovered.result == first.result
+                async with persistence_sessions.begin() as session:
+                    principal = await session.scalar(
+                        select(PrincipalTable).where(PrincipalTable.principal_ref == authenticated.actor_ref)
+                    )
+                    assert principal is not None
+                    principal.status = "disabled"
+                    principal.version += 1
+                with pytest.raises(IdentityDenied):
+                    await service.get_result(authenticated, first.execution_id)
+        finally:
+            assert (await host.close(timeout=5)).successful
 
 
 async def test_core_managed_delivery_component_starts_and_persists_receipt(

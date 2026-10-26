@@ -11,7 +11,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from app.core.db import create_engine, create_session_factory  # noqa: E402
-from app.models import identity_foundation  # noqa: E402, F401
+from app.models import identity_foundation, native_auth  # noqa: E402, F401
 from app.models.authorization import RelationTupleTable, RoleAssignmentTable  # noqa: E402, F401
 from app.models.base import Base  # noqa: E402
 from app.models.execution import (  # noqa: E402, F401
@@ -24,6 +24,19 @@ from app.models.execution import (  # noqa: E402, F401
 from app.models.identity import PrincipalTable  # noqa: E402, F401
 from app.models.work import WorkItemTable  # noqa: E402, F401
 from scripts.check_database import validate_test_database  # noqa: E402
+from tests.support.database_safety import require_serial_database_reset  # noqa: E402
+
+
+def pytest_configure(config: pytest.Config) -> None:
+    """Reject unsafe parallel reset before collecting or opening any database."""
+    try:
+        require_serial_database_reset(
+            os.environ.get("TEST_DATABASE_URL"),
+            workers=config.getoption("numprocesses", default=None),
+            worker_id=os.environ.get("PYTEST_XDIST_WORKER"),
+        )
+    except ValueError as exc:
+        raise pytest.UsageError(str(exc)) from None
 
 
 @pytest.fixture

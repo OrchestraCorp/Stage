@@ -12,6 +12,7 @@ BUILTIN_POLICY_RELEASE_ID = "stage-authz:builtin-v1"
 
 class Permission(StrEnum):
     TASK_VIEW = "task.view"
+    TASK_METADATA_UPDATE = "task.metadata.update"
     TASK_COMMIT_CREATE = "task.commit.create"
     TASK_DELIVERY_SUBMIT = "task.delivery.submit"
     TASK_ACCEPTANCE_REVIEW = "task.acceptance.review"
@@ -59,6 +60,12 @@ ACTION_POLICIES: Mapping[Permission, ActionPolicy] = MappingProxyType(
             Permission.TASK_VIEW,
             (frozenset({"viewer_of", "assignee_of", "owner_of", "reviewer_of"}),),
             allowed_resource_states=tuple(WorkLifecycle),
+        ),
+        Permission.TASK_METADATA_UPDATE: ActionPolicy(
+            Permission.TASK_METADATA_UPDATE,
+            (frozenset({"owner_of"}),),
+            require_object_version=True,
+            allowed_resource_states=(WorkLifecycle.DRAFT, WorkLifecycle.OPEN),
         ),
         Permission.TASK_COMMIT_CREATE: ActionPolicy(
             Permission.TASK_COMMIT_CREATE,

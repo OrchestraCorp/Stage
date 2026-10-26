@@ -1,12 +1,12 @@
 """Execute trusted, bounded local commands atomically with audit and outbox.
 
-Authentication and full IAM integration are separate. No HTTP route exposes this
-kernel until a trusted adapter and database-backed authorization loader exist.
+Public human commands use server-issued identity evidence and the authenticated
+database authorization adapter; fixture-only callers remain explicitly trusted.
 Handlers must not do external I/O, commit, or change the security facts they use.
 """
 
 import logging
-from collections.abc import Sequence
+from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import replace
 from types import MappingProxyType
 from uuid import uuid4
@@ -20,9 +20,11 @@ from app.authz.decision import AuthorizationDecision, AuthorizationEngine
 from app.core.enums import DecisionOutcome, PrincipalType
 from app.execution.contracts import (
     AuthorizationLoader,
+    AuthorizationLockCoordinator,
     Clock,
     CommandEffect,
     CommandEnvelope,
+    CommandIdentityValidator,
     CommandResult,
     CommandSpec,
     ExecutionContext,
@@ -35,6 +37,7 @@ from app.execution.errors import (
     ExecutionNotFound,
     IdempotencyConflict,
     InvalidCommand,
+    ObjectVersionConflict,
     UnknownCommand,
 )
 from app.execution.storage import lock_tenant, managed_uow
@@ -51,6 +54,8 @@ class CommandKernel:
         loader: AuthorizationLoader,
         commands: Sequence[CommandSpec],
         clock: Clock = utc_clock,
+        coordinator: AuthorizationLockCoordinator | None = None,
+        identity_validator: CommandIdentityValidator | None = None,
     ) -> None:
         specs: dict[tuple[str, str], CommandSpec] = {}
         for spec in commands:
@@ -63,6 +68,8 @@ class CommandKernel:
         self._loader = loader
         self._clock = clock
         self._authorization = AuthorizationEngine()
+        self._coordinator = coordinator
+        self._identity_validator = identity_validator
 
     def _spec(self, name: str, version: str) -> CommandSpec:
         try:
@@ -109,7 +116,30 @@ class CommandKernel:
         context.check_live(now)
         decision = self._authorization.decide(replace(facts, now=now))
         if decision.outcome != DecisionOutcome.ALLOWED:
+            if (
+                expected_version is not None
+                and facts.attributes.object_version is not None
+                and expected_version != facts.attributes.object_version
+            ):
+                # Reveal a version conflict only after the current action's
+                # remaining RBAC/ReBAC/ABAC requirements have been satisfied.
+                current_version_facts = replace(
+                    facts,
+                    now=now,
+                    attributes=replace(facts.attributes, expected_object_version=facts.attributes.object_version),
+                )
+                if self._authorization.decide(current_version_facts).outcome == DecisionOutcome.ALLOWED:
+                    raise ObjectVersionConflict()
             raise AuthorizationDenied()
+        if context.authentication is not None:
+            if self._identity_validator is None:
+                raise AuthorizationDenied()
+            await self._identity_validator.validate_before_commit(session, context, self._clock())
+            now = self._clock()
+            context.check_live(now)
+            decision = self._authorization.decide(replace(facts, now=now))
+            if decision.outcome != DecisionOutcome.ALLOWED:
+                raise AuthorizationDenied()
         return decision, facts
 
     @staticmethod
@@ -121,6 +151,7 @@ class CommandKernel:
         return CommandResult(row.execution_id, copied_object(row.result_json), replayed, row.completed_at)
 
     async def execute(self, context: ExecutionContext, command: CommandEnvelope) -> CommandResult:
+        self._check_identity_integration(context)
         spec = self._spec(command.name, command.version)
         context.check_live(self._clock())
         raw_payload = copied_object(command.payload)
@@ -148,6 +179,9 @@ class CommandKernel:
         )
         async with managed_uow(self._sessions) as uow:
             session = uow.session
+            if self._coordinator is not None:
+                await self._coordinator.acquire_locks(session, context)
+                uow.assert_owned()
             await lock_tenant(session, context.tenant_ref)
             row = await session.scalar(
                 select(CommandExecutionTable).where(
@@ -221,6 +255,7 @@ class CommandKernel:
                     request_id=context.request_id,
                     before_json=copied_object(effect.before) if effect.before is not None else None,
                     after_json=copied_object(effect.after) if effect.after is not None else None,
+                    authorization_json=self._authorization_evidence(guarded_facts, decision, context),
                     created_at=row.completed_at,
                 )
             )
@@ -247,6 +282,9 @@ class CommandKernel:
             # Constraint failures happen before the commit boundary. They
             # roll back the domain write, execution, audit and messages together.
             await uow.flush()
+            if context.authentication is not None:
+                assert self._identity_validator is not None
+                await self._identity_validator.validate_before_commit(session, context, self._clock())
             now = self._clock()
             context.check_live(now)
             # Guarded authorization inputs remain stable under the writer
@@ -268,9 +306,13 @@ class CommandKernel:
         Acquiring the guard also waits for an earlier transaction to finish.
         A missing row here is not a general cross-system proof of non-execution.
         """
+        self._check_identity_integration(context)
         context.check_live(self._clock())
         async with managed_uow(self._sessions) as uow:
             session = uow.session
+            if self._coordinator is not None:
+                await self._coordinator.acquire_locks(session, context)
+                uow.assert_owned()
             await lock_tenant(session, context.tenant_ref)
             row = await session.scalar(
                 select(CommandExecutionTable).where(
@@ -287,3 +329,106 @@ class CommandKernel:
             )
             uow.assert_owned()
             return self._result(row, replayed=True)
+
+    async def read[T](
+        self,
+        context: ExecutionContext,
+        *,
+        action: str,
+        target_ref: str,
+        reader: Callable[[AsyncSession], Awaitable[T]],
+    ) -> T:
+        """Load a value under current authorization and recheck before disclosure.
+
+        The trusted reader must return a materialized value, perform only local
+        database reads, and leave transaction ownership to this method. The
+        transaction always rolls back; writes belong in registered commands.
+        Authentication/authorization locks remain held through the final check.
+        """
+        self._check_identity_integration(context)
+        context.check_live(self._clock())
+        async with managed_uow(self._sessions) as uow:
+            if self._coordinator is not None:
+                await self._coordinator.acquire_locks(uow.session, context)
+                uow.assert_owned()
+            await lock_tenant(uow.session, context.tenant_ref)
+            await self._authorize(uow.session, context, action=action, target_ref=target_ref, expected_version=None)
+            uow.assert_owned()
+            result = await reader(uow.session)
+            uow.assert_owned()
+            # Data loading can cross authentication or grant expiration. A read
+            # has the same current-identity boundary as a command's final commit.
+            await self._authorize(uow.session, context, action=action, target_ref=target_ref, expected_version=None)
+            uow.assert_owned()
+            return result
+
+    async def get_result_by_key(
+        self,
+        context: ExecutionContext,
+        *,
+        command_name: str,
+        command_version: str,
+        idempotency_key: str,
+        target_ref: str,
+    ) -> CommandResult:
+        """Recover an uncertain HTTP result using the caller's original operation key."""
+        self._check_identity_integration(context)
+        context.check_live(self._clock())
+        spec = self._spec(command_name, command_version)
+        async with managed_uow(self._sessions) as uow:
+            session = uow.session
+            if self._coordinator is not None:
+                await self._coordinator.acquire_locks(session, context)
+                uow.assert_owned()
+            await lock_tenant(session, context.tenant_ref)
+            row = await session.scalar(
+                select(CommandExecutionTable).where(
+                    CommandExecutionTable.tenant_ref == context.tenant_ref,
+                    CommandExecutionTable.actor_ref == context.actor_ref,
+                    CommandExecutionTable.command_name == command_name,
+                    CommandExecutionTable.command_version == command_version,
+                    CommandExecutionTable.idempotency_key == idempotency_key,
+                    CommandExecutionTable.target_ref == target_ref,
+                )
+            )
+            if row is None:
+                raise ExecutionNotFound()
+            await self._authorize(
+                session, context, action=spec.read_action, target_ref=target_ref, expected_version=None
+            )
+            uow.assert_owned()
+            return self._result(row, replayed=True)
+
+    def _check_identity_integration(self, context: ExecutionContext) -> None:
+        if context.authentication is not None and (self._coordinator is None or self._identity_validator is None):
+            raise AuthorizationDenied()
+
+    @staticmethod
+    def _authorization_evidence(
+        facts: AuthorizationContext,
+        decision: AuthorizationDecision,
+        context: ExecutionContext,
+    ) -> dict[str, object] | None:
+        assignment = facts.assignment
+        if assignment is None or assignment.permission_actions is None:
+            return None
+        evidence: dict[str, object] = {
+            "schema": "stage-authorization-evidence-v1",
+            "organization_ref": facts.organization_ref,
+            "principal_ref": facts.subject_ref,
+            "membership_ref": assignment.membership_ref,
+            "assignment_ref": assignment.assignment_ref,
+            "role_ref": assignment.role_ref,
+            "role_revision": assignment.role_revision,
+            "role_digest": assignment.role_version_digest,
+            "policy_release_ref": facts.policy_release_id,
+            "action": facts.action,
+            "resource_ref": facts.resource_ref,
+            "resource_scopes": list(facts.resource_scope_refs),
+            "matched_relations": list(decision.matched_relations),
+            "fact_versions": [list(version) for version in facts.fact_versions],
+            "evaluated_at": decision.evaluated_at.isoformat() if decision.evaluated_at else None,
+        }
+        if context.authentication is not None:
+            evidence["authentication"] = context.authentication.audit_snapshot()
+        return evidence

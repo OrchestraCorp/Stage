@@ -1,0 +1,983 @@
+{
+  "schema": "stage.mixed-native-work-capacity.v1",
+  "recorded_at": "2026-10-26T03:55:27.861903+00:00",
+  "source_sha256": "18a3bcd443cf10df6fb50ff306f91a09c341b3291daf8ef7371ae7ee9cec78f0",
+  "postgresql": "17.11 (Ubuntu 17.11-1.pgdg24.04+2)",
+  "migration_head": "c6f3a19d820b",
+  "configuration": {
+    "database_name": "stage_test_capacity_20261026",
+    "users": 16,
+    "sessions": 16,
+    "scope": "openid profile offline_access",
+    "organization_mfa": "required",
+    "processes": 1,
+    "event_loops": 1,
+    "pool_size": 16,
+    "rsa_bits": 3072,
+    "max_overflow": 0,
+    "requests_per_level": 512,
+    "concurrency_levels": [
+      1,
+      4,
+      8,
+      16
+    ],
+    "available_cpus": 24,
+    "cgroup_cpu_max": null,
+    "load_average_before": [
+      0.19287109375,
+      0.9150390625,
+      1.22900390625
+    ],
+    "load_average_after": [
+      1.0791015625,
+      1.01513671875,
+      1.23681640625
+    ],
+    "environment_note": "The preceding PostgreSQL suite and SQLite targeted suites, Chromium acceptance and online smoke had finished before this dedicated measurement window. Final full suites ran after this window. Existing Stage/PostgreSQL/Redis services remained running; other host activity was not controlled. Environment description corrected after measurement; measured values and source fingerprint unchanged."
+  },
+  "boundaries": [
+    "Service methods and runtime leases; real PostgreSQL TCP; no HTTP/TLS/frontend.",
+    "Synthetic completed MFA fixture; actual PKCE, JWT verification, refresh and current authorization.",
+    "Separate shared-peer login burst includes Argon2/TOTP, browser sessions and PKCE issuance.",
+    "One person/session/item per worker; equal mix, no intentional object conflict or refresh reuse.",
+    "Per-operation throughput is its contribution to the common mixed window, not an isolated capacity.",
+    "Guard acquisition includes SQL/driver/round-trip; an upper bound for server lock waiting.",
+    "Guard hold starts after acquisition until transaction end, including commit/rollback and pool return.",
+    "SQL counts include ORM/cursor statements, excluding driver transaction-control and pre-ping traffic.",
+    "Closed-loop warm service baseline; no production SLO, arrival model or multi-process capacity claim."
+  ],
+  "results": [
+    {
+      "concurrency": 1,
+      "elapsed_seconds": 16.841,
+      "all": {
+        "operations": 512,
+        "throughput_per_second": 30.402,
+        "errors": {},
+        "latency_ms": {
+          "samples": 512,
+          "p50": 31.165,
+          "p95": 63.555,
+          "max": 73.813
+        },
+        "sql_statements": {
+          "total": 27904,
+          "mean": 54.5
+        },
+        "guard_queries": 1152,
+        "guard_transactions": 768,
+        "guard_acquire_ms_per_operation": {
+          "samples": 512,
+          "p50": 0.285,
+          "p95": 0.42,
+          "max": 0.593
+        },
+        "guard_hold_ms_per_operation": {
+          "samples": 512,
+          "p50": 23.675,
+          "p95": 52.607,
+          "max": 61.149
+        },
+        "guard_acquire_ms_per_transaction": {
+          "samples": 768,
+          "p50": 0.182,
+          "p95": 0.228,
+          "max": 0.417
+        },
+        "guard_hold_ms_per_transaction": {
+          "samples": 768,
+          "p50": 9.179,
+          "p95": 43.299,
+          "max": 52.654
+        }
+      },
+      "by_operation": {
+        "userinfo": {
+          "operations": 128,
+          "throughput_per_second": 7.601,
+          "errors": {},
+          "latency_ms": {
+            "samples": 128,
+            "p50": 6.189,
+            "p95": 7.144,
+            "max": 9.8
+          },
+          "sql_statements": {
+            "total": 1280,
+            "mean": 10.0
+          },
+          "guard_queries": 128,
+          "guard_transactions": 128,
+          "guard_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 0.184,
+            "p95": 0.224,
+            "max": 0.267
+          },
+          "guard_hold_ms_per_operation": {
+            "samples": 128,
+            "p50": 3.152,
+            "p95": 3.634,
+            "max": 6.711
+          },
+          "guard_acquire_ms_per_transaction": {
+            "samples": 128,
+            "p50": 0.184,
+            "p95": 0.224,
+            "max": 0.267
+          },
+          "guard_hold_ms_per_transaction": {
+            "samples": 128,
+            "p50": 3.152,
+            "p95": 3.634,
+            "max": 6.711
+          }
+        },
+        "refresh": {
+          "operations": 128,
+          "throughput_per_second": 7.601,
+          "errors": {},
+          "latency_ms": {
+            "samples": 128,
+            "p50": 13.331,
+            "p95": 14.868,
+            "max": 16.57
+          },
+          "sql_statements": {
+            "total": 2048,
+            "mean": 16.0
+          },
+          "guard_queries": 128,
+          "guard_transactions": 128,
+          "guard_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 0.181,
+            "p95": 0.226,
+            "max": 0.243
+          },
+          "guard_hold_ms_per_operation": {
+            "samples": 128,
+            "p50": 9.524,
+            "p95": 10.552,
+            "max": 11.275
+          },
+          "guard_acquire_ms_per_transaction": {
+            "samples": 128,
+            "p50": 0.181,
+            "p95": 0.226,
+            "max": 0.243
+          },
+          "guard_hold_ms_per_transaction": {
+            "samples": 128,
+            "p50": 9.524,
+            "p95": 10.552,
+            "max": 11.275
+          }
+        },
+        "work_read": {
+          "operations": 128,
+          "throughput_per_second": 7.601,
+          "errors": {},
+          "latency_ms": {
+            "samples": 128,
+            "p50": 59.953,
+            "p95": 66.818,
+            "max": 73.813
+          },
+          "sql_statements": {
+            "total": 13696,
+            "mean": 107.0
+          },
+          "guard_queries": 512,
+          "guard_transactions": 256,
+          "guard_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 0.364,
+            "p95": 0.44,
+            "max": 0.549
+          },
+          "guard_hold_ms_per_operation": {
+            "samples": 128,
+            "p50": 49.698,
+            "p95": 55.263,
+            "max": 61.149
+          },
+          "guard_acquire_ms_per_transaction": {
+            "samples": 256,
+            "p50": 0.182,
+            "p95": 0.231,
+            "max": 0.346
+          },
+          "guard_hold_ms_per_transaction": {
+            "samples": 256,
+            "p50": 25.705,
+            "p95": 45.845,
+            "max": 52.654
+          }
+        },
+        "work_edit": {
+          "operations": 128,
+          "throughput_per_second": 7.601,
+          "errors": {},
+          "latency_ms": {
+            "samples": 128,
+            "p50": 50.103,
+            "p95": 57.238,
+            "max": 65.175
+          },
+          "sql_statements": {
+            "total": 10880,
+            "mean": 85.0
+          },
+          "guard_queries": 384,
+          "guard_transactions": 256,
+          "guard_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 0.365,
+            "p95": 0.439,
+            "max": 0.593
+          },
+          "guard_hold_ms_per_operation": {
+            "samples": 128,
+            "p50": 39.457,
+            "p95": 44.512,
+            "max": 52.14
+          },
+          "guard_acquire_ms_per_transaction": {
+            "samples": 256,
+            "p50": 0.182,
+            "p95": 0.228,
+            "max": 0.417
+          },
+          "guard_hold_ms_per_transaction": {
+            "samples": 256,
+            "p50": 19.997,
+            "p95": 35.256,
+            "max": 42.118
+          }
+        }
+      }
+    },
+    {
+      "concurrency": 4,
+      "elapsed_seconds": 15.477,
+      "all": {
+        "operations": 512,
+        "throughput_per_second": 33.081,
+        "errors": {},
+        "latency_ms": {
+          "samples": 512,
+          "p50": 125.671,
+          "p95": 210.391,
+          "max": 242.915
+        },
+        "sql_statements": {
+          "total": 27904,
+          "mean": 54.5
+        },
+        "guard_queries": 1152,
+        "guard_transactions": 768,
+        "guard_acquire_ms_per_operation": {
+          "samples": 512,
+          "p50": 74.667,
+          "p95": 134.615,
+          "max": 159.328
+        },
+        "guard_hold_ms_per_operation": {
+          "samples": 512,
+          "p50": 28.544,
+          "p95": 58.386,
+          "max": 64.358
+        },
+        "guard_acquire_ms_per_transaction": {
+          "samples": 768,
+          "p50": 47.815,
+          "p95": 92.56,
+          "max": 135.764
+        },
+        "guard_hold_ms_per_transaction": {
+          "samples": 768,
+          "p50": 11.961,
+          "p95": 46.068,
+          "max": 53.272
+        }
+      },
+      "by_operation": {
+        "userinfo": {
+          "operations": 128,
+          "throughput_per_second": 8.27,
+          "errors": {},
+          "latency_ms": {
+            "samples": 128,
+            "p50": 65.91,
+            "p95": 110.61,
+            "max": 116.071
+          },
+          "sql_statements": {
+            "total": 1280,
+            "mean": 10.0
+          },
+          "guard_queries": 128,
+          "guard_transactions": 128,
+          "guard_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 53.959,
+            "p95": 99.228,
+            "max": 103.881
+          },
+          "guard_hold_ms_per_operation": {
+            "samples": 128,
+            "p50": 4.741,
+            "p95": 6.021,
+            "max": 6.651
+          },
+          "guard_acquire_ms_per_transaction": {
+            "samples": 128,
+            "p50": 53.959,
+            "p95": 99.228,
+            "max": 103.881
+          },
+          "guard_hold_ms_per_transaction": {
+            "samples": 128,
+            "p50": 4.741,
+            "p95": 6.021,
+            "max": 6.651
+          }
+        },
+        "refresh": {
+          "operations": 128,
+          "throughput_per_second": 8.27,
+          "errors": {},
+          "latency_ms": {
+            "samples": 128,
+            "p50": 61.057,
+            "p95": 82.445,
+            "max": 91.409
+          },
+          "sql_statements": {
+            "total": 2048,
+            "mean": 16.0
+          },
+          "guard_queries": 128,
+          "guard_transactions": 128,
+          "guard_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 39.969,
+            "p95": 57.087,
+            "max": 69.345
+          },
+          "guard_hold_ms_per_operation": {
+            "samples": 128,
+            "p50": 12.422,
+            "p95": 15.254,
+            "max": 18.272
+          },
+          "guard_acquire_ms_per_transaction": {
+            "samples": 128,
+            "p50": 39.969,
+            "p95": 57.087,
+            "max": 69.345
+          },
+          "guard_hold_ms_per_transaction": {
+            "samples": 128,
+            "p50": 12.422,
+            "p95": 15.254,
+            "max": 18.272
+          }
+        },
+        "work_read": {
+          "operations": 128,
+          "throughput_per_second": 8.27,
+          "errors": {},
+          "latency_ms": {
+            "samples": 128,
+            "p50": 170.771,
+            "p95": 221.902,
+            "max": 242.915
+          },
+          "sql_statements": {
+            "total": 13696,
+            "mean": 107.0
+          },
+          "guard_queries": 512,
+          "guard_transactions": 256,
+          "guard_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 91.643,
+            "p95": 139.893,
+            "max": 159.328
+          },
+          "guard_hold_ms_per_operation": {
+            "samples": 128,
+            "p50": 55.529,
+            "p95": 62.343,
+            "max": 64.358
+          },
+          "guard_acquire_ms_per_transaction": {
+            "samples": 256,
+            "p50": 47.01,
+            "p95": 91.183,
+            "max": 135.764
+          },
+          "guard_hold_ms_per_transaction": {
+            "samples": 256,
+            "p50": 27.557,
+            "p95": 49.518,
+            "max": 53.272
+          }
+        },
+        "work_edit": {
+          "operations": 128,
+          "throughput_per_second": 8.27,
+          "errors": {},
+          "latency_ms": {
+            "samples": 128,
+            "p50": 164.93,
+            "p95": 204.805,
+            "max": 217.382
+          },
+          "sql_statements": {
+            "total": 10880,
+            "mean": 85.0
+          },
+          "guard_queries": 384,
+          "guard_transactions": 256,
+          "guard_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 92.1,
+            "p95": 137.564,
+            "max": 152.739
+          },
+          "guard_hold_ms_per_operation": {
+            "samples": 128,
+            "p50": 45.977,
+            "p95": 50.735,
+            "max": 60.65
+          },
+          "guard_acquire_ms_per_transaction": {
+            "samples": 256,
+            "p50": 49.173,
+            "p95": 78.737,
+            "max": 132.257
+          },
+          "guard_hold_ms_per_transaction": {
+            "samples": 256,
+            "p50": 23.516,
+            "p95": 38.426,
+            "max": 49.413
+          }
+        }
+      }
+    },
+    {
+      "concurrency": 8,
+      "elapsed_seconds": 15.799,
+      "all": {
+        "operations": 512,
+        "throughput_per_second": 32.408,
+        "errors": {},
+        "latency_ms": {
+          "samples": 512,
+          "p50": 244.665,
+          "p95": 405.918,
+          "max": 483.641
+        },
+        "sql_statements": {
+          "total": 27904,
+          "mean": 54.5
+        },
+        "guard_queries": 1152,
+        "guard_transactions": 768,
+        "guard_acquire_ms_per_operation": {
+          "samples": 512,
+          "p50": 182.368,
+          "p95": 333.416,
+          "max": 393.385
+        },
+        "guard_hold_ms_per_operation": {
+          "samples": 512,
+          "p50": 32.478,
+          "p95": 60.28,
+          "max": 73.173
+        },
+        "guard_acquire_ms_per_transaction": {
+          "samples": 768,
+          "p50": 126.842,
+          "p95": 224.451,
+          "max": 247.309
+        },
+        "guard_hold_ms_per_transaction": {
+          "samples": 768,
+          "p50": 11.807,
+          "p95": 48.205,
+          "max": 56.607
+        }
+      },
+      "by_operation": {
+        "userinfo": {
+          "operations": 128,
+          "throughput_per_second": 8.102,
+          "errors": {},
+          "latency_ms": {
+            "samples": 128,
+            "p50": 149.039,
+            "p95": 245.122,
+            "max": 258.198
+          },
+          "sql_statements": {
+            "total": 1280,
+            "mean": 10.0
+          },
+          "guard_queries": 128,
+          "guard_transactions": 128,
+          "guard_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 138.92,
+            "p95": 234.79,
+            "max": 247.309
+          },
+          "guard_hold_ms_per_operation": {
+            "samples": 128,
+            "p50": 4.895,
+            "p95": 7.328,
+            "max": 12.034
+          },
+          "guard_acquire_ms_per_transaction": {
+            "samples": 128,
+            "p50": 138.92,
+            "p95": 234.79,
+            "max": 247.309
+          },
+          "guard_hold_ms_per_transaction": {
+            "samples": 128,
+            "p50": 4.895,
+            "p95": 7.328,
+            "max": 12.034
+          }
+        },
+        "refresh": {
+          "operations": 128,
+          "throughput_per_second": 8.102,
+          "errors": {},
+          "latency_ms": {
+            "samples": 128,
+            "p50": 134.049,
+            "p95": 190.862,
+            "max": 212.252
+          },
+          "sql_statements": {
+            "total": 2048,
+            "mean": 16.0
+          },
+          "guard_queries": 128,
+          "guard_transactions": 128,
+          "guard_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 111.484,
+            "p95": 169.859,
+            "max": 189.49
+          },
+          "guard_hold_ms_per_operation": {
+            "samples": 128,
+            "p50": 13.192,
+            "p95": 15.033,
+            "max": 23.132
+          },
+          "guard_acquire_ms_per_transaction": {
+            "samples": 128,
+            "p50": 111.484,
+            "p95": 169.859,
+            "max": 189.49
+          },
+          "guard_hold_ms_per_transaction": {
+            "samples": 128,
+            "p50": 13.192,
+            "p95": 15.033,
+            "max": 23.132
+          }
+        },
+        "work_read": {
+          "operations": 128,
+          "throughput_per_second": 8.102,
+          "errors": {},
+          "latency_ms": {
+            "samples": 128,
+            "p50": 341.753,
+            "p95": 438.406,
+            "max": 483.641
+          },
+          "sql_statements": {
+            "total": 13696,
+            "mean": 107.0
+          },
+          "guard_queries": 512,
+          "guard_transactions": 256,
+          "guard_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 256.849,
+            "p95": 357.439,
+            "max": 393.385
+          },
+          "guard_hold_ms_per_operation": {
+            "samples": 128,
+            "p50": 57.055,
+            "p95": 63.846,
+            "max": 73.173
+          },
+          "guard_acquire_ms_per_transaction": {
+            "samples": 256,
+            "p50": 125.422,
+            "p95": 228.706,
+            "max": 246.599
+          },
+          "guard_hold_ms_per_transaction": {
+            "samples": 256,
+            "p50": 31.517,
+            "p95": 51.225,
+            "max": 56.607
+          }
+        },
+        "work_edit": {
+          "operations": 128,
+          "throughput_per_second": 8.102,
+          "errors": {},
+          "latency_ms": {
+            "samples": 128,
+            "p50": 342.314,
+            "p95": 404.208,
+            "max": 441.67
+          },
+          "sql_statements": {
+            "total": 10880,
+            "mean": 85.0
+          },
+          "guard_queries": 384,
+          "guard_transactions": 256,
+          "guard_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 269.732,
+            "p95": 333.434,
+            "max": 365.173
+          },
+          "guard_hold_ms_per_operation": {
+            "samples": 128,
+            "p50": 45.124,
+            "p95": 52.64,
+            "max": 57.769
+          },
+          "guard_acquire_ms_per_transaction": {
+            "samples": 256,
+            "p50": 133.332,
+            "p95": 212.789,
+            "max": 237.74
+          },
+          "guard_hold_ms_per_transaction": {
+            "samples": 256,
+            "p50": 23.562,
+            "p95": 37.635,
+            "max": 44.241
+          }
+        }
+      }
+    },
+    {
+      "concurrency": 16,
+      "elapsed_seconds": 16.252,
+      "all": {
+        "operations": 512,
+        "throughput_per_second": 31.505,
+        "errors": {},
+        "latency_ms": {
+          "samples": 512,
+          "p50": 521.281,
+          "p95": 830.043,
+          "max": 909.182
+        },
+        "sql_statements": {
+          "total": 27904,
+          "mean": 54.5
+        },
+        "guard_queries": 1152,
+        "guard_transactions": 768,
+        "guard_acquire_ms_per_operation": {
+          "samples": 512,
+          "p50": 454.357,
+          "p95": 754.411,
+          "max": 834.292
+        },
+        "guard_hold_ms_per_operation": {
+          "samples": 512,
+          "p50": 34.324,
+          "p95": 61.108,
+          "max": 68.292
+        },
+        "guard_acquire_ms_per_transaction": {
+          "samples": 768,
+          "p50": 291.28,
+          "p95": 474.528,
+          "max": 521.834
+        },
+        "guard_hold_ms_per_transaction": {
+          "samples": 768,
+          "p50": 12.052,
+          "p95": 49.149,
+          "max": 54.947
+        }
+      },
+      "by_operation": {
+        "userinfo": {
+          "operations": 128,
+          "throughput_per_second": 7.876,
+          "errors": {},
+          "latency_ms": {
+            "samples": 128,
+            "p50": 319.457,
+            "p95": 512.153,
+            "max": 533.46
+          },
+          "sql_statements": {
+            "total": 1280,
+            "mean": 10.0
+          },
+          "guard_queries": 128,
+          "guard_transactions": 128,
+          "guard_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 308.612,
+            "p95": 500.849,
+            "max": 521.834
+          },
+          "guard_hold_ms_per_operation": {
+            "samples": 128,
+            "p50": 5.112,
+            "p95": 7.013,
+            "max": 26.347
+          },
+          "guard_acquire_ms_per_transaction": {
+            "samples": 128,
+            "p50": 308.612,
+            "p95": 500.849,
+            "max": 521.834
+          },
+          "guard_hold_ms_per_transaction": {
+            "samples": 128,
+            "p50": 5.112,
+            "p95": 7.013,
+            "max": 26.347
+          }
+        },
+        "refresh": {
+          "operations": 128,
+          "throughput_per_second": 7.876,
+          "errors": {},
+          "latency_ms": {
+            "samples": 128,
+            "p50": 284.286,
+            "p95": 349.517,
+            "max": 377.372
+          },
+          "sql_statements": {
+            "total": 2048,
+            "mean": 16.0
+          },
+          "guard_queries": 128,
+          "guard_transactions": 128,
+          "guard_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 261.786,
+            "p95": 327.45,
+            "max": 353.568
+          },
+          "guard_hold_ms_per_operation": {
+            "samples": 128,
+            "p50": 13.061,
+            "p95": 15.079,
+            "max": 24.291
+          },
+          "guard_acquire_ms_per_transaction": {
+            "samples": 128,
+            "p50": 261.786,
+            "p95": 327.45,
+            "max": 353.568
+          },
+          "guard_hold_ms_per_transaction": {
+            "samples": 128,
+            "p50": 13.061,
+            "p95": 15.079,
+            "max": 24.291
+          }
+        },
+        "work_read": {
+          "operations": 128,
+          "throughput_per_second": 7.876,
+          "errors": {},
+          "latency_ms": {
+            "samples": 128,
+            "p50": 668.79,
+            "p95": 867.177,
+            "max": 909.182
+          },
+          "sql_statements": {
+            "total": 13696,
+            "mean": 107.0
+          },
+          "guard_queries": 512,
+          "guard_transactions": 256,
+          "guard_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 581.238,
+            "p95": 783.533,
+            "max": 821.514
+          },
+          "guard_hold_ms_per_operation": {
+            "samples": 128,
+            "p50": 58.085,
+            "p95": 64.255,
+            "max": 68.292
+          },
+          "guard_acquire_ms_per_transaction": {
+            "samples": 256,
+            "p50": 289.887,
+            "p95": 490.411,
+            "max": 510.671
+          },
+          "guard_hold_ms_per_transaction": {
+            "samples": 256,
+            "p50": 29.044,
+            "p95": 51.165,
+            "max": 54.947
+          }
+        },
+        "work_edit": {
+          "operations": 128,
+          "throughput_per_second": 7.876,
+          "errors": {},
+          "latency_ms": {
+            "samples": 128,
+            "p50": 690.47,
+            "p95": 839.982,
+            "max": 896.336
+          },
+          "sql_statements": {
+            "total": 10880,
+            "mean": 85.0
+          },
+          "guard_queries": 384,
+          "guard_transactions": 256,
+          "guard_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 612.872,
+            "p95": 768.217,
+            "max": 834.292
+          },
+          "guard_hold_ms_per_operation": {
+            "samples": 128,
+            "p50": 46.509,
+            "p95": 51.311,
+            "max": 61.171
+          },
+          "guard_acquire_ms_per_transaction": {
+            "samples": 256,
+            "p50": 306.937,
+            "p95": 455.916,
+            "max": 508.488
+          },
+          "guard_hold_ms_per_transaction": {
+            "samples": 256,
+            "p50": 27.517,
+            "p95": 38.521,
+            "max": 45.445
+          }
+        }
+      }
+    }
+  ],
+  "login_burst": {
+    "operations": 16,
+    "throughput_per_second": 9.182,
+    "errors": {},
+    "latency_ms": {
+      "samples": 16,
+      "p50": 1046.99,
+      "p95": 1712.497,
+      "max": 1737.255
+    },
+    "sql_statements": {
+      "total": 1312,
+      "mean": 82.0
+    },
+    "guard_queries": 80,
+    "guard_transactions": 80,
+    "guard_acquire_ms_per_operation": {
+      "samples": 16,
+      "p50": 8.043,
+      "p95": 15.925,
+      "max": 21.754
+    },
+    "guard_hold_ms_per_operation": {
+      "samples": 16,
+      "p50": 42.597,
+      "p95": 50.802,
+      "max": 50.886
+    },
+    "guard_acquire_ms_per_transaction": {
+      "samples": 80,
+      "p50": 1.246,
+      "p95": 4.595,
+      "max": 8.13
+    },
+    "guard_hold_ms_per_transaction": {
+      "samples": 80,
+      "p50": 8.277,
+      "p95": 13.005,
+      "max": 13.869
+    },
+    "observed_factor_budget_consumed": 32,
+    "observed_authorization_budget_consumed": 16,
+    "stages_ms": {
+      "authorize": {
+        "samples": 16,
+        "p50": 75.435,
+        "p95": 124.374,
+        "max": 126.304
+      },
+      "password": {
+        "samples": 16,
+        "p50": 893.182,
+        "p95": 1525.543,
+        "max": 1537.693
+      },
+      "totp": {
+        "samples": 16,
+        "p50": 18.732,
+        "p95": 27.495,
+        "max": 29.913
+      },
+      "finish": {
+        "samples": 16,
+        "p50": 35.021,
+        "p95": 40.094,
+        "max": 40.552
+      },
+      "token": {
+        "samples": 16,
+        "p50": 22.59,
+        "p95": 24.502,
+        "max": 24.615
+      }
+    },
+    "same_peer": true,
+    "factor_attempt_limit": 300,
+    "authorization_attempt_limit": 300,
+    "rate_window_seconds": 600,
+    "factor_attempts": 32,
+    "otp_reused": false
+  },
+  "checks": {
+    "commands_audits_versions": 512,
+    "all_operations_succeeded": true,
+    "runtime_drained": true,
+    "source_stable": true
+  }
+}

@@ -1,9 +1,6 @@
 """Protocol boundaries: signatures do not imply the right issuer, usage or subject kind."""
 
 import base64
-import json
-import time
-from dataclasses import replace
 from datetime import UTC, datetime
 from typing import Any
 
@@ -16,53 +13,15 @@ from app.identity.authentication import (
     AuthenticationRejected,
     AuthenticationUnavailable,
     KeycloakAuthenticator,
-    KeycloakProfile,
 )
-
-
-@pytest.fixture(scope="module")
-def key() -> rsa.RSAPrivateKey:
-    return rsa.generate_private_key(public_exponent=65537, key_size=2048)
-
-
-def profile(**changes: Any) -> KeycloakProfile:
-    return replace(
-        KeycloakProfile(
-            profile_ref="local-human",
-            profile_version=1,
-            issuer="https://idp.example/realms/stage",
-            jwks_url="https://idp.example/realms/stage/protocol/openid-connect/certs",
-            audience="stage-api",
-            credential_kind="human_oidc",
-            allowed_clients=("maestro",),
-            subject_namespace="keycloak-human-v1",
-            environment="test",
-        ),
-        **changes,
-    )
-
-
-def token(
-    key: rsa.RSAPrivateKey, *, claims: dict[str, Any] | None = None, headers: dict[str, Any] | None = None
-) -> str:
-    now = int(time.time())
-    payload = {
-        "iss": profile().issuer,
-        "sub": "subject-1",
-        "aud": "stage-api",
-        "azp": "maestro",
-        "iat": now,
-        "exp": now + 300,
-        "typ": "Bearer",
-        "stage_credential_kind": "human_oidc",
-    }
-    payload.update(claims or {})
-    return jwt.encode(payload, key, algorithm="RS256", headers={"kid": "key-1", "typ": "JWT", **(headers or {})})
-
-
-def jwks(key: rsa.RSAPrivateKey, kid: str = "key-1") -> dict[str, Any]:
-    public = json.loads(jwt.algorithms.RSAAlgorithm.to_jwk(key.public_key()))
-    return {"keys": [{**public, "kid": kid, "alg": "RS256", "use": "sig"}]}
+from tests.support.identity_tokens import (
+    jwks,
+    profile,
+    token,
+)
+from tests.support.identity_tokens import (
+    key as key,
+)
 
 
 async def test_human_evidence_omits_unknown_authentication_strength(key: rsa.RSAPrivateKey) -> None:
@@ -102,9 +61,13 @@ async def test_human_evidence_omits_unknown_authentication_strength(key: rsa.RSA
         {"nbf": 2**32},
         {"sub": ""},
         {"sub": 123},
+        {"sub": "subject\x00suffix"},
+        {"sub": "subject\ud800suffix"},
         {"auth_time": 2**32},
         {"amr": "mfa"},
         {"acr": 2},
+        {"acr": "level\x00suffix"},
+        {"amr": ["pwd\x00suffix"]},
         {"scope": ["openid"]},
     ],
 )

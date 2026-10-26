@@ -14,7 +14,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.authz.context import AuthorizationContext
 from app.core.enums import PrincipalType
-from app.execution.errors import ContextExpired, InvalidCommand
+from app.execution.errors import ContextExpired, InvalidCommand, RequestDeadlineExceeded
+from app.identity.evidence import HumanAuthenticationEvidence
 
 JsonObject = dict[str, Any]
 Clock = Callable[[], datetime]
@@ -51,6 +52,7 @@ class ExecutionContext:
     assignment_ref: str | None = None
     delegation_ref: str | None = None
     deadline: datetime | None = None
+    authentication: HumanAuthenticationEvidence | None = field(default=None, repr=False)
 
     def __post_init__(self) -> None:
         for value in (self.tenant_ref, self.actor_ref, self.effective_subject_ref, self.request_id):
@@ -63,11 +65,28 @@ class ExecutionContext:
         require_time(self.credential_expires_at)
         if self.deadline is not None:
             require_time(self.deadline)
+        evidence = self.authentication
+        if evidence is not None:
+            if (
+                self.principal_type is not PrincipalType.HUMAN
+                or self.actor_ref != evidence.principal_ref
+                or self.effective_subject_ref != evidence.principal_ref
+                or self.tenant_ref != evidence.organization_ref
+                or self.delegation_ref is not None
+            ):
+                raise InvalidCommand()
+            require_time(evidence.valid_until)
+            if self.credential_expires_at > evidence.valid_until:
+                raise InvalidCommand()
 
     def check_live(self, now: datetime) -> None:
         require_time(now)
-        if now >= self.credential_expires_at or (self.deadline is not None and now >= self.deadline):
+        if now >= self.credential_expires_at:
             raise ContextExpired()
+        if self.authentication is not None and now >= self.authentication.valid_until:
+            raise ContextExpired()
+        if self.deadline is not None and now >= self.deadline:
+            raise RequestDeadlineExceeded()
 
 
 @dataclass(frozen=True)
@@ -123,6 +142,27 @@ class CommandResult:
     replayed: bool
     completed_at: datetime
     status: str = field(default="succeeded", init=False)
+
+
+class AuthorizationLockCoordinator(Protocol):
+    async def acquire_locks(self, session: AsyncSession, context: ExecutionContext) -> None:
+        """Acquire trust/global identity locks before the organization guard.
+
+        This hook cannot perform network I/O or finish the caller's transaction.
+        Its implementations must discover dependencies before taking later locks.
+        """
+        ...
+
+
+class CommandIdentityValidator(Protocol):
+    async def validate_before_commit(
+        self,
+        session: AsyncSession,
+        context: ExecutionContext,
+        now: datetime,
+    ) -> None:
+        """Revalidate server-issued authentication evidence with no network or commit."""
+        ...
 
 
 class AuthorizationLoader(Protocol):

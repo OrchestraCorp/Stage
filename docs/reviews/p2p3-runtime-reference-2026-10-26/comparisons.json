@@ -1,0 +1,1997 @@
+[
+  {
+    "scenario_id": "C2-01",
+    "scope": "required service arrival",
+    "comparison": "shared-semantics",
+    "deviations": [],
+    "adaptation": null,
+    "equal": true,
+    "matched": true,
+    "expected_observations": null,
+    "ts": {
+      "scenario_id": "C2-01",
+      "scope": "required service arrival",
+      "outcome": "observed",
+      "observations": [
+        {
+          "pending": "consumer"
+        },
+        {
+          "id": "consumer",
+          "runs": 1,
+          "cleaned": 0,
+          "calls": 0
+        }
+      ]
+    },
+    "python": {
+      "scenario_id": "C2-01",
+      "scope": "required service arrival",
+      "outcome": "observed",
+      "observations": [
+        {
+          "pending": "consumer"
+        },
+        {
+          "id": "consumer",
+          "runs": 1,
+          "cleaned": 0,
+          "calls": 0
+        }
+      ]
+    }
+  },
+  {
+    "scenario_id": "C2-02",
+    "scope": "service removal and recovery",
+    "comparison": "shared-semantics",
+    "deviations": [],
+    "adaptation": null,
+    "equal": true,
+    "matched": true,
+    "expected_observations": null,
+    "ts": {
+      "scenario_id": "C2-02",
+      "scope": "service removal and recovery",
+      "outcome": "observed",
+      "observations": [
+        {
+          "pending": "consumer"
+        },
+        {
+          "id": "consumer",
+          "runs": 2,
+          "cleaned": 1,
+          "calls": 0
+        }
+      ]
+    },
+    "python": {
+      "scenario_id": "C2-02",
+      "scope": "service removal and recovery",
+      "outcome": "observed",
+      "observations": [
+        {
+          "pending": "consumer"
+        },
+        {
+          "id": "consumer",
+          "runs": 2,
+          "cleaned": 1,
+          "calls": 0
+        }
+      ]
+    }
+  },
+  {
+    "scenario_id": "C2-03",
+    "scope": "explicit availability notification",
+    "comparison": "shared-semantics",
+    "deviations": [],
+    "adaptation": null,
+    "equal": true,
+    "matched": true,
+    "expected_observations": null,
+    "ts": {
+      "scenario_id": "C2-03",
+      "scope": "explicit availability notification",
+      "outcome": "observed",
+      "observations": [
+        {
+          "pending": "consumer"
+        },
+        {
+          "id": "consumer",
+          "runs": 1,
+          "cleaned": 0,
+          "calls": 0
+        }
+      ]
+    },
+    "python": {
+      "scenario_id": "C2-03",
+      "scope": "explicit availability notification",
+      "outcome": "observed",
+      "observations": [
+        {
+          "pending": "consumer"
+        },
+        {
+          "id": "consumer",
+          "runs": 1,
+          "cleaned": 0,
+          "calls": 0
+        }
+      ]
+    }
+  },
+  {
+    "scenario_id": "C3-01",
+    "scope": "equal service value with different provider identity",
+    "comparison": "shared-semantics",
+    "deviations": [],
+    "adaptation": null,
+    "equal": true,
+    "matched": true,
+    "expected_observations": null,
+    "ts": {
+      "scenario_id": "C3-01",
+      "scope": "equal service value with different provider identity",
+      "outcome": "observed",
+      "observations": [
+        {
+          "id": "consumer",
+          "runs": 2,
+          "cleaned": 1,
+          "calls": 0
+        }
+      ]
+    },
+    "python": {
+      "scenario_id": "C3-01",
+      "scope": "equal service value with different provider identity",
+      "outcome": "observed",
+      "observations": [
+        {
+          "id": "consumer",
+          "runs": 2,
+          "cleaned": 1,
+          "calls": 0
+        }
+      ]
+    }
+  },
+  {
+    "scenario_id": "C3-04",
+    "scope": "unrelated service changes",
+    "comparison": "shared-semantics",
+    "deviations": [],
+    "adaptation": null,
+    "equal": true,
+    "matched": true,
+    "expected_observations": null,
+    "ts": {
+      "scenario_id": "C3-04",
+      "scope": "unrelated service changes",
+      "outcome": "observed",
+      "observations": [
+        {
+          "id": "consumer",
+          "runs": 1,
+          "cleaned": 0,
+          "calls": 0
+        }
+      ]
+    },
+    "python": {
+      "scenario_id": "C3-04",
+      "scope": "unrelated service changes",
+      "outcome": "observed",
+      "observations": [
+        {
+          "id": "consumer",
+          "runs": 1,
+          "cleaned": 0,
+          "calls": 0
+        }
+      ]
+    }
+  },
+  {
+    "scenario_id": "C4-03",
+    "scope": "undeclared access versus public observation",
+    "comparison": "shared-semantics",
+    "deviations": [],
+    "adaptation": null,
+    "equal": true,
+    "matched": true,
+    "expected_observations": null,
+    "ts": {
+      "scenario_id": "C4-03",
+      "scope": "undeclared access versus public observation",
+      "outcome": "observed",
+      "observations": [
+        {
+          "id": "reader",
+          "runs": 1,
+          "cleaned": 0,
+          "calls": 0,
+          "discovered": 1,
+          "denied": true
+        }
+      ]
+    },
+    "python": {
+      "scenario_id": "C4-03",
+      "scope": "undeclared access versus public observation",
+      "outcome": "observed",
+      "observations": [
+        {
+          "id": "reader",
+          "runs": 1,
+          "cleaned": 0,
+          "calls": 0,
+          "discovered": 1,
+          "denied": true
+        }
+      ]
+    }
+  },
+  {
+    "scenario_id": "C6-01",
+    "scope": "isolation changes one service key",
+    "comparison": "shared-semantics",
+    "deviations": [],
+    "adaptation": null,
+    "equal": true,
+    "matched": true,
+    "expected_observations": null,
+    "ts": {
+      "scenario_id": "C6-01",
+      "scope": "isolation changes one service key",
+      "outcome": "observed",
+      "observations": [
+        {
+          "value": "parent"
+        },
+        {
+          "value": "child"
+        },
+        {
+          "value": "same"
+        }
+      ]
+    },
+    "python": {
+      "scenario_id": "C6-01",
+      "scope": "isolation changes one service key",
+      "outcome": "observed",
+      "observations": [
+        {
+          "value": "parent"
+        },
+        {
+          "value": "child"
+        },
+        {
+          "value": "same"
+        }
+      ]
+    }
+  },
+  {
+    "scenario_id": "C6-02",
+    "scope": "explicit realm labels share one key",
+    "comparison": "shared-semantics",
+    "deviations": [],
+    "adaptation": null,
+    "equal": true,
+    "matched": true,
+    "expected_observations": null,
+    "ts": {
+      "scenario_id": "C6-02",
+      "scope": "explicit realm labels share one key",
+      "outcome": "observed",
+      "observations": [
+        {
+          "value": "shared"
+        },
+        {
+          "value": "private"
+        }
+      ]
+    },
+    "python": {
+      "scenario_id": "C6-02",
+      "scope": "explicit realm labels share one key",
+      "outcome": "observed",
+      "observations": [
+        {
+          "value": "shared"
+        },
+        {
+          "value": "private"
+        }
+      ]
+    }
+  },
+  {
+    "scenario_id": "C7-01",
+    "scope": "listener contributions belong to the caller owner",
+    "comparison": "shared-semantics",
+    "deviations": [],
+    "adaptation": null,
+    "equal": true,
+    "matched": true,
+    "expected_observations": null,
+    "ts": {
+      "scenario_id": "C7-01",
+      "scope": "listener contributions belong to the caller owner",
+      "outcome": "observed",
+      "observations": [
+        {
+          "id": "first",
+          "runs": 1,
+          "cleaned": 1,
+          "calls": 1
+        },
+        {
+          "id": "second",
+          "runs": 1,
+          "cleaned": 0,
+          "calls": 2
+        }
+      ]
+    },
+    "python": {
+      "scenario_id": "C7-01",
+      "scope": "listener contributions belong to the caller owner",
+      "outcome": "observed",
+      "observations": [
+        {
+          "id": "first",
+          "runs": 1,
+          "cleaned": 1,
+          "calls": 1
+        },
+        {
+          "id": "second",
+          "runs": 1,
+          "cleaned": 0,
+          "calls": 2
+        }
+      ]
+    }
+  },
+  {
+    "scenario_id": "C1-01",
+    "scope": "setup failure rolls back every reported resource",
+    "comparison": "shared-semantics",
+    "deviations": [],
+    "adaptation": null,
+    "equal": true,
+    "matched": true,
+    "expected_observations": null,
+    "ts": {
+      "scenario_id": "C1-01",
+      "scope": "setup failure rolls back every reported resource",
+      "outcome": "observed",
+      "observations": [
+        {
+          "log": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "python": {
+      "scenario_id": "C1-01",
+      "scope": "setup failure rolls back every reported resource",
+      "outcome": "observed",
+      "observations": [
+        {
+          "log": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "scenario_id": "C1-02",
+    "scope": "late async setup disposer stays owned during unload",
+    "comparison": "shared-semantics",
+    "deviations": [],
+    "adaptation": null,
+    "equal": true,
+    "matched": true,
+    "expected_observations": null,
+    "ts": {
+      "scenario_id": "C1-02",
+      "scope": "late async setup disposer stays owned during unload",
+      "outcome": "observed",
+      "observations": [
+        {
+          "log": [
+            "late"
+          ]
+        }
+      ]
+    },
+    "python": {
+      "scenario_id": "C1-02",
+      "scope": "late async setup disposer stays owned during unload",
+      "outcome": "observed",
+      "observations": [
+        {
+          "log": [
+            "late"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "scenario_id": "C1-03",
+    "scope": "manual effect close followed by repeated and owner close is single-shot",
+    "comparison": "shared-semantics",
+    "deviations": [],
+    "adaptation": null,
+    "equal": true,
+    "matched": true,
+    "expected_observations": null,
+    "ts": {
+      "scenario_id": "C1-03",
+      "scope": "manual effect close followed by repeated and owner close is single-shot",
+      "outcome": "observed",
+      "observations": [
+        {
+          "log": [
+            "A"
+          ]
+        }
+      ]
+    },
+    "python": {
+      "scenario_id": "C1-03",
+      "scope": "manual effect close followed by repeated and owner close is single-shot",
+      "outcome": "observed",
+      "observations": [
+        {
+          "log": [
+            "A"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "scenario_id": "C1-03.generator",
+    "scope": "generator resource inverses run in reverse within one effect",
+    "comparison": "shared-semantics",
+    "deviations": [],
+    "adaptation": null,
+    "equal": true,
+    "matched": true,
+    "expected_observations": null,
+    "ts": {
+      "scenario_id": "C1-03.generator",
+      "scope": "generator resource inverses run in reverse within one effect",
+      "outcome": "observed",
+      "observations": [
+        {
+          "log": [
+            "B",
+            "A"
+          ]
+        }
+      ]
+    },
+    "python": {
+      "scenario_id": "C1-03.generator",
+      "scope": "generator resource inverses run in reverse within one effect",
+      "outcome": "observed",
+      "observations": [
+        {
+          "log": [
+            "B",
+            "A"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "scenario_id": "C1-04",
+    "scope": "independent safe resource still cleans after another inverse fails",
+    "comparison": "shared-semantics",
+    "deviations": [],
+    "adaptation": null,
+    "equal": true,
+    "matched": true,
+    "expected_observations": null,
+    "ts": {
+      "scenario_id": "C1-04",
+      "scope": "independent safe resource still cleans after another inverse fails",
+      "outcome": "observed",
+      "observations": [
+        {
+          "log": [
+            "bad",
+            "good"
+          ]
+        }
+      ]
+    },
+    "python": {
+      "scenario_id": "C1-04",
+      "scope": "independent safe resource still cleans after another inverse fails",
+      "outcome": "observed",
+      "observations": [
+        {
+          "log": [
+            "bad",
+            "good"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "scenario_id": "C1-05",
+    "scope": "disposed owner rejects new effects",
+    "comparison": "shared-semantics",
+    "deviations": [],
+    "adaptation": null,
+    "equal": true,
+    "matched": true,
+    "expected_observations": null,
+    "ts": {
+      "scenario_id": "C1-05",
+      "scope": "disposed owner rejects new effects",
+      "outcome": "observed",
+      "observations": [
+        {
+          "rejected": true
+        }
+      ]
+    },
+    "python": {
+      "scenario_id": "C1-05",
+      "scope": "disposed owner rejects new effects",
+      "outcome": "observed",
+      "observations": [
+        {
+          "rejected": true
+        }
+      ]
+    }
+  },
+  {
+    "scenario_id": "C3-03",
+    "scope": "provider restart reloads its consumer",
+    "comparison": "shared-semantics",
+    "deviations": [],
+    "adaptation": null,
+    "equal": true,
+    "matched": true,
+    "expected_observations": null,
+    "ts": {
+      "scenario_id": "C3-03",
+      "scope": "provider restart reloads its consumer",
+      "outcome": "observed",
+      "observations": [
+        {
+          "id": "consumer",
+          "runs": 2,
+          "cleaned": 1,
+          "calls": 0
+        }
+      ]
+    },
+    "python": {
+      "scenario_id": "C3-03",
+      "scope": "provider restart reloads its consumer",
+      "outcome": "observed",
+      "observations": [
+        {
+          "id": "consumer",
+          "runs": 2,
+          "cleaned": 1,
+          "calls": 0
+        }
+      ]
+    }
+  },
+  {
+    "scenario_id": "C4-01",
+    "scope": "cleanup uses old committed value after public revocation",
+    "comparison": "shared-semantics",
+    "deviations": [],
+    "adaptation": null,
+    "equal": true,
+    "matched": true,
+    "expected_observations": null,
+    "ts": {
+      "scenario_id": "C4-01",
+      "scope": "cleanup uses old committed value after public revocation",
+      "outcome": "observed",
+      "observations": [
+        {
+          "log": [
+            {
+              "phase": "before",
+              "value": "old",
+              "public": null
+            }
+          ]
+        },
+        {
+          "log": [
+            {
+              "phase": "before",
+              "value": "old",
+              "public": null
+            },
+            {
+              "phase": "after",
+              "value": "old"
+            }
+          ]
+        }
+      ]
+    },
+    "python": {
+      "scenario_id": "C4-01",
+      "scope": "cleanup uses old committed value after public revocation",
+      "outcome": "observed",
+      "observations": [
+        {
+          "log": [
+            {
+              "phase": "before",
+              "value": "old",
+              "public": null
+            }
+          ]
+        },
+        {
+          "log": [
+            {
+              "phase": "before",
+              "value": "old",
+              "public": null
+            },
+            {
+              "phase": "after",
+              "value": "old"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "scenario_id": "C4-02",
+    "scope": "independent new provider cannot change old cleanup committed view",
+    "comparison": "shared-semantics",
+    "deviations": [],
+    "adaptation": null,
+    "equal": true,
+    "matched": true,
+    "expected_observations": null,
+    "ts": {
+      "scenario_id": "C4-02",
+      "scope": "independent new provider cannot change old cleanup committed view",
+      "outcome": "observed",
+      "observations": [
+        {
+          "value": "new"
+        },
+        {
+          "log": [
+            {
+              "phase": "before",
+              "value": "old",
+              "public": null
+            },
+            {
+              "phase": "after",
+              "value": "old"
+            }
+          ]
+        }
+      ]
+    },
+    "python": {
+      "scenario_id": "C4-02",
+      "scope": "independent new provider cannot change old cleanup committed view",
+      "outcome": "observed",
+      "observations": [
+        {
+          "value": "new"
+        },
+        {
+          "log": [
+            {
+              "phase": "before",
+              "value": "old",
+              "public": null
+            },
+            {
+              "phase": "after",
+              "value": "old"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "scenario_id": "C4-04",
+    "scope": "declared view cannot be read after its consumer is disposed",
+    "comparison": "shared-semantics",
+    "deviations": [],
+    "adaptation": null,
+    "equal": true,
+    "matched": true,
+    "expected_observations": null,
+    "ts": {
+      "scenario_id": "C4-04",
+      "scope": "declared view cannot be read after its consumer is disposed",
+      "outcome": "observed",
+      "observations": [
+        {
+          "rejected": true
+        }
+      ]
+    },
+    "python": {
+      "scenario_id": "C4-04",
+      "scope": "declared view cannot be read after its consumer is disposed",
+      "outcome": "observed",
+      "observations": [
+        {
+          "rejected": true
+        }
+      ]
+    }
+  },
+  {
+    "scenario_id": "C6-03",
+    "scope": "base ancestor descendant inject head config merging",
+    "comparison": "shared-semantics",
+    "deviations": [],
+    "adaptation": null,
+    "equal": true,
+    "matched": true,
+    "expected_observations": null,
+    "ts": {
+      "scenario_id": "C6-03",
+      "scope": "base ancestor descendant inject head config merging",
+      "outcome": "observed",
+      "observations": [
+        {
+          "id": "consumer",
+          "runs": 1,
+          "cleaned": 0,
+          "calls": 0,
+          "config": {
+            "base": true,
+            "common": "head",
+            "outer": true,
+            "inner": true,
+            "inject": true,
+            "head": true
+          }
+        }
+      ]
+    },
+    "python": {
+      "scenario_id": "C6-03",
+      "scope": "base ancestor descendant inject head config merging",
+      "outcome": "observed",
+      "observations": [
+        {
+          "id": "consumer",
+          "runs": 1,
+          "cleaned": 0,
+          "calls": 0,
+          "config": {
+            "base": true,
+            "common": "head",
+            "outer": true,
+            "inner": true,
+            "inject": true,
+            "head": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "scenario_id": "C6-03.merge",
+    "scope": "base ancestor descendant inject head config merging via service merge",
+    "comparison": "shared-semantics",
+    "deviations": [],
+    "adaptation": null,
+    "equal": true,
+    "matched": true,
+    "expected_observations": null,
+    "ts": {
+      "scenario_id": "C6-03.merge",
+      "scope": "base ancestor descendant inject head config merging via service merge",
+      "outcome": "observed",
+      "observations": [
+        {
+          "id": "consumer",
+          "runs": 1,
+          "cleaned": 0,
+          "calls": 0,
+          "config": {
+            "sources": [
+              "base",
+              "outer",
+              "inner",
+              "inject",
+              "head"
+            ]
+          }
+        }
+      ]
+    },
+    "python": {
+      "scenario_id": "C6-03.merge",
+      "scope": "base ancestor descendant inject head config merging via service merge",
+      "outcome": "observed",
+      "observations": [
+        {
+          "id": "consumer",
+          "runs": 1,
+          "cleaned": 0,
+          "calls": 0,
+          "config": {
+            "sources": [
+              "base",
+              "outer",
+              "inner",
+              "inject",
+              "head"
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "scenario_id": "C6-04",
+    "scope": "isolated provider and listeners leave no binding or callbacks",
+    "comparison": "shared-semantics",
+    "deviations": [],
+    "adaptation": null,
+    "equal": true,
+    "matched": true,
+    "expected_observations": null,
+    "ts": {
+      "scenario_id": "C6-04",
+      "scope": "isolated provider and listeners leave no binding or callbacks",
+      "outcome": "observed",
+      "observations": [
+        {
+          "id": "consumer",
+          "runs": 1,
+          "cleaned": 1,
+          "calls": 1
+        },
+        {
+          "value": null
+        }
+      ]
+    },
+    "python": {
+      "scenario_id": "C6-04",
+      "scope": "isolated provider and listeners leave no binding or callbacks",
+      "outcome": "observed",
+      "observations": [
+        {
+          "id": "consumer",
+          "runs": 1,
+          "cleaned": 1,
+          "calls": 1
+        },
+        {
+          "value": null
+        }
+      ]
+    }
+  },
+  {
+    "scenario_id": "C7-02",
+    "scope": "shared service resources belong to async callers not the provider",
+    "comparison": "shared-semantics",
+    "deviations": [],
+    "adaptation": null,
+    "equal": true,
+    "matched": true,
+    "expected_observations": null,
+    "ts": {
+      "scenario_id": "C7-02",
+      "scope": "shared service resources belong to async callers not the provider",
+      "outcome": "observed",
+      "observations": [
+        {
+          "log": [
+            "first"
+          ]
+        },
+        {
+          "log": [
+            "first",
+            "second"
+          ]
+        }
+      ]
+    },
+    "python": {
+      "scenario_id": "C7-02",
+      "scope": "shared service resources belong to async callers not the provider",
+      "outcome": "observed",
+      "observations": [
+        {
+          "log": [
+            "first"
+          ]
+        },
+        {
+          "log": [
+            "first",
+            "second"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "scenario_id": "C7-03",
+    "scope": "nested child effects and listeners are owned by the parent generation",
+    "comparison": "shared-semantics",
+    "deviations": [],
+    "adaptation": null,
+    "equal": true,
+    "matched": true,
+    "expected_observations": null,
+    "ts": {
+      "scenario_id": "C7-03",
+      "scope": "nested child effects and listeners are owned by the parent generation",
+      "outcome": "observed",
+      "observations": [
+        {
+          "id": "child",
+          "runs": 1,
+          "cleaned": 1,
+          "calls": 1
+        },
+        {
+          "log": [
+            "child-resource"
+          ]
+        }
+      ]
+    },
+    "python": {
+      "scenario_id": "C7-03",
+      "scope": "nested child effects and listeners are owned by the parent generation",
+      "outcome": "observed",
+      "observations": [
+        {
+          "id": "child",
+          "runs": 1,
+          "cleaned": 1,
+          "calls": 1
+        },
+        {
+          "log": [
+            "child-resource"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "scenario_id": "C7-04",
+    "scope": "disposed caller cannot register listeners",
+    "comparison": "shared-semantics",
+    "deviations": [],
+    "adaptation": null,
+    "equal": true,
+    "matched": true,
+    "expected_observations": null,
+    "ts": {
+      "scenario_id": "C7-04",
+      "scope": "disposed caller cannot register listeners",
+      "outcome": "observed",
+      "observations": [
+        {
+          "rejected": true
+        }
+      ]
+    },
+    "python": {
+      "scenario_id": "C7-04",
+      "scope": "disposed caller cannot register listeners",
+      "outcome": "observed",
+      "observations": [
+        {
+          "rejected": true
+        }
+      ]
+    }
+  },
+  {
+    "scenario_id": "C8-01",
+    "scope": "dispatch snapshots selected callbacks before unregistration",
+    "comparison": "shared-semantics",
+    "deviations": [],
+    "adaptation": null,
+    "equal": true,
+    "matched": true,
+    "expected_observations": null,
+    "ts": {
+      "scenario_id": "C8-01",
+      "scope": "dispatch snapshots selected callbacks before unregistration",
+      "outcome": "observed",
+      "observations": [
+        {
+          "value": null
+        },
+        {
+          "value": null
+        },
+        {
+          "log": [
+            "first",
+            "second",
+            "first"
+          ]
+        }
+      ]
+    },
+    "python": {
+      "scenario_id": "C8-01",
+      "scope": "dispatch snapshots selected callbacks before unregistration",
+      "outcome": "observed",
+      "observations": [
+        {
+          "value": null
+        },
+        {
+          "value": null
+        },
+        {
+          "log": [
+            "first",
+            "second",
+            "first"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "scenario_id": "C8-02",
+    "scope": "async around waterfall wraps downstream and supports veto",
+    "comparison": "shared-semantics",
+    "deviations": [],
+    "adaptation": null,
+    "equal": true,
+    "matched": true,
+    "expected_observations": null,
+    "ts": {
+      "scenario_id": "C8-02",
+      "scope": "async around waterfall wraps downstream and supports veto",
+      "outcome": "observed",
+      "observations": [
+        {
+          "value": 3
+        },
+        {
+          "value": 5
+        },
+        {
+          "log": [
+            "outer.before",
+            "terminal",
+            "outer.after",
+            "veto.before"
+          ]
+        }
+      ]
+    },
+    "python": {
+      "scenario_id": "C8-02",
+      "scope": "async around waterfall wraps downstream and supports veto",
+      "outcome": "observed",
+      "observations": [
+        {
+          "value": 3
+        },
+        {
+          "value": 5
+        },
+        {
+          "log": [
+            "outer.before",
+            "terminal",
+            "outer.after",
+            "veto.before"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "scenario_id": "C8-03.parallel",
+    "scope": "parallel awaits every callback before raising an aggregate",
+    "comparison": "shared-semantics",
+    "deviations": [],
+    "adaptation": null,
+    "equal": true,
+    "matched": true,
+    "expected_observations": null,
+    "ts": {
+      "scenario_id": "C8-03.parallel",
+      "scope": "parallel awaits every callback before raising an aggregate",
+      "outcome": "observed",
+      "observations": [
+        {
+          "log": [
+            "failed",
+            "waiting"
+          ]
+        },
+        {
+          "raised": true,
+          "errors": 1
+        },
+        {
+          "log": [
+            "failed",
+            "waiting",
+            "waiting.end"
+          ]
+        }
+      ]
+    },
+    "python": {
+      "scenario_id": "C8-03.parallel",
+      "scope": "parallel awaits every callback before raising an aggregate",
+      "outcome": "observed",
+      "observations": [
+        {
+          "log": [
+            "failed",
+            "waiting"
+          ]
+        },
+        {
+          "raised": true,
+          "errors": 1
+        },
+        {
+          "log": [
+            "failed",
+            "waiting",
+            "waiting.end"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "scenario_id": "C8-03.serial",
+    "scope": "serial stops on explicit zero result",
+    "comparison": "shared-semantics",
+    "deviations": [],
+    "adaptation": null,
+    "equal": true,
+    "matched": true,
+    "expected_observations": null,
+    "ts": {
+      "scenario_id": "C8-03.serial",
+      "scope": "serial stops on explicit zero result",
+      "outcome": "observed",
+      "observations": [
+        {
+          "value": 0
+        },
+        {
+          "log": [
+            "first"
+          ]
+        }
+      ]
+    },
+    "python": {
+      "scenario_id": "C8-03.serial",
+      "scope": "serial stops on explicit zero result",
+      "outcome": "observed",
+      "observations": [
+        {
+          "value": 0
+        },
+        {
+          "log": [
+            "first"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "scenario_id": "C8-04",
+    "scope": "bail null false continue while zero and empty string stop",
+    "comparison": "shared-semantics",
+    "deviations": [],
+    "adaptation": null,
+    "equal": true,
+    "matched": true,
+    "expected_observations": null,
+    "ts": {
+      "scenario_id": "C8-04",
+      "scope": "bail null false continue while zero and empty string stop",
+      "outcome": "observed",
+      "observations": [
+        {
+          "value": 99
+        },
+        {
+          "value": 99
+        },
+        {
+          "value": 0
+        },
+        {
+          "value": ""
+        },
+        {
+          "log": [
+            "bail0.first",
+            "bail0.second",
+            "bail1.first",
+            "bail1.second",
+            "bail2.first",
+            "bail3.first"
+          ]
+        }
+      ]
+    },
+    "python": {
+      "scenario_id": "C8-04",
+      "scope": "bail null false continue while zero and empty string stop",
+      "outcome": "observed",
+      "observations": [
+        {
+          "value": 99
+        },
+        {
+          "value": 99
+        },
+        {
+          "value": 0
+        },
+        {
+          "value": ""
+        },
+        {
+          "log": [
+            "bail0.first",
+            "bail0.second",
+            "bail1.first",
+            "bail1.second",
+            "bail2.first",
+            "bail3.first"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "scenario_id": "C8-05",
+    "scope": "async startup failure is observable without falsely invoking component",
+    "comparison": "shared-semantics",
+    "deviations": [],
+    "adaptation": null,
+    "equal": true,
+    "matched": true,
+    "expected_observations": null,
+    "ts": {
+      "scenario_id": "C8-05",
+      "scope": "async startup failure is observable without falsely invoking component",
+      "outcome": "observed",
+      "observations": []
+    },
+    "python": {
+      "scenario_id": "C8-05",
+      "scope": "async startup failure is observable without falsely invoking component",
+      "outcome": "observed",
+      "observations": []
+    }
+  },
+  {
+    "scenario_id": "C3-02",
+    "scope": "A to B to C during loading discards stale startup and converges to C",
+    "comparison": "shared-semantics",
+    "deviations": [],
+    "adaptation": null,
+    "equal": true,
+    "matched": true,
+    "expected_observations": null,
+    "ts": {
+      "scenario_id": "C3-02",
+      "scope": "A to B to C during loading discards stale startup and converges to C",
+      "outcome": "observed",
+      "observations": [
+        {
+          "id": "consumer",
+          "runs": 2,
+          "cleaned": 1,
+          "calls": 0,
+          "values": [
+            1,
+            3
+          ]
+        }
+      ]
+    },
+    "python": {
+      "scenario_id": "C3-02",
+      "scope": "A to B to C during loading discards stale startup and converges to C",
+      "outcome": "observed",
+      "observations": [
+        {
+          "id": "consumer",
+          "runs": 2,
+          "cleaned": 1,
+          "calls": 0,
+          "values": [
+            1,
+            3
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "scenario_id": "C5-04",
+    "scope": "provider close waits until dependent cleanup actually ends",
+    "comparison": "shared-semantics",
+    "deviations": [],
+    "adaptation": null,
+    "equal": true,
+    "matched": true,
+    "expected_observations": null,
+    "ts": {
+      "scenario_id": "C5-04",
+      "scope": "provider close waits until dependent cleanup actually ends",
+      "outcome": "observed",
+      "observations": [
+        {
+          "pending": true
+        }
+      ]
+    },
+    "python": {
+      "scenario_id": "C5-04",
+      "scope": "provider close waits until dependent cleanup actually ends",
+      "outcome": "observed",
+      "observations": [
+        {
+          "pending": true
+        }
+      ]
+    }
+  },
+  {
+    "scenario_id": "D-01",
+    "scope": "whole-provider resource drain versus vendor parallel teardown",
+    "comparison": "expected-deviation",
+    "deviations": [
+      "D-01"
+    ],
+    "adaptation": null,
+    "equal": false,
+    "matched": true,
+    "expected_observations": {
+      "ts": [
+        {
+          "log": [
+            "pool.close",
+            "consumer.enter"
+          ]
+        },
+        {
+          "log": [
+            "pool.close",
+            "consumer.enter",
+            "consumer.end"
+          ]
+        }
+      ],
+      "python": [
+        {
+          "log": [
+            "consumer.enter"
+          ]
+        },
+        {
+          "log": [
+            "consumer.enter",
+            "consumer.end",
+            "pool.close"
+          ]
+        }
+      ]
+    },
+    "ts": {
+      "scenario_id": "D-01",
+      "scope": "whole-provider resource drain versus vendor parallel teardown",
+      "outcome": "observed",
+      "observations": [
+        {
+          "log": [
+            "pool.close",
+            "consumer.enter"
+          ]
+        },
+        {
+          "log": [
+            "pool.close",
+            "consumer.enter",
+            "consumer.end"
+          ]
+        }
+      ]
+    },
+    "python": {
+      "scenario_id": "D-01",
+      "scope": "whole-provider resource drain versus vendor parallel teardown",
+      "outcome": "observed",
+      "observations": [
+        {
+          "log": [
+            "consumer.enter"
+          ]
+        },
+        {
+          "log": [
+            "consumer.enter",
+            "consumer.end",
+            "pool.close"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "scenario_id": "D-02",
+    "scope": "serial top-level inverse waits versus vendor concurrent top-level cleanup",
+    "comparison": "expected-deviation",
+    "deviations": [
+      "D-02"
+    ],
+    "adaptation": null,
+    "equal": false,
+    "matched": true,
+    "expected_observations": {
+      "ts": [
+        {
+          "log": [
+            "B.enter",
+            "A"
+          ]
+        },
+        {
+          "log": [
+            "B.enter",
+            "A",
+            "B.end"
+          ]
+        }
+      ],
+      "python": [
+        {
+          "log": [
+            "B.enter"
+          ]
+        },
+        {
+          "log": [
+            "B.enter",
+            "B.end",
+            "A"
+          ]
+        }
+      ]
+    },
+    "ts": {
+      "scenario_id": "D-02",
+      "scope": "serial top-level inverse waits versus vendor concurrent top-level cleanup",
+      "outcome": "observed",
+      "observations": [
+        {
+          "log": [
+            "B.enter",
+            "A"
+          ]
+        },
+        {
+          "log": [
+            "B.enter",
+            "A",
+            "B.end"
+          ]
+        }
+      ]
+    },
+    "python": {
+      "scenario_id": "D-02",
+      "scope": "serial top-level inverse waits versus vendor concurrent top-level cleanup",
+      "outcome": "observed",
+      "observations": [
+        {
+          "log": [
+            "B.enter"
+          ]
+        },
+        {
+          "log": [
+            "B.enter",
+            "B.end",
+            "A"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "scenario_id": "D-03",
+    "scope": "repeat public effect close returns shared awaitable only in Stage",
+    "comparison": "expected-deviation",
+    "deviations": [
+      "D-03"
+    ],
+    "adaptation": null,
+    "equal": false,
+    "matched": true,
+    "expected_observations": {
+      "ts": [
+        {
+          "returns_awaitable": false
+        }
+      ],
+      "python": [
+        {
+          "returns_awaitable": true
+        }
+      ]
+    },
+    "ts": {
+      "scenario_id": "D-03",
+      "scope": "repeat public effect close returns shared awaitable only in Stage",
+      "outcome": "observed",
+      "observations": [
+        {
+          "returns_awaitable": false
+        }
+      ]
+    },
+    "python": {
+      "scenario_id": "D-03",
+      "scope": "repeat public effect close returns shared awaitable only in Stage",
+      "outcome": "observed",
+      "observations": [
+        {
+          "returns_awaitable": true
+        }
+      ]
+    }
+  },
+  {
+    "scenario_id": "D-04",
+    "scope": "cleanup error is an explicit unsuccessful close outcome only in Stage",
+    "comparison": "expected-deviation",
+    "deviations": [
+      "D-04"
+    ],
+    "adaptation": null,
+    "equal": false,
+    "matched": true,
+    "expected_observations": {
+      "ts": [
+        {
+          "cleanup_failed": false
+        }
+      ],
+      "python": [
+        {
+          "cleanup_failed": true
+        }
+      ]
+    },
+    "ts": {
+      "scenario_id": "D-04",
+      "scope": "cleanup error is an explicit unsuccessful close outcome only in Stage",
+      "outcome": "observed",
+      "observations": [
+        {
+          "cleanup_failed": false
+        }
+      ]
+    },
+    "python": {
+      "scenario_id": "D-04",
+      "scope": "cleanup error is an explicit unsuccessful close outcome only in Stage",
+      "outcome": "observed",
+      "observations": [
+        {
+          "cleanup_failed": true
+        }
+      ]
+    }
+  },
+  {
+    "scenario_id": "D-05",
+    "scope": "same Fiber restart increments explicit Stage activation identity",
+    "comparison": "expected-deviation",
+    "deviations": [
+      "D-05"
+    ],
+    "adaptation": null,
+    "equal": false,
+    "matched": true,
+    "expected_observations": {
+      "ts": [
+        {
+          "activation_identity_changed": false
+        }
+      ],
+      "python": [
+        {
+          "activation_identity_changed": true
+        }
+      ]
+    },
+    "ts": {
+      "scenario_id": "D-05",
+      "scope": "same Fiber restart increments explicit Stage activation identity",
+      "outcome": "observed",
+      "observations": [
+        {
+          "activation_identity_changed": false
+        }
+      ]
+    },
+    "python": {
+      "scenario_id": "D-05",
+      "scope": "same Fiber restart increments explicit Stage activation identity",
+      "outcome": "observed",
+      "observations": [
+        {
+          "activation_identity_changed": true
+        }
+      ]
+    }
+  },
+  {
+    "scenario_id": "D-06",
+    "scope": "native caller-owner APIs preserve identical resource attribution",
+    "comparison": "shared-semantics",
+    "deviations": [
+      "D-06"
+    ],
+    "adaptation": "TS traceable Service.ctx versus Python explicit owner argument; outcome must remain equal",
+    "equal": true,
+    "matched": true,
+    "expected_observations": null,
+    "ts": {
+      "scenario_id": "D-06",
+      "scope": "native caller-owner APIs preserve identical resource attribution",
+      "outcome": "observed",
+      "observations": [
+        {
+          "log": [
+            "first"
+          ]
+        },
+        {
+          "log": [
+            "first",
+            "second"
+          ]
+        }
+      ]
+    },
+    "python": {
+      "scenario_id": "D-06",
+      "scope": "native caller-owner APIs preserve identical resource attribution",
+      "outcome": "observed",
+      "observations": [
+        {
+          "log": [
+            "first"
+          ]
+        },
+        {
+          "log": [
+            "first",
+            "second"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "scenario_id": "D-07",
+    "scope": "bail explicit decision type versus raw vendor zero payload",
+    "comparison": "expected-deviation",
+    "deviations": [
+      "D-07"
+    ],
+    "adaptation": null,
+    "equal": false,
+    "matched": true,
+    "expected_observations": {
+      "ts": [
+        {
+          "returns_explicit_decision": false
+        }
+      ],
+      "python": [
+        {
+          "returns_explicit_decision": true
+        }
+      ]
+    },
+    "ts": {
+      "scenario_id": "D-07",
+      "scope": "bail explicit decision type versus raw vendor zero payload",
+      "outcome": "observed",
+      "observations": [
+        {
+          "returns_explicit_decision": false
+        }
+      ]
+    },
+    "python": {
+      "scenario_id": "D-07",
+      "scope": "bail explicit decision type versus raw vendor zero payload",
+      "outcome": "observed",
+      "observations": [
+        {
+          "returns_explicit_decision": true
+        }
+      ]
+    }
+  },
+  {
+    "scenario_id": "D-08",
+    "scope": "business listeners are activation-gated only by Stage",
+    "comparison": "expected-deviation",
+    "deviations": [
+      "D-08"
+    ],
+    "adaptation": null,
+    "equal": false,
+    "matched": true,
+    "expected_observations": {
+      "ts": [
+        {
+          "id": "owner",
+          "runs": 1,
+          "cleaned": 0,
+          "calls": 1
+        },
+        {
+          "id": "owner",
+          "runs": 1,
+          "cleaned": 0,
+          "calls": 2
+        }
+      ],
+      "python": [
+        {
+          "id": "owner",
+          "runs": 1,
+          "cleaned": 0,
+          "calls": 0
+        },
+        {
+          "id": "owner",
+          "runs": 1,
+          "cleaned": 0,
+          "calls": 1
+        }
+      ]
+    },
+    "ts": {
+      "scenario_id": "D-08",
+      "scope": "business listeners are activation-gated only by Stage",
+      "outcome": "observed",
+      "observations": [
+        {
+          "id": "owner",
+          "runs": 1,
+          "cleaned": 0,
+          "calls": 1
+        },
+        {
+          "id": "owner",
+          "runs": 1,
+          "cleaned": 0,
+          "calls": 2
+        }
+      ]
+    },
+    "python": {
+      "scenario_id": "D-08",
+      "scope": "business listeners are activation-gated only by Stage",
+      "outcome": "observed",
+      "observations": [
+        {
+          "id": "owner",
+          "runs": 1,
+          "cleaned": 0,
+          "calls": 0
+        },
+        {
+          "id": "owner",
+          "runs": 1,
+          "cleaned": 0,
+          "calls": 1
+        }
+      ]
+    }
+  },
+  {
+    "scenario_id": "D-09",
+    "scope": "strict Stage readiness times out instead of returning PENDING",
+    "comparison": "expected-deviation",
+    "deviations": [
+      "D-09"
+    ],
+    "adaptation": null,
+    "equal": false,
+    "matched": true,
+    "expected_observations": {
+      "ts": [
+        {
+          "outcome": "pending"
+        }
+      ],
+      "python": [
+        {
+          "outcome": "timeout"
+        }
+      ]
+    },
+    "ts": {
+      "scenario_id": "D-09",
+      "scope": "strict Stage readiness times out instead of returning PENDING",
+      "outcome": "observed",
+      "observations": [
+        {
+          "outcome": "pending"
+        }
+      ]
+    },
+    "python": {
+      "scenario_id": "D-09",
+      "scope": "strict Stage readiness times out instead of returning PENDING",
+      "outcome": "observed",
+      "observations": [
+        {
+          "outcome": "timeout"
+        }
+      ]
+    }
+  },
+  {
+    "scenario_id": "C2-04",
+    "scope": "duplicate providers are rejected before being exposed as usable",
+    "comparison": "shared-semantics",
+    "deviations": [],
+    "adaptation": null,
+    "equal": true,
+    "matched": true,
+    "expected_observations": null,
+    "ts": {
+      "scenario_id": "C2-04",
+      "scope": "duplicate providers are rejected before being exposed as usable",
+      "outcome": "observed",
+      "observations": [
+        {
+          "duplicate_rejected": true
+        }
+      ]
+    },
+    "python": {
+      "scenario_id": "C2-04",
+      "scope": "duplicate providers are rejected before being exposed as usable",
+      "outcome": "observed",
+      "observations": [
+        {
+          "duplicate_rejected": true
+        }
+      ]
+    }
+  },
+  {
+    "scenario_id": "D-01.call",
+    "scope": "in-flight invocation lease delays provider resource close only in Stage",
+    "comparison": "expected-deviation",
+    "deviations": [
+      "D-01"
+    ],
+    "adaptation": null,
+    "equal": false,
+    "matched": true,
+    "expected_observations": {
+      "ts": [
+        {
+          "task_outcome": "done"
+        },
+        {
+          "log": [
+            "pool.close",
+            "query.end"
+          ]
+        }
+      ],
+      "python": [
+        {
+          "task_outcome": "timeout"
+        },
+        {
+          "log": [
+            "query.end",
+            "pool.close"
+          ]
+        }
+      ]
+    },
+    "ts": {
+      "scenario_id": "D-01.call",
+      "scope": "in-flight invocation lease delays provider resource close only in Stage",
+      "outcome": "observed",
+      "observations": [
+        {
+          "task_outcome": "done"
+        },
+        {
+          "log": [
+            "pool.close",
+            "query.end"
+          ]
+        }
+      ]
+    },
+    "python": {
+      "scenario_id": "D-01.call",
+      "scope": "in-flight invocation lease delays provider resource close only in Stage",
+      "outcome": "observed",
+      "observations": [
+        {
+          "task_outcome": "timeout"
+        },
+        {
+          "log": [
+            "query.end",
+            "pool.close"
+          ]
+        }
+      ]
+    }
+  }
+]

@@ -1,11 +1,15 @@
 ---
-title: 当前 Stage 与 Z Pool 的代码架构对照
-status: research-record
+title: Stage 与 Z Pool 的代码架构历史对照（2026-10-24）
+status: historical-research-record
 policy_effect: none
 review_date: 2026-10-24
 ---
 
-# 当前 Stage 与 Z Pool 的代码架构对照
+# Stage 与 Z Pool 的代码架构历史对照（2026-10-24）
+
+> **历史静态评审，只描述表中固定版本和当时工作区。** 保留文件数、代码行数、表数、路由数和原源码定位，不重新计算或冒充当前实现。下文“当前”“尚未”和目标路线均指本次研究时点；最新范围见[当前代码架构](current-code-architecture.md)及[P1b 收尾证据](reviews/p1b-closeout-2026-10-25.md)。Core、真实人员认证、单任职授权和最小 HTTP 编辑现已落地，完整人员管理/MFA、WASM、签名和持久工作流仍需独立验收。
+>
+> Stage 的现行产品边界是 PG＋Redis、企业私有单组织根与“人员—公司—人员”；本文 MySQL/多租户/Agent 委托等历史比较不构成当前实施要求，参见[存储策略](storage-strategy.md)、[人员协作边界](people-company-collaboration.md)与[路线图](roadmap.md)。
 
 结论分三层：**技术栈与工程习惯接近；现有业务实现深度是 Z Pool 明显领先；Stage 的目标架构已经转向可组合组织运行平台，与 Z Pool 的固定业务后端有较大差异。**不能用 Stage 新文档里的 Core、真实身份协议、WASM 和签名准入代表已经实现的优势。
 

@@ -125,7 +125,7 @@ def _insert(engine: Engine, model: type[Base], values: dict[str, object]) -> Non
 @pytest.fixture(scope="module")
 def migrated_template(tmp_path_factory: pytest.TempPathFactory) -> Path:
     database = tmp_path_factory.mktemp("execution-schema") / "template.db"
-    _migrate(database, "upgrade", REVISION)
+    _migrate(database, "upgrade", "head")
     return database
 
 
@@ -305,6 +305,7 @@ def test_json_nullability_utc_storage_and_database_defaults(storage: Engine) -> 
         assert command.created_at.tzinfo == UTC
         assert connection.execute(text("SELECT result_json IS NULL FROM command_execution")).scalar_one() == 1
         audit = connection.execute(select(AuditRecordTable.__table__)).one()
+        assert audit.authorization_json is None
         assert audit.before_json is None
         assert audit.after_json == {"version": 2}
         outbox = connection.execute(select(OutboxRecordTable.__table__)).one()

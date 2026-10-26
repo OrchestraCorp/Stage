@@ -14,6 +14,7 @@ import json
 import os
 import secrets
 import stat
+import sys
 from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any
@@ -22,7 +23,11 @@ from urllib.parse import parse_qs, urlencode, urljoin, urlsplit
 import httpx
 import jwt
 
-from app.identity.authentication import AuthenticationRejected, KeycloakAuthenticator, KeycloakProfile
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from app.identity.authentication import AuthenticationRejected, KeycloakAuthenticator, KeycloakProfile  # noqa: E402
 
 
 class LoginForm(HTMLParser):
@@ -96,6 +101,14 @@ async def authorization_code(client: httpx.AsyncClient, config: dict[str, Any]) 
             "credentialId": "",
         },
     )
+    if response.status_code == 200 and config.get("otp_secret"):
+        # Both the original password-only fixture and its explicitly upgraded
+        # MFA configuration use this entry. A real OTP form must be completed;
+        # merely finding an OTP secret in local configuration grants no assurance.
+        from scripts.identity_mfa_smoke import LoginAttempt, complete_otp
+
+        attempt = LoginAttempt(response, config["human_client"], verifier, state, nonce)
+        response = (await complete_otp(client, config, attempt)).response
     if response.status_code != 302:
         raise RuntimeError("fixture login did not produce authorization code")
     location = response.headers["location"]

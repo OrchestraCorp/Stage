@@ -1,0 +1,503 @@
+{
+  "schema": "stage.p1b.human-work-baseline.v1",
+  "recorded_at": "2026-10-25T14:37:06.118560+00:00",
+  "software": {
+    "python": "3.12.3",
+    "implementation": "cpython",
+    "postgresql_server_version": "17.11 (Ubuntu 17.11-1.pgdg24.04+2)",
+    "dependencies": {
+      "SQLAlchemy": "2.1.5",
+      "asyncpg": "0.32.0",
+      "fastapi": "0.146.0",
+      "httpx": "0.28.1",
+      "PyJWT": "2.15.1",
+      "cryptography": "50.0.2",
+      "pydantic": "2.14.1"
+    },
+    "sources": {
+      "app_python_tree_sha256": "5f53862db640c23937fb575719e925bc968434a1b4fea98122ee41cb4064f7be",
+      "app_python_files": 71,
+      "selected_files_sha256": {
+        "app/api/work.py": "f184e054096cd4333e99a8e73e0fa2f6de84fd6f78a0ee5662a5ee312ea471a8",
+        "app/providers/work.py": "d7a2258bba1cf9f00416adca9f579e0b9607542ec4dba3858370039c24c17d64",
+        "app/identity/service.py": "1464d77e9ea0775a81490ac6eaf82d60a8a2fb1d67e555d0d84c78592e01077e",
+        "app/identity/authentication.py": "c533131b05302448503a6362cb2f469ce209799b54f8301679ecb24607ab9346",
+        "app/authz/authenticated.py": "ca678857ff8a5804608fe7131142933db162065908656b320f8aac391d00f020",
+        "app/authz/loader.py": "d57b45aec53d005dc76338c3e99f86b5fe6de449db6f2900fb58b6dfa0a75f52",
+        "app/authz/decision.py": "dcf69eda0cc1671388dd157035aef59d403ce331297c357040233f2deb3b29e4",
+        "app/authz/administration.py": "180ed404ed6e2fc6a89fb57b63eb4664c9fb2735dbf0cb1dc925b3810a98cc3c",
+        "app/execution/kernel.py": "8e589493ef5407d9b0f4e12110157ad9685b334c55f9f63e029c95d25a58439a",
+        "app/execution/storage.py": "7d942eeef50190224eb72e81a9cc4ae652b2463170240695d132d07507071bd2",
+        "app/features/work/details.py": "cd1cb9b839fef2bc6eabe911897bd225d2aaad390ec4d834943eaa36bda6614e",
+        "app/runtime/host.py": "1277ab3e2711540c5cf8ca321a0971911013d3fa7dcec48a3ff216a0b15855cc",
+        "scripts/benchmark_human_work.py": "d167896676c8ddf2a035458dcd3fb48db890b67ac09f60fbbfeede74bf552931",
+        "tests/execution/test_authenticated_commands.py": "3e0df9ad3633e3cdf501b192527705dd65f173bbd5b210cf05d50ab5c2047df9",
+        "tests/authz/test_database_loader.py": "f7227946663212d2882cb9c58ae6aeebdc6508aba6cdd5403ba7e026a105dfc7",
+        "tests/execution/test_kernel_db_loader.py": "54b732d37cda9ce4dba77ce05d8919a0e1daf1a4a013276bb9a276ef38b24108",
+        "tests/features/test_work_details.py": "78d779422f6d81b66e7611df0e15707ec2485ad2ad5f9576291ff8ef441ad838",
+        "tests/identity/test_authentication.py": "9425c8684307f9b45e6b771700a7942170cf6aa54a5c3c92a4c6e0a808507cd2",
+        "uv.lock": "305daa09e8a9646c49d1726a8a7ee2fd5e7f81d34915e53614acb29b47a8fd1b"
+      }
+    }
+  },
+  "configuration": {
+    "database": "PostgreSQL",
+    "pool_size": 5,
+    "max_overflow": 5,
+    "pool_timeout_seconds": 2,
+    "command_timeout_seconds": 10,
+    "requests_per_level": 48,
+    "concurrency_levels": [
+      1,
+      4,
+      8,
+      16
+    ],
+    "processes": 1,
+    "event_loops": 1
+  },
+  "measurement_boundaries": [
+    "Synthetic single-person/single-organization data in an explicitly disposable database.",
+    "ASGI in-process HTTP with actual identity, authorization, runtime and PG command execution.",
+    "Locally signed RSA JWT; mock JWKS; excludes real IdP, TCP/TLS, Redis and frontend performance.",
+    "Application tables created from ORM metadata; migration verification is a separate check.",
+    "Pool checkout includes queueing/acquisition; guard includes SQL round trips and lock waits.",
+    "Wait metrics sum all acquisitions per request, including authentication and command transactions.",
+    "Cancellation and timeout require a PG lock wait observed via pg_blocking_pids before completion.",
+    "Closed-loop bounded concurrency; small sample percentiles are not a capacity or SLO guarantee.",
+    "Replay, state verification, warm-up and synthetic cancellation setup are outside edit throughput."
+  ],
+  "results": [
+    {
+      "scenario": "independent_object_edits",
+      "concurrency": 1,
+      "requests": 48,
+      "elapsed_seconds": 2.2472,
+      "requests_per_second": 21.36,
+      "status_counts": {
+        "200": 48
+      },
+      "request_latency_ms": {
+        "samples": 48,
+        "p50": 43.73,
+        "p95": 55.493,
+        "p99": 107.118,
+        "max": 146.038
+      },
+      "pool_checkout_per_request_ms": {
+        "samples": 48,
+        "p50": 0.018,
+        "p95": 0.024,
+        "p99": 0.029,
+        "max": 0.03
+      },
+      "organization_guard_per_request_ms": {
+        "samples": 48,
+        "p50": 1.431,
+        "p95": 1.607,
+        "p99": 8.942,
+        "max": 15.316
+      },
+      "pool_checkout_calls": 192,
+      "organization_guard_calls": 144,
+      "checks": {
+        "writes_audits_versions_match": true,
+        "replay_does_not_write": true
+      }
+    },
+    {
+      "scenario": "same_object_conflict",
+      "concurrency": 1,
+      "requests": 48,
+      "elapsed_seconds": 1.5315,
+      "requests_per_second": 31.341,
+      "status_counts": {
+        "200": 1,
+        "409": 47
+      },
+      "request_latency_ms": {
+        "samples": 48,
+        "p50": 30.931,
+        "p95": 36.359,
+        "p99": 47.454,
+        "max": 49.791
+      },
+      "pool_checkout_per_request_ms": {
+        "samples": 48,
+        "p50": 0.017,
+        "p95": 0.023,
+        "p99": 0.033,
+        "max": 0.039
+      },
+      "organization_guard_per_request_ms": {
+        "samples": 48,
+        "p50": 1.412,
+        "p95": 1.574,
+        "p99": 1.616,
+        "max": 1.63
+      },
+      "pool_checkout_calls": 192,
+      "organization_guard_calls": 144,
+      "checks": {
+        "writes_audits_versions_match": true,
+        "replay_does_not_write": true
+      }
+    },
+    {
+      "scenario": "independent_object_edits",
+      "concurrency": 4,
+      "requests": 48,
+      "elapsed_seconds": 2.032,
+      "requests_per_second": 23.622,
+      "status_counts": {
+        "200": 48
+      },
+      "request_latency_ms": {
+        "samples": 48,
+        "p50": 160.745,
+        "p95": 215.114,
+        "p99": 249.312,
+        "max": 266.97
+      },
+      "pool_checkout_per_request_ms": {
+        "samples": 48,
+        "p50": 0.02,
+        "p95": 7.642,
+        "p99": 12.063,
+        "max": 12.096
+      },
+      "organization_guard_per_request_ms": {
+        "samples": 48,
+        "p50": 96.24,
+        "p95": 131.361,
+        "p99": 159.897,
+        "max": 163.187
+      },
+      "pool_checkout_calls": 192,
+      "organization_guard_calls": 144,
+      "checks": {
+        "writes_audits_versions_match": true,
+        "replay_does_not_write": true
+      }
+    },
+    {
+      "scenario": "same_object_conflict",
+      "concurrency": 4,
+      "requests": 48,
+      "elapsed_seconds": 1.3621,
+      "requests_per_second": 35.24,
+      "status_counts": {
+        "200": 1,
+        "409": 47
+      },
+      "request_latency_ms": {
+        "samples": 48,
+        "p50": 111.862,
+        "p95": 117.785,
+        "p99": 128.683,
+        "max": 136.382
+      },
+      "pool_checkout_per_request_ms": {
+        "samples": 48,
+        "p50": 0.018,
+        "p95": 0.021,
+        "p99": 0.025,
+        "max": 0.028
+      },
+      "organization_guard_per_request_ms": {
+        "samples": 48,
+        "p50": 58.666,
+        "p95": 65.124,
+        "p99": 74.446,
+        "max": 82.327
+      },
+      "pool_checkout_calls": 192,
+      "organization_guard_calls": 144,
+      "checks": {
+        "writes_audits_versions_match": true,
+        "replay_does_not_write": true
+      }
+    },
+    {
+      "scenario": "independent_object_edits",
+      "concurrency": 8,
+      "requests": 48,
+      "elapsed_seconds": 2.0533,
+      "requests_per_second": 23.377,
+      "status_counts": {
+        "200": 48
+      },
+      "request_latency_ms": {
+        "samples": 48,
+        "p50": 325.66,
+        "p95": 378.05,
+        "p99": 412.742,
+        "max": 432.653
+      },
+      "pool_checkout_per_request_ms": {
+        "samples": 48,
+        "p50": 0.019,
+        "p95": 17.013,
+        "p99": 19.35,
+        "max": 20.311
+      },
+      "organization_guard_per_request_ms": {
+        "samples": 48,
+        "p50": 261.6,
+        "p95": 308.736,
+        "p99": 312.19,
+        "max": 313.886
+      },
+      "pool_checkout_calls": 192,
+      "organization_guard_calls": 144,
+      "checks": {
+        "writes_audits_versions_match": true,
+        "replay_does_not_write": true
+      }
+    },
+    {
+      "scenario": "same_object_conflict",
+      "concurrency": 8,
+      "requests": 48,
+      "elapsed_seconds": 1.4503,
+      "requests_per_second": 33.097,
+      "status_counts": {
+        "200": 1,
+        "409": 47
+      },
+      "request_latency_ms": {
+        "samples": 48,
+        "p50": 228.832,
+        "p95": 265.267,
+        "p99": 311.15,
+        "max": 322.251
+      },
+      "pool_checkout_per_request_ms": {
+        "samples": 48,
+        "p50": 0.019,
+        "p95": 6.305,
+        "p99": 15.609,
+        "max": 15.824
+      },
+      "organization_guard_per_request_ms": {
+        "samples": 48,
+        "p50": 174.462,
+        "p95": 201.056,
+        "p99": 212.232,
+        "max": 216.089
+      },
+      "pool_checkout_calls": 192,
+      "organization_guard_calls": 144,
+      "checks": {
+        "writes_audits_versions_match": true,
+        "replay_does_not_write": true
+      }
+    },
+    {
+      "scenario": "independent_object_edits",
+      "concurrency": 16,
+      "requests": 48,
+      "elapsed_seconds": 2.1578,
+      "requests_per_second": 22.245,
+      "status_counts": {
+        "200": 48
+      },
+      "request_latency_ms": {
+        "samples": 48,
+        "p50": 630.249,
+        "p95": 859.961,
+        "p99": 939.201,
+        "max": 963.361
+      },
+      "pool_checkout_per_request_ms": {
+        "samples": 48,
+        "p50": 231.577,
+        "p95": 434.767,
+        "p99": 461.534,
+        "max": 469.485
+      },
+      "organization_guard_per_request_ms": {
+        "samples": 48,
+        "p50": 331.019,
+        "p95": 511.906,
+        "p99": 540.607,
+        "max": 545.708
+      },
+      "pool_checkout_calls": 192,
+      "organization_guard_calls": 144,
+      "checks": {
+        "writes_audits_versions_match": true,
+        "replay_does_not_write": true
+      }
+    },
+    {
+      "scenario": "same_object_conflict",
+      "concurrency": 16,
+      "requests": 48,
+      "elapsed_seconds": 1.4611,
+      "requests_per_second": 32.852,
+      "status_counts": {
+        "200": 1,
+        "409": 47
+      },
+      "request_latency_ms": {
+        "samples": 48,
+        "p50": 450.067,
+        "p95": 543.106,
+        "p99": 579.087,
+        "max": 588.923
+      },
+      "pool_checkout_per_request_ms": {
+        "samples": 48,
+        "p50": 162.825,
+        "p95": 210.63,
+        "p99": 247.706,
+        "max": 257.855
+      },
+      "organization_guard_per_request_ms": {
+        "samples": 48,
+        "p50": 226.387,
+        "p95": 285.471,
+        "p99": 293.745,
+        "max": 296.364
+      },
+      "pool_checkout_calls": 192,
+      "organization_guard_calls": 144,
+      "checks": {
+        "writes_audits_versions_match": true,
+        "replay_does_not_write": true
+      }
+    },
+    {
+      "scenario": "timeout_at_guard",
+      "concurrency": 1,
+      "requests": 1,
+      "elapsed_seconds": 0.5143,
+      "requests_per_second": 1.945,
+      "status_counts": {
+        "503": 1
+      },
+      "request_latency_ms": {
+        "samples": 1,
+        "p50": 514.27,
+        "p95": 514.27,
+        "p99": 514.27,
+        "max": 514.27
+      },
+      "pool_checkout_per_request_ms": {
+        "samples": 1,
+        "p50": 0.033,
+        "p95": 0.033,
+        "p99": 0.033,
+        "max": 0.033
+      },
+      "organization_guard_per_request_ms": {
+        "samples": 1,
+        "p50": 496.793,
+        "p95": 496.793,
+        "p99": 496.793,
+        "max": 496.793
+      },
+      "pool_checkout_calls": 4,
+      "organization_guard_calls": 2,
+      "checks": {
+        "postgresql_guard_block_observed": true,
+        "cancelled_request_did_not_write": true,
+        "connections_released": true,
+        "next_write_succeeds": true
+      }
+    },
+    {
+      "scenario": "explicit_cancel_at_guard",
+      "concurrency": 1,
+      "requests": 1,
+      "elapsed_seconds": 0.033,
+      "requests_per_second": 30.302,
+      "status_counts": {
+        "cancelled": 1
+      },
+      "request_latency_ms": {
+        "samples": 1,
+        "p50": 33.002,
+        "p95": 33.002,
+        "p99": 33.002,
+        "max": 33.002
+      },
+      "pool_checkout_per_request_ms": {
+        "samples": 1,
+        "p50": 0.015,
+        "p95": 0.015,
+        "p99": 0.015,
+        "max": 0.015
+      },
+      "organization_guard_per_request_ms": {
+        "samples": 1,
+        "p50": 14.852,
+        "p95": 14.852,
+        "p99": 14.852,
+        "max": 14.852
+      },
+      "pool_checkout_calls": 4,
+      "organization_guard_calls": 2,
+      "checks": {
+        "postgresql_guard_block_observed": true,
+        "cancelled_request_did_not_write": true,
+        "connections_released": true,
+        "next_write_succeeds": true
+      }
+    },
+    {
+      "scenario": "reads_and_edits_during_assignment_revocation",
+      "concurrency": 8,
+      "requests": 48,
+      "elapsed_seconds": 1.1654,
+      "requests_per_second": 41.187,
+      "status_counts": {
+        "200": 9,
+        "403": 39
+      },
+      "request_latency_ms": {
+        "samples": 48,
+        "p50": 155.013,
+        "p95": 333.676,
+        "p99": 359.429,
+        "max": 372.113
+      },
+      "pool_checkout_per_request_ms": {
+        "samples": 48,
+        "p50": 0.016,
+        "p95": 9.855,
+        "p99": 15.212,
+        "max": 15.212
+      },
+      "organization_guard_per_request_ms": {
+        "samples": 48,
+        "p50": 110.351,
+        "p95": 269.49,
+        "p99": 282.403,
+        "max": 286.514
+      },
+      "pool_checkout_calls": 192,
+      "organization_guard_calls": 120,
+      "revocation": {
+        "duration_ms": 111.557,
+        "guard_ms": 66.158,
+        "pool_checkout_ms": 9.939,
+        "workload_requests_started_after_commit": 31,
+        "explicit_post_commit_statuses": [
+          "403",
+          "403"
+        ]
+      },
+      "checks": {
+        "writes_audits_versions_match": true,
+        "new_requests_after_revocation_denied": true
+      }
+    }
+  ],
+  "checks": {
+    "all_scenarios_passed": true,
+    "runtime_drained": true,
+    "pool_released": true
+  }
+}

@@ -1,0 +1,170 @@
+{
+  "date": "2026-10-26",
+  "scope": "Native authentication independent audit; full regression plus later targeted registration/browser checks",
+  "git_head": "80447174c2acdccfb17455cbf28727b10ee2c6cf",
+  "workspace_state": "uncommitted implementation and audit fixes; exact source hashes below",
+  "checks": {
+    "postgresql_redis_full": {
+      "passed": 1127,
+      "skipped": 7
+    },
+    "sqlite_full": {
+      "passed": 1080,
+      "skipped": 46,
+      "purpose": "portable tests only"
+    },
+    "postgresql_operator_and_identifier_followup": {
+      "passed": 10
+    },
+    "sqlite_operator_and_identifier_followup": {
+      "passed": 10
+    },
+    "isolated_chromium_factor_replacement": {
+      "pytest_passed": 1,
+      "checks_passed": 14
+    },
+    "runtime_core_scenarios": {
+      "passed": 46,
+      "defined": 46
+    },
+    "standing_native_smoke": {
+      "checks_passed": 9
+    },
+    "standing_service_smoke": {
+      "passed": 5
+    },
+    "mypy": {
+      "files": 184,
+      "passed": true
+    },
+    "ruff": {
+      "passed": true
+    },
+    "openapi_contract": {
+      "passed": true
+    }
+  },
+  "deployment": {
+    "schema_head": "b7f0d3a9216c",
+    "application_tables": 34,
+    "existing_credential_and_principal_digest_preserved": true,
+    "existing_factor_bootstrap_disabled": true,
+    "service": "orchestra-stage-dev",
+    "ready": true
+  },
+  "source_sha256": {
+    "app/__init__.py": "8a2fdc7a610911a6f8089ad33fec38498722a274fc0cef1c2447af85710e2f04",
+    "app/api/__init__.py": "6b80f88fda6d9e8c639161e04e40ddb27796c0ec47e7862f8dfb8206ecbba2d5",
+    "app/api/assignments.py": "7221c945c90ed8f94d2fa52343c77356fce2b61ec879289e1d93dee211966356",
+    "app/api/health.py": "3418fe3d0b97323a359a61dec1ef5b6426af15f068eac21d352354949bdc7d5e",
+    "app/api/identity.py": "33481a3007fd303f16046a0a777f34916c79949eda9bde837b06ab884e8e94d4",
+    "app/api/native_auth.py": "7e4897a0a0e416f2bad967aeb25c142ee0cd34407c30b1bb2d119df466f0e8ae",
+    "app/api/readiness.py": "74dab7816a520b994e406f7a4a68921622991e38e1907c946b8900c31f9ee64e",
+    "app/api/router.py": "e37900928c6e1c0dc633d3595f6c0436b9d15a643c56fee57f677247d446c07c",
+    "app/api/work.py": "b3585e785516c3a5951c3d0a2a67887cf34f4770d67f9b448256a83ee49b2a87",
+    "app/authz/__init__.py": "3fdf30ca848390ae14090bc7e185bb8fc644c1112ae9f0e5d8f26921b3112219",
+    "app/authz/administration.py": "180ed404ed6e2fc6a89fb57b63eb4664c9fb2735dbf0cb1dc925b3810a98cc3c",
+    "app/authz/assignments.py": "ffc8f099dd2dbb892cbb0f29a71de08b1325bc395949ce18075969d597681a86",
+    "app/authz/attributes.py": "8f2be693777f1c75096f31f1b20bcef2dc32fc40d470041496743780e695af49",
+    "app/authz/authenticated.py": "ca678857ff8a5804608fe7131142933db162065908656b320f8aac391d00f020",
+    "app/authz/context.py": "40d533fa5d69aa58658f3c6faa7f04a737915d2f507c98b08f4c614561343ef2",
+    "app/authz/decision.py": "dcf69eda0cc1671388dd157035aef59d403ce331297c357040233f2deb3b29e4",
+    "app/authz/identity.py": "da37bfbafe04075acbceb68901540f9c36ed6d0d611967c52e274888300bde93",
+    "app/authz/loader.py": "283715c156ae42f045ca14425f8384a13a3d6524135cf35010bdcf1656d36f42",
+    "app/authz/permissions.py": "9d6e012daf765f07657eadbe80d4e8d116be396f286d67f5663aa6dd16917ff4",
+    "app/authz/relations.py": "482f4938e1d34a3c470d6153b00ac9d6cf0822d429765fa88cf25efc67c44ff6",
+    "app/bootstrap/__init__.py": "593b63b1904682a242dd2e66dcb0ffcbc892d2edabfb4083c6283c01ab6745b4",
+    "app/bootstrap/application.py": "55406c27ad6545ec3b698f82af38e515731d4df67459e8524621e9f74a2d908d",
+    "app/core/__init__.py": "38d28321c4e51c0361120ed39b4f02338a15d5880ad3c420ff8fd608f07363ed",
+    "app/core/audit.py": "44428c7acb28c976597e3658c31a910227e7ac32bb36f97d62472a7ce2164583",
+    "app/core/config.py": "9a95fc8ef0cbde33b3e4e6101791d68797c319a0a46257a89687e68233b43837",
+    "app/core/db.py": "705dc4adcd18ef40638bf2e98927cc717c898775c3e20482b13af3854e85bb53",
+    "app/core/enums.py": "cb41afb682ef10d507d645e76bee3344adaf392ea7eb7c6a14f0afcce2983161",
+    "app/core/errors.py": "8ca8ba6aa86b3881aa82732a952a80d28093d6452e050ac2264cef2ab48fefd9",
+    "app/core/idempotency.py": "38c097a0372b18bc90480f41c7921861df2fd4500e223327684221e8d06f63ab",
+    "app/core/middleware.py": "75bb74f34a6a6e3a481f14a4c9d7b506f0ba7bb0a7d81ae60ee669558813844f",
+    "app/core/outbox.py": "c4e8a15a992f0ce916b9c5135923b1d9b26ba9ff3c1f4e860ef72be852a11ad1",
+    "app/core/redis.py": "233ee8d3f4e04509798464be508ed0492cd8c2e97505d003fd87f2948ac67f4a",
+    "app/core/schemas.py": "8c03c9d16a8b2ed625bd07913d5ff5643c7834485bb1de3ad72b252e59f027f2",
+    "app/core/time.py": "30e980609c55dc1821237abb04296133ccfa0826aaa429d629959916b4fd5d72",
+    "app/delivery/__init__.py": "87414e003e7a792f6e6150c8780e6dbdcd17d1591110e355f8258eca808294c9",
+    "app/delivery/contracts.py": "a5afd5410f4409bd3dffae01289dd82f03b84e4e22d51cd3b6403d96cf534b0a",
+    "app/delivery/worker.py": "d713c06930f1ecebd29808c34c37e39b1e7753bc51e5b4b56011f88a4fbdfb02",
+    "app/execution/__init__.py": "f6bf83d9a2c59ce75ea584dc0bbcaf7715e9b53479d00f3d5d0d8c91147253ca",
+    "app/execution/contracts.py": "141ee9a689a46f5b629ac746788bf72715d76b590fa4c2dbcb816e0e9f07c24c",
+    "app/execution/encoding.py": "145cc5dff05dd97f6d4002ad0a8f980a97fc65298b453d44ceee23493167e07e",
+    "app/execution/errors.py": "759881c28c8adf7da6b71776d47615d43800cebbef6613fbf653e12fee908684",
+    "app/execution/kernel.py": "8e589493ef5407d9b0f4e12110157ad9685b334c55f9f63e029c95d25a58439a",
+    "app/execution/storage.py": "7d942eeef50190224eb72e81a9cc4ae652b2463170240695d132d07507071bd2",
+    "app/features/__init__.py": "4edfdb946e416079f2cda30604970c44d7b3979c6c827b1008a1712b650eca49",
+    "app/features/work/__init__.py": "5e88a314e493e79f1bb605f06fcbda01d874501e1ffacdc2b105db484889c3cc",
+    "app/features/work/commands.py": "7905b853bf247dae9937588d5e1cc41143e9bbd21632aad103e4c12b2c3e8818",
+    "app/features/work/details.py": "cd1cb9b839fef2bc6eabe911897bd225d2aaad390ec4d834943eaa36bda6614e",
+    "app/identity/__init__.py": "47b35e8c464314c5a6ad04b9aba0f2a21a00be6db2b2f343bc3368516c8688e5",
+    "app/identity/administration.py": "031c18157c44e0c914ef2210b46eb789ef315c3124b92bbffa584ef0ea164844",
+    "app/identity/assurance.py": "1292277d1da40f9f3710e75427643508a0a40791ff12086b2b86a086aa1b2464",
+    "app/identity/assurance_administration.py": "1715c81a30ac25076d12062d742c753eeb23eec37cddbea73d1700fa91ded7fc",
+    "app/identity/assurance_verification.py": "6238ff50b4093e2e081be8518eff4effe86aecd0735fc99c07d2cdc7538e9155",
+    "app/identity/authentication.py": "c6a540eb3b144700ebbafa1c3ee7ffcdf65424775304161fd77e0f6fd0b86b3b",
+    "app/identity/evidence.py": "47440e6a62027e084ad0907266023520cb1dc8cd857c7628ab935e0a156d63a1",
+    "app/identity/native.py": "000a8b6510fe4f71f8c51109f7cb71992d331313a4e556042a20c8fed494d323",
+    "app/identity/service.py": "c3605c7ebec4dcc534b0b9884302da31ecfd92c6d76a95c583db85997541588e",
+    "app/main.py": "bdf39e3828b7045fc9cb1567cadcdbb19dd833a481f2e26dda2e6d6bb0aaaf5c",
+    "app/models/__init__.py": "7a03b48600ecebc3ac62c210793d269c285540fc838703a4a8d7622493150e37",
+    "app/models/authorization.py": "ef70f8773c9f84f171352bd2c95dcd1ca323b10995038843711066f01df52d5e",
+    "app/models/base.py": "bb11c6ef2ea01d57d2beec65de7bfb0b019aefe8b783c2115db920d503844b7e",
+    "app/models/execution.py": "6e64757578e950d543078a8c07f5d9a2ab4f97da6158400fa0074f14553f9633",
+    "app/models/identity.py": "d7d287a75b78c0499e8e312898a9997259887cb41b05f8975d823f8d8f51d9c3",
+    "app/models/identity_foundation.py": "d83802ba7923f63836d877c6bb6d3512c8e72237cf9b14b48b4e6de6fba9e44b",
+    "app/models/native_auth.py": "1a9e8fe8b9e3d430896c853a66068aadf75083aaae0fdab5f589cf50069d0501",
+    "app/models/work.py": "aca5e0ba7c54ca156d716c2735a0e95f69a36eecdb6a82026666046541035c1f",
+    "app/native_auth/__init__.py": "fbe09f183c0988fc95297661a62043aad13806c667c31b1fe85c1f68fedd1891",
+    "app/native_auth/administration.py": "d95edd1fb59a9b5327a38d9637413ec366a160ec2063a526a667d2c06e59f308",
+    "app/native_auth/config.py": "639559b8c24b7140695f634629bc649516bbd9995ed1df93976199a091fb6f42",
+    "app/native_auth/credentials.py": "6f4057f53b715b97e7e4c57ecd1b2c428b54a4a81d396758e83f9402fee3f7f3",
+    "app/native_auth/crypto.py": "fafe594e9b44de49ac2ac4455c2bba6dda9659d03c8f822de4180b5698fc773b",
+    "app/native_auth/errors.py": "fb39acd10a764dcdcd238e0a19631d29731d85bd9f2faa3845f035949b01f6c4",
+    "app/native_auth/keys.py": "d61d2a2bf714836483ea54c4c8778cbc965e73b2d1de43944f5da71fd5e993ab",
+    "app/native_auth/oauth.py": "e8485161fbcee3001127b713761d22abb7a4fa62793c97eae39b1f27b7207569",
+    "app/providers/__init__.py": "42b9cf7430e15e010773a6eb4621b9765146f11b7eed7847455156f79d2f7842",
+    "app/providers/assignments.py": "c809135e55f48df91a37cf3f18e8cc3b48ae483abc349059330213d26745fc7c",
+    "app/providers/execution.py": "9766ad9c5db1be843dbe976e7689533e2e3f0266ed038a6422d0192654f290ad",
+    "app/providers/identity.py": "b3858d000d5e287477bc74cb490d35e1d7aa486202ddaec2fec9ad042881fd05",
+    "app/providers/native_auth.py": "4a3ad78e0c8d4f4db7eb4d510ee3bfe836476bbc8deaaff072056c42ac7e2bbb",
+    "app/providers/storage.py": "87ee931a4ed1358e50228c1dca9601359547f2cc48e901ec56d4b2507161d6dd",
+    "app/providers/work.py": "08f3161070679cc025fdc504168886c83ed5b290045dc7686ef6597be876eba0",
+    "app/runtime/__init__.py": "0c90bbb4cee45e44020dc7adbf1f1f11820cc30c8f5d8d10b5667e496a7ca6cf",
+    "app/runtime/context.py": "b67ebdfb36300c85f04ab9b6ab4d81959a0b65d0eb751fd49184cda995b56f9f",
+    "app/runtime/contracts.py": "740ed86ba0562f03a30b092aab3f882c0de59a10e984277ddb0efa60b9f8fd0a",
+    "app/runtime/effects.py": "72d7a4aab72d944b6ecb553b8bf8150cd06a8483916101685558b9b563cea77d",
+    "app/runtime/events.py": "8e55c822b08e77382c2f48bbea8af3311fd6d5471fadc64706cf9dff23f25537",
+    "app/runtime/host.py": "906f31e37b773ceeee1cf4efcc25a62b0ca6d2b00ff5616a9328549c932ed959",
+    "app/runtime/leases.py": "556fca86d7445d3dddee7cd52cd5e7941be8cfc7d1ad888688178b46debfd60f",
+    "app/storage/__init__.py": "ee46fb2efb6826de863c6da3151ca180739cfb537abe632e0047e35f96ac09d8",
+    "app/storage/types.py": "770061dc2a17b8c4c6bd23b1cd39cbc22befbcf5d394bc20003446cfd634c594",
+    "migrations/versions/b7f0d3a9216c_native_factor_enrollment_authority.py": "1604434b3d6e122d359cd6ce999140e0a37eff5b8a98abfb056d64c95147e862",
+    "scripts/native_auth_admin.py": "d5dd259c846a1f372b234665841c606aa627ec1e299b535de8a760ff10cb1543",
+    "scripts/native_auth_browser_smoke.cjs": "f1b6d891f888adfd3eb69aa1f7c254ed98c8d3d7c9f0929993ca197fcb6e234c",
+    "scripts/native_auth_recovery_browser_smoke.cjs": "450a836f6f4d96662f499dbe33850f6579f258ead224fe26a3a62748f160fc0b",
+    "scripts/native_auth_smoke.py": "8b95e38a8b5fdc3572440804934c3deed4230f9e82a0191750f118d187701aff",
+    "tests/integration/test_native_auth_live.py": "ae2ac116fa99fe774d811269fd9736df37d66097145e99242df40d6784f670f1",
+    "tests/integration/test_native_recovery_browser.py": "6e47684216e5bacc74e927567a2945ce6cce9e7b67156b48abd9d107c2dced46",
+    "tests/native_auth/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "tests/native_auth/test_administration.py": "4932c5a7b454d989e7d94e0a60eeae8d75f535da54eb3be5b682998297b9aff4",
+    "tests/native_auth/test_audit_administration.py": "fbf84b709df1f31b257af51d3e58d8005f12824f8ff5176552e4cc1763e3f549",
+    "tests/native_auth/test_audit_credentials.py": "3ccb77f8e79ffe4e3031852397f173931b9bf27bf25a56f8a2d6f50a96288c99",
+    "tests/native_auth/test_audit_identity.py": "bc4507efa3497bf02246031d9d92a13b1e2024416e5d1ea2837777f003f3d240",
+    "tests/native_auth/test_audit_protocol.py": "f7f0bda39601348c104038a964642216f48ac3633ed8033d7e8398a870a87bf3",
+    "tests/native_auth/test_command_concurrency.py": "a4331556470c01da078595b71f5569b683f953148d59f1e9d407181366ca16d2",
+    "tests/native_auth/test_contract.py": "114bdcc01a616ba24b60a7519ae5799de205f3a166c2f7fca74ad0fe76b9a40e",
+    "tests/native_auth/test_credentials.py": "49eecb570968b35d94ea262c9578341c393b0f957e492d23bddb551cfcb74485",
+    "tests/native_auth/test_http.py": "ba52668bc4a412d5110a1f791c20aaf2fea99a9884ce576c1a283326acd3dcab",
+    "tests/native_auth/test_identity_integration.py": "8d508bf6e5378191a562806bf36770c48ee6c4af6ac618ccdeac2293405d3f46",
+    "tests/native_auth/test_keys.py": "805fc5b5deda235049545232fbf3804e5169b6c8c2f3bb3d308196a9ac90a8e9",
+    "tests/native_auth/test_oauth.py": "d8517959cae9c8b05330209d0fee1d73507cfaf5303d34723adef442d71874bd"
+  },
+  "full_regression_junit_sha256": {
+    "postgresql": "a5b62bea8b4e98b779864f46b13ed4138ebae9580923176c1baa1a49e39e910a",
+    "sqlite": "3567431101d29905c0dfced8436700346fb15b91467cbeefea783fffc22991c6"
+  }
+}

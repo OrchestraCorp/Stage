@@ -1,12 +1,16 @@
 ---
 title: Z Pool 工程能力在 Stage P1 的复用范围
-status: implementation-planning
-implementation_status: not-started
+status: historical-implementation-plan
+implementation_status: historical-snapshot-not-current
 policy_effect: none
 review_date: 2026-10-24
 ---
 
 # Z Pool 工程能力在 Stage P1 的复用范围
+
+> **历史复用计划，保留 2026-10-24 的取舍与明确标注的后续补记，不作当前待办清单。** 最新实现和阶段以[代码架构](current-code-architecture.md)、[P1b 收尾](reviews/p1b-closeout-2026-10-25.md)、[一期方案](phase-1.md)及[运行时演进决策](runtime-evolution-and-composition.md)为准。Core、真实人员认证、单任职授权及最小 HTTP 命令已落地；本文“尚未接入身份/HTTP”仅描述当时状态。
+>
+> 当前按业务切片逐项增加能力，不要求 P1a 提前建设通用 `CapabilitySpec` 目录，也不要求 P1b 先实现 ServiceGrant、独立 Agent 或 Delegation。一期采用私有单组织根、“人员—公司—人员”和 PG＋Redis。完整 IAM/MFA、WASM、签名、正式连接器与流程运行器仍按各自阶段单独验收；历史复用建议不替代现行门禁。
 
 有必要吸收 Z Pool 已有的工程实现，优先覆盖一期必需的事务、幂等、审计、运行资源和故障处理。采用方式是按 Stage 对象和契约提炼，再在 Stage 的场景中验收；不以原项目有代码或历史测试记录替代目标系统验证。
 

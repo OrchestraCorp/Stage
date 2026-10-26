@@ -46,4 +46,8 @@ provider 健康探测变化可以触发受影响组件重协调，使不可用 p
 
 关闭超时返回 pending/blocked 报告，host 保留任务所有权；并发等待者共享清理结果。一个等待者取消不会取消共享关闭。调用者应检查报告，不能在超时后自行强关资源并报告完成。运行期失败通过 `snapshot()`、readiness 和 observations 可见；诊断含内部组件信息，不作为未认证 HTTP 响应。
 
+成功卸载后，host 仅保存不含执行对象的诊断快照，释放 setup/config、组件 context、effect scope 和父组件对子组件的持有。`PluginHandle` 继续保留名称、owner、代次与最终状态，`context` 为 `None`；调用方保留旧 handle 时，其原装配 context 仍保留，保证随后 `replace()` 继续使用同一隔离域和继承配置。默认最多保留 256 个成功卸载快照和 256 条最新 observations，分别由 `RuntimeHost(history_limit=..., observation_limit=...)` 调整；`snapshot()` 的 `history`、`observations` 给出容量和省略计数。未完成、失败或 blocked 记录不受成功历史容量淘汰，失败清理继续持有资源与诊断。诊断历史不是持久审计。
+
+这里保证的是 host 不再通过成功卸载历史无界持有执行对象；不承诺主动释放调用方自己仍持有的 handle、context 或服务引用。尤其旧 handle 的原继承配置仍为 `replace()` 保留，调用方释放最后一个 handle 后这些配置才可被回收。全局 readiness 只检查仍受 host 管理的组件，成功卸载摘要不参与依赖图或就绪判定。`host.close()` 报告本次管理集合的关闭结果，不重列历史成功 owner；保留的 `PluginHandle.close()` 仍可幂等查询该 owner 的完成状态。
+
 行为规格见 [Core 一致性规格](../../docs/runtime-conformance.md)、[框架实施规格](../../docs/framework-foundation.md)，运行时演进边界见[运行时演进与能力组合决策](../../docs/runtime-evolution-and-composition.md)，场景映射位于 `tests/runtime_core/scenarios.json`。映射通过必须引用真实 pytest JUnit 结果；固定 Cordis 参考与 Stage 特有规则分别留证，不宣称官方跨语言认证。

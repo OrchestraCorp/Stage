@@ -26,6 +26,8 @@ contract:
   stage: contract
   script:
     - uv run python scripts/check_contract.py --check
+    - uv build --wheel --out-dir tmp/distribution
+    - uv run python scripts/check_distribution.py tmp/distribution/*.whl
 
 # These credentials are for disposable job-local databases only.
 database:postgresql:
@@ -57,3 +59,28 @@ database:redis:
     TEST_REDIS_URL: redis://redis:6379/0
   script:
     - uv run python scripts/check_redis.py
+
+database:browser:
+  stage: database
+  timeout: 15m
+  services:
+    - name: postgres:17
+      alias: postgres
+  variables:
+    POSTGRES_DB: stage_ci_browser
+    POSTGRES_USER: stage
+    POSTGRES_PASSWORD: stage-ci-browser-test-only
+    TEST_DATABASE_URL: postgresql+asyncpg://stage:stage-ci-browser-test-only@postgres:5432/stage_ci_browser
+    STAGE_ALLOW_TEST_DATABASE_RESET: "1"
+  script:
+    - apt-get update && apt-get install -y --no-install-recommends nodejs npm
+    - npm ci --prefix scripts/browser --ignore-scripts
+    - npm exec --prefix scripts/browser -- playwright install --with-deps chromium
+    - uv run python scripts/check_database.py
+    - uv run python scripts/check_browser_acceptance.py
+  artifacts:
+    when: always
+    paths:
+      - tmp/browser-tests.xml
+    reports:
+      junit: tmp/browser-tests.xml

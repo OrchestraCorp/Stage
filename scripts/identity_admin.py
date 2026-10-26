@@ -15,15 +15,12 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from app.identity.administration import (  # noqa: E402
-    AdministrationResult,
-    BootstrapPlan,
-    IdentityAdministrationError,
-    IdentityOperationUnknown,
-    RevocationRequest,
-    bootstrap,
-    operation_result,
-    revoke,
+from app.control.contracts import AdministrationError, AdministrationResult, OperationUnknown  # noqa: E402
+from app.control.operations import operation_result  # noqa: E402
+from app.identity.administration import BootstrapPlan, RevocationRequest, bootstrap, revoke  # noqa: E402
+from app.identity.assurance_administration import (  # noqa: E402
+    ConfigureHumanAuthenticationRequest,
+    configure_human_authentication,
 )
 
 
@@ -38,9 +35,9 @@ async def run(args: argparse.Namespace) -> AdministrationResult:
 
     config = Settings()
     if config.env not in {"dev", "test"} or config.env != args.environment:
-        raise IdentityAdministrationError("development_environment_required")
+        raise AdministrationError("development_environment_required")
     if not os.environ.get("STAGE_DATABASE_URL"):
-        raise IdentityAdministrationError("explicit_database_required")
+        raise AdministrationError("explicit_database_required")
     engine = create_engine(config.database_url)
     sessions = create_session_factory(engine)
     actor = local_operator_ref()
@@ -48,10 +45,10 @@ async def run(args: argparse.Namespace) -> AdministrationResult:
         if args.command == "bootstrap":
             raw = args.plan.read_bytes()
             if len(raw) > 262144:
-                raise IdentityAdministrationError("bootstrap_plan_too_large")
+                raise AdministrationError("bootstrap_plan_too_large")
             plan = BootstrapPlan.model_validate_json(raw)
             if plan.environment != config.env:
-                raise IdentityAdministrationError("environment_mismatch")
+                raise AdministrationError("environment_mismatch")
             return await bootstrap(sessions, plan, actor_ref=actor, idempotency_key=args.idempotency_key)
         if args.command == "revoke":
             request = RevocationRequest.model_validate(
@@ -66,6 +63,16 @@ async def run(args: argparse.Namespace) -> AdministrationResult:
                 }
             )
             return await revoke(sessions, request, actor_ref=actor, idempotency_key=args.idempotency_key)
+        if args.command == "configure-human-authentication":
+            raw = args.plan.read_bytes()
+            if len(raw) > 262144:
+                raise AdministrationError("assurance_plan_too_large")
+            assurance_request = ConfigureHumanAuthenticationRequest.model_validate_json(raw)
+            if assurance_request.environment != config.env:
+                raise AdministrationError("environment_mismatch")
+            return await configure_human_authentication(
+                sessions, assurance_request, actor_ref=actor, idempotency_key=args.idempotency_key
+            )
         return await operation_result(
             sessions,
             environment=args.environment,
@@ -95,6 +102,11 @@ def main() -> int:
     revoke_parser.add_argument("--tenant-ref")
     revoke_parser.add_argument("--profile-version", type=int)
     revoke_parser.add_argument("--idempotency-key", required=True)
+    assurance_parser = subparsers.add_parser(
+        "configure-human-authentication", help="set explicit versioned human login assurance for this organization"
+    )
+    assurance_parser.add_argument("--plan", type=Path, required=True)
+    assurance_parser.add_argument("--idempotency-key", required=True)
     result_parser = subparsers.add_parser("result", help="recover a prior operation using its original identity")
     result_parser.add_argument(
         "--operation-type",
@@ -105,6 +117,7 @@ def main() -> int:
             "revoke.tenant",
             "revoke.membership",
             "revoke.profile",
+            "configure.human-authentication",
         ),
         required=True,
     )
@@ -112,7 +125,7 @@ def main() -> int:
     args = parser.parse_args()
     try:
         result = asyncio.run(run(args))
-    except IdentityOperationUnknown as error:
+    except OperationUnknown as error:
         print(
             json.dumps(
                 {
@@ -125,7 +138,7 @@ def main() -> int:
             file=sys.stderr,
         )
         return 2
-    except IdentityAdministrationError as error:
+    except AdministrationError as error:
         print(json.dumps({"error": error.code}), file=sys.stderr)
         return 1
     except Exception as error:
