@@ -5,11 +5,12 @@ from datetime import UTC, datetime
 
 from app.authz.assignments import AssignmentList, load_self_assignments
 from app.core.config import Settings
-from app.execution.storage import lock_tenant, managed_uow
+from app.execution.storage import managed_uow
 from app.identity.authentication import AuthenticationRejected
 from app.providers.identity import IDENTITY
 from app.providers.storage import STORAGE
 from app.runtime import ComponentContext, PluginSpec, ServiceKey
+from app.storage.coordination import LockMode, lock_organization
 
 ASSIGNMENTS: ServiceKey["AssignmentService"] = ServiceKey("stage", "self-assignments", "1")
 
@@ -37,7 +38,7 @@ class AssignmentService:
                 # Same writer protocol as human commands, without requiring an
                 # assignment before the caller has been able to discover one.
                 await identity.acquire_human_locks(uow.session, evidence)
-                await lock_tenant(uow.session, evidence.organization_ref)
+                await lock_organization(uow.session, evidence.organization_ref, mode=LockMode.SHARED)
                 await identity.validate_human(uow.session, evidence, datetime.now(UTC))
                 result = await load_self_assignments(
                     uow.session, evidence, now=datetime.now(UTC), limit=limit, after=after

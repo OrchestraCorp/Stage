@@ -15,7 +15,6 @@ from typing import Any
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from app.execution.storage import lock_tenant
 from app.models.identity import PrincipalTable
 from app.models.identity_foundation import OrganizationRootTable, TrustStateTable
 from app.models.native_auth import (
@@ -40,6 +39,7 @@ from app.native_auth.current_session import validate_native_session
 from app.native_auth.errors import NativeCommitUnknown, NativeCredentialError
 from app.native_auth.freshness import current_authentication_deadline
 from app.native_auth.protocol import OAuthError
+from app.storage.coordination import LockMode, lock_organization
 
 
 @dataclass(frozen=True, slots=True)
@@ -65,9 +65,11 @@ class AdminResetResult:
 
 
 async def acquire_account_lock(
-    session: AsyncSession, account_ref: str, *, organization_ref: str, trust_ref: str
+    session: AsyncSession, account_ref: str, *, organization_ref: str, trust_ref: str, mode: LockMode
 ) -> NativeAccountTable:
     """Same trust -> principal -> organization order as human business commands."""
+    if not isinstance(mode, LockMode):
+        raise ValueError("account_lock_mode_required")
     principal_ref = await session.scalar(
         select(NativeAccountTable.principal_ref).where(NativeAccountTable.account_ref == account_ref)
     )
@@ -79,17 +81,17 @@ async def acquire_account_lock(
     principal = await session.scalar(
         select(PrincipalTable)
         .where(PrincipalTable.principal_ref == principal_ref)
-        .with_for_update()
+        .with_for_update(read=mode is LockMode.SHARED)
         .execution_options(populate_existing=True)
     )
     if trust is None or trust.purpose != "authentication" or principal is None or principal.principal_type != "human":
         raise NativeCredentialError()
-    await lock_tenant(session, organization_ref)
+    await lock_organization(session, organization_ref, mode=LockMode.SHARED)
     root = await session.get(OrganizationRootTable, organization_ref, populate_existing=True)
     account = await session.scalar(
         select(NativeAccountTable)
         .where(NativeAccountTable.account_ref == account_ref)
-        .with_for_update()
+        .with_for_update(read=mode is LockMode.SHARED)
         .execution_options(populate_existing=True)
     )
     if (
@@ -169,6 +171,17 @@ class NativeCredentials:
             account_ref,
             organization_ref=self.organization_ref,
             trust_ref=self.trust_ref,
+            mode=LockMode.EXCLUSIVE,
+        )
+
+    async def read_account(self, session: AsyncSession, account_ref: str) -> NativeAccountTable:
+        """Pin current account facts without serializing pure readers."""
+        return await acquire_account_lock(
+            session,
+            account_ref,
+            organization_ref=self.organization_ref,
+            trust_ref=self.trust_ref,
+            mode=LockMode.SHARED,
         )
 
     @staticmethod
@@ -530,7 +543,7 @@ class NativeCredentials:
                 or principal.disabled_at is not None
             ):
                 raise NativeCredentialError("invalid_account")
-            await lock_tenant(session, self.organization_ref)
+            await lock_organization(session, self.organization_ref, mode=LockMode.SHARED)
             existing = await session.scalar(
                 select(NativeAccountTable).where(
                     (NativeAccountTable.account_ref == account_ref)

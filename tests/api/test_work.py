@@ -24,7 +24,7 @@ from app.execution.errors import (
     ObjectVersionConflict,
     RequestDeadlineExceeded,
 )
-from app.execution.storage import UnitOfWork, lock_tenant
+from app.execution.storage import UnitOfWork
 from app.features.work.details import WorkDetailsConflict
 from app.identity.authentication import AuthenticationRejected, AuthenticationUnavailable
 from app.identity.evidence import HumanAuthenticationEvidence
@@ -35,6 +35,7 @@ from app.providers.identity import IDENTITY, IdentityFacade
 from app.providers.storage import STORAGE, Storage
 from app.providers.work import WORK, human_work_plugin
 from app.runtime import ComponentContext, PluginSpec, RuntimeHost
+from app.storage.coordination import LockMode, lock_organization
 from tests.support.authenticated_commands import identity_service, jwt_client, seed_authenticated_command
 from tests.support.authorization import ORG
 from tests.support.authorization_recovery import _install_reader
@@ -165,7 +166,7 @@ async def test_revoked_current_relation_blocks_http_read_replay_and_result_recov
 ) -> None:
     assert (await work_client.put(BASE + "/details", json=PAYLOAD)).status_code == 200
     async with persistence_sessions.begin() as session:
-        await lock_tenant(session, ORG)
+        await lock_organization(session, ORG, mode=LockMode.EXCLUSIVE)
         relation = await session.scalar(select(RelationTupleTable))
         assert relation is not None
         relation.status = "revoked"

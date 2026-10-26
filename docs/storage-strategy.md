@@ -13,6 +13,8 @@ policy_effect: engineering-only
 
 这是工程选型决定，不表示 Runtime Core、真实 IAM、WASM 或完整业务切片已经实现。当前代码与测试结果按提交和环境单独记录；历史双库评审、迁移代码与验证 JSON 保留原貌，不改写成新策略的验收证据。
 
+当前短命令协调已明确组织S/X与事务级逻辑幂等键，见[并发优化](reviews/concurrency-optimization-2026-10-26.md)。advisory键只保护同一PostgreSQL事务，不是持久任务租约；Redis仍不参与权威提交。
+
 ## 1. 事实权威与提交边界
 
 | 存储 | 负责内容 | 恢复与一致性要求 |

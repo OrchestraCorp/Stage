@@ -1,0 +1,787 @@
+{
+  "schema": "stage.oa-research-sources.v1",
+  "retrieved_at": "2026-10-26T12:58:39.593490+08:00",
+  "stage_baseline": "0560abef3872ad40d406ad4e8a54b3ad35f800e5",
+  "method": "Read official pinned source and documentation; no deployment, Java/Python product tests, or vulnerability certification. Metadata only; no third-party source text copied into Stage.",
+  "source_files": [
+    {
+      "project": "o2oa",
+      "tag": "develop-10.1-ce",
+      "commit": "f6a85b5d995d570433cdbec5aa2a791341e7bfb7",
+      "path": "README.md",
+      "url": "https://github.com/o2oa/o2oa/blob/f6a85b5d995d570433cdbec5aa2a791341e7bfb7/README.md",
+      "sha256": "a64ff68f5d65c79a3d434bdd437152060f5ad00190499e86c0386f874b366818",
+      "lines": [
+        [
+          15,
+          19
+        ]
+      ],
+      "finding": "真实OA/协同办公平台定位"
+    },
+    {
+      "project": "o2oa",
+      "tag": "develop-10.1-ce",
+      "commit": "f6a85b5d995d570433cdbec5aa2a791341e7bfb7",
+      "path": "o2server/x_organization_core_entity/src/main/java/com/x/organization/core/entity/Identity.java",
+      "url": "https://github.com/o2oa/o2oa/blob/f6a85b5d995d570433cdbec5aa2a791341e7bfb7/o2server/x_organization_core_entity/src/main/java/com/x/organization/core/entity/Identity.java",
+      "sha256": "695d87f2415839817cc576fb1636e3d14b7eda9ebea8055d79c408fa0f9326b7",
+      "lines": [
+        [
+          124,
+          165
+        ]
+      ],
+      "finding": "身份连接人员与组织，支持主身份标志",
+      "report_line_anchors": [
+        124
+      ]
+    },
+    {
+      "project": "o2oa",
+      "tag": "develop-10.1-ce",
+      "commit": "f6a85b5d995d570433cdbec5aa2a791341e7bfb7",
+      "path": "o2server/x_organization_core_entity/src/main/java/com/x/organization/core/entity/Unit.java",
+      "url": "https://github.com/o2oa/o2oa/blob/f6a85b5d995d570433cdbec5aa2a791341e7bfb7/o2server/x_organization_core_entity/src/main/java/com/x/organization/core/entity/Unit.java",
+      "sha256": "34b2ecef1a02971f61b2db229731713489bd02df2f984fcdfb6907c546f68d3b",
+      "lines": [
+        [
+          178,
+          183
+        ]
+      ],
+      "finding": "组织父级"
+    },
+    {
+      "project": "o2oa",
+      "tag": "develop-10.1-ce",
+      "commit": "f6a85b5d995d570433cdbec5aa2a791341e7bfb7",
+      "path": "o2server/x_organization_core_entity/src/main/java/com/x/organization/core/entity/UnitDuty.java",
+      "url": "https://github.com/o2oa/o2oa/blob/f6a85b5d995d570433cdbec5aa2a791341e7bfb7/o2server/x_organization_core_entity/src/main/java/com/x/organization/core/entity/UnitDuty.java",
+      "sha256": "73b986565590fbcf6e3624090a3f41052ce0a91cff2a36a58af7f2da1bf5e0a1",
+      "lines": [
+        [
+          124,
+          146
+        ]
+      ],
+      "finding": "组织职务及多身份成员"
+    },
+    {
+      "project": "o2oa",
+      "tag": "develop-10.1-ce",
+      "commit": "f6a85b5d995d570433cdbec5aa2a791341e7bfb7",
+      "path": "o2server/x_organization_assemble_control/src/main/java/com/x/organization/assemble/control/jaxrs/identity/ActionCreate.java",
+      "url": "https://github.com/o2oa/o2oa/blob/f6a85b5d995d570433cdbec5aa2a791341e7bfb7/o2server/x_organization_assemble_control/src/main/java/com/x/organization/assemble/control/jaxrs/identity/ActionCreate.java",
+      "sha256": "94fd61363e3c05a61cbf68e930b2494b12b84470734e449a50dcc05257b23428",
+      "lines": [
+        [
+          90,
+          123
+        ]
+      ],
+      "finding": "一人多个身份与唯一主身份处理，提交后通知缓存",
+      "report_line_anchors": [
+        90
+      ]
+    },
+    {
+      "project": "o2oa",
+      "tag": "develop-10.1-ce",
+      "commit": "f6a85b5d995d570433cdbec5aa2a791341e7bfb7",
+      "path": "o2server/x_processplatform_core_entity/src/main/java/com/x/processplatform/core/entity/content/Task.java",
+      "url": "https://github.com/o2oa/o2oa/blob/f6a85b5d995d570433cdbec5aa2a791341e7bfb7/o2server/x_processplatform_core_entity/src/main/java/com/x/processplatform/core/entity/content/Task.java",
+      "sha256": "85c1384ebaf722054d15841d48e89eda7da2132dea507370f0c4add3a02767e5",
+      "lines": [
+        [
+          148,
+          166
+        ],
+        [
+          382,
+          404
+        ]
+      ],
+      "finding": "待办持久记录job/person/identity/unit",
+      "report_line_anchors": [
+        148
+      ]
+    },
+    {
+      "project": "o2oa",
+      "tag": "develop-10.1-ce",
+      "commit": "f6a85b5d995d570433cdbec5aa2a791341e7bfb7",
+      "path": "o2server/x_processplatform_assemble_surface/src/main/java/com/x/processplatform/assemble/surface/jaxrs/task/ActionProcessing.java",
+      "url": "https://github.com/o2oa/o2oa/blob/f6a85b5d995d570433cdbec5aa2a791341e7bfb7/o2server/x_processplatform_assemble_surface/src/main/java/com/x/processplatform/assemble/surface/jaxrs/task/ActionProcessing.java",
+      "sha256": "afd5461206477a260b774a1a817e3e5e01adaeab7e0f38536987ba7cd498ae54",
+      "lines": [
+        [
+          118,
+          150
+        ],
+        [
+          326,
+          334
+        ]
+      ],
+      "finding": "当前任务工作读取、控制判定、按job作为处理节点routing seed",
+      "report_line_anchors": [
+        118
+      ]
+    },
+    {
+      "project": "o2oa",
+      "tag": "develop-10.1-ce",
+      "commit": "f6a85b5d995d570433cdbec5aa2a791341e7bfb7",
+      "path": "o2server/x_processplatform_assemble_surface/src/main/java/com/x/processplatform/assemble/surface/WorkControlBuilder.java",
+      "url": "https://github.com/o2oa/o2oa/blob/f6a85b5d995d570433cdbec5aa2a791341e7bfb7/o2server/x_processplatform_assemble_surface/src/main/java/com/x/processplatform/assemble/surface/WorkControlBuilder.java",
+      "sha256": "d34c68c27633db80a2a5eb6364f6c754056d0c80d18ba36a24f673404ebb04c0",
+      "lines": [
+        [
+          213,
+          244
+        ],
+        [
+          322,
+          369
+        ]
+      ],
+      "finding": "操作能力分离及一次构造器内结果复用",
+      "report_line_anchors": [
+        213
+      ]
+    },
+    {
+      "project": "o2oa",
+      "tag": "develop-10.1-ce",
+      "commit": "f6a85b5d995d570433cdbec5aa2a791341e7bfb7",
+      "path": "o2server/x_processplatform_assemble_surface/src/main/java/com/x/processplatform/assemble/surface/Business.java",
+      "url": "https://github.com/o2oa/o2oa/blob/f6a85b5d995d570433cdbec5aa2a791341e7bfb7/o2server/x_processplatform_assemble_surface/src/main/java/com/x/processplatform/assemble/surface/Business.java",
+      "sha256": "103af3e160063d1fcae70d0d99ec241849eaf52383668ef976590ebc90d8c20d",
+      "lines": [
+        [
+          610,
+          628
+        ],
+        [
+          677,
+          680
+        ]
+      ],
+      "finding": "管理权限含组织AuthInfo；处理人待办关系SQL查询"
+    },
+    {
+      "project": "o2oa",
+      "tag": "develop-10.1-ce",
+      "commit": "f6a85b5d995d570433cdbec5aa2a791341e7bfb7",
+      "path": "o2server/x_processplatform_service_processing/src/main/java/com/x/processplatform/service/processing/ProcessPlatformKeyClassifyExecutorFactory.java",
+      "url": "https://github.com/o2oa/o2oa/blob/f6a85b5d995d570433cdbec5aa2a791341e7bfb7/o2server/x_processplatform_service_processing/src/main/java/com/x/processplatform/service/processing/ProcessPlatformKeyClassifyExecutorFactory.java",
+      "sha256": "9f7aa03cc951c26d2c4ef0ebf5eb6659e86d7c0afe105ccf6a23c9b7204468b4",
+      "lines": [
+        [
+          49,
+          59
+        ],
+        [
+          85,
+          89
+        ]
+      ],
+      "finding": "JVM内每key单线程池",
+      "report_line_anchors": [
+        49
+      ]
+    },
+    {
+      "project": "o2oa",
+      "tag": "develop-10.1-ce",
+      "commit": "f6a85b5d995d570433cdbec5aa2a791341e7bfb7",
+      "path": "o2server/x_processplatform_service_processing/src/main/java/com/x/processplatform/service/processing/jaxrs/task/ActionProcessing.java",
+      "url": "https://github.com/o2oa/o2oa/blob/f6a85b5d995d570433cdbec5aa2a791341e7bfb7/o2server/x_processplatform_service_processing/src/main/java/com/x/processplatform/service/processing/jaxrs/task/ActionProcessing.java",
+      "sha256": "d141fd49b63bdde2e2183236b96f26c8e506072430845644e77cdeee9d53ac2a",
+      "lines": [
+        [
+          52,
+          63
+        ],
+        [
+          170,
+          205
+        ]
+      ],
+      "finding": "job级提交执行器，执行时重读任务，任务转已办原子提交",
+      "report_line_anchors": [
+        52
+      ]
+    },
+    {
+      "project": "o2oa",
+      "tag": "develop-10.1-ce",
+      "commit": "f6a85b5d995d570433cdbec5aa2a791341e7bfb7",
+      "path": "o2server/x_base_core_project/src/main/java/com/x/base/core/project/Applications.java",
+      "url": "https://github.com/o2oa/o2oa/blob/f6a85b5d995d570433cdbec5aa2a791341e7bfb7/o2server/x_base_core_project/src/main/java/com/x/base/core/project/Applications.java",
+      "sha256": "d4fba62eb11648f32e1163387933d73f222cc3f0100e6f69fd465dfc7506cd0f",
+      "lines": [
+        [
+          404,
+          425
+        ],
+        [
+          681,
+          689
+        ]
+      ],
+      "finding": "按seed CRC32选择应用节点；仅稳定节点列表下相同seed路由",
+      "report_line_anchors": [
+        681
+      ]
+    },
+    {
+      "project": "o2oa",
+      "tag": "develop-10.1-ce",
+      "commit": "f6a85b5d995d570433cdbec5aa2a791341e7bfb7",
+      "path": "o2server/x_organization_assemble_express/src/main/java/com/x/organization/assemble/express/jaxrs/person/ActionGetAuthInfo.java",
+      "url": "https://github.com/o2oa/o2oa/blob/f6a85b5d995d570433cdbec5aa2a791341e7bfb7/o2server/x_organization_assemble_express/src/main/java/com/x/organization/assemble/express/jaxrs/person/ActionGetAuthInfo.java",
+      "sha256": "282bced2d15da42d5017544b8f57a8504f822f137b7e23232fdab4a734b0b442",
+      "lines": [
+        [
+          37,
+          81
+        ],
+        [
+          107,
+          113
+        ]
+      ],
+      "finding": "授权信息聚合人员全部身份/组织/角色/群组且有服务端缓存",
+      "report_line_anchors": [
+        37
+      ]
+    },
+    {
+      "project": "o2oa",
+      "tag": "develop-10.1-ce",
+      "commit": "f6a85b5d995d570433cdbec5aa2a791341e7bfb7",
+      "path": "o2server/x_organization_assemble_express/src/main/java/com/x/organization/assemble/express/jaxrs/person/BaseAction.java",
+      "url": "https://github.com/o2oa/o2oa/blob/f6a85b5d995d570433cdbec5aa2a791341e7bfb7/o2server/x_organization_assemble_express/src/main/java/com/x/organization/assemble/express/jaxrs/person/BaseAction.java",
+      "sha256": "90e6fdc318454c0cdd73ed146812c4dddd991a594c8b8d3d49bc4b777d769258",
+      "lines": [
+        [
+          29,
+          32
+        ]
+      ],
+      "finding": "缓存依赖实体类别"
+    },
+    {
+      "project": "o2oa",
+      "tag": "develop-10.1-ce",
+      "commit": "f6a85b5d995d570433cdbec5aa2a791341e7bfb7",
+      "path": "o2server/x_organization_assemble_control/src/main/java/com/x/organization/assemble/control/jaxrs/identity/ActionEdit.java",
+      "url": "https://github.com/o2oa/o2oa/blob/f6a85b5d995d570433cdbec5aa2a791341e7bfb7/o2server/x_organization_assemble_control/src/main/java/com/x/organization/assemble/control/jaxrs/identity/ActionEdit.java",
+      "sha256": "f6608643ef7f214176f2c16f62db2a67007c71b4298375e92478e17f5c3301c7",
+      "lines": [
+        [
+          84,
+          91
+        ]
+      ],
+      "finding": "提交后通知Identity/Person缓存失效",
+      "report_line_anchors": [
+        84
+      ]
+    },
+    {
+      "project": "o2oa",
+      "tag": "develop-10.1-ce",
+      "commit": "f6a85b5d995d570433cdbec5aa2a791341e7bfb7",
+      "path": "o2server/x_base_core_project/src/main/java/com/x/base/core/project/cache/CacheManager.java",
+      "url": "https://github.com/o2oa/o2oa/blob/f6a85b5d995d570433cdbec5aa2a791341e7bfb7/o2server/x_base_core_project/src/main/java/com/x/base/core/project/cache/CacheManager.java",
+      "sha256": "7248aad66b6f46450d6265fad64441942d70ec0f0fd4c74526621470707e012f",
+      "lines": [
+        [
+          34,
+          42
+        ],
+        [
+          94,
+          101
+        ]
+      ],
+      "finding": "可选Redis/Guava缓存；notify错误记录而不抛出"
+    },
+    {
+      "project": "ruoyi",
+      "tag": "v3.9.2",
+      "commit": "0e2d75c23c0d7a1fa85f660f06a59a4dd1ba14c0",
+      "path": "ruoyi-framework/src/main/java/com/ruoyi/framework/aspectj/DataScopeAspect.java",
+      "url": "https://github.com/yangzongzhuan/RuoYi-Vue/blob/0e2d75c23c0d7a1fa85f660f06a59a4dd1ba14c0/ruoyi-framework/src/main/java/com/ruoyi/framework/aspectj/DataScopeAspect.java",
+      "sha256": "9f7a354b35b250d28175184cb400be63afb44292486472d0b741f227db146770",
+      "lines": [
+        [
+          29,
+          52
+        ],
+        [
+          66,
+          77
+        ],
+        [
+          91,
+          167
+        ]
+      ],
+      "finding": "五类数据范围，通过角色和人员数据组成SQL谓词",
+      "report_line_anchors": [
+        91
+      ]
+    },
+    {
+      "project": "ruoyi",
+      "tag": "v3.9.2",
+      "commit": "0e2d75c23c0d7a1fa85f660f06a59a4dd1ba14c0",
+      "path": "ruoyi-framework/src/main/java/com/ruoyi/framework/web/service/PermissionService.java",
+      "url": "https://github.com/yangzongzhuan/RuoYi-Vue/blob/0e2d75c23c0d7a1fa85f660f06a59a4dd1ba14c0/ruoyi-framework/src/main/java/com/ruoyi/framework/web/service/PermissionService.java",
+      "sha256": "5a857c94c78b8bd33407e3523f60398395898ff7a0c841d510cc77ec12711009",
+      "lines": [
+        [
+          27,
+          39
+        ]
+      ],
+      "finding": "功能权限来自LoginUser权限集合",
+      "report_line_anchors": [
+        27
+      ]
+    },
+    {
+      "project": "ruoyi",
+      "tag": "v3.9.2",
+      "commit": "0e2d75c23c0d7a1fa85f660f06a59a4dd1ba14c0",
+      "path": "ruoyi-framework/src/main/java/com/ruoyi/framework/web/service/TokenService.java",
+      "url": "https://github.com/yangzongzhuan/RuoYi-Vue/blob/0e2d75c23c0d7a1fa85f660f06a59a4dd1ba14c0/ruoyi-framework/src/main/java/com/ruoyi/framework/web/service/TokenService.java",
+      "sha256": "0416dada12bc146b1a59c1eabdd7356cffb49b6f8c64a7f6d0f8777f32ae9c1c",
+      "lines": [
+        [
+          62,
+          82
+        ],
+        [
+          99,
+          105
+        ],
+        [
+          148,
+          155
+        ]
+      ],
+      "finding": "Redis会话取回，删除与刷新",
+      "report_line_anchors": [
+        62
+      ]
+    },
+    {
+      "project": "ruoyi",
+      "tag": "v3.9.2",
+      "commit": "0e2d75c23c0d7a1fa85f660f06a59a4dd1ba14c0",
+      "path": "ruoyi-admin/src/main/java/com/ruoyi/web/controller/system/SysLoginController.java",
+      "url": "https://github.com/yangzongzhuan/RuoYi-Vue/blob/0e2d75c23c0d7a1fa85f660f06a59a4dd1ba14c0/ruoyi-admin/src/main/java/com/ruoyi/web/controller/system/SysLoginController.java",
+      "sha256": "240555e714b4baeeea541c9b481d9e3c45a1e5b6de34de176a19628733dc90cf",
+      "lines": [
+        [
+          72,
+          85
+        ]
+      ],
+      "finding": "getInfo重新查询权限并刷新当前会话权限集合",
+      "report_line_anchors": [
+        72
+      ]
+    },
+    {
+      "project": "ruoyi",
+      "tag": "v3.9.2",
+      "commit": "0e2d75c23c0d7a1fa85f660f06a59a4dd1ba14c0",
+      "path": "ruoyi-framework/src/main/java/com/ruoyi/framework/web/service/SysPermissionService.java",
+      "url": "https://github.com/yangzongzhuan/RuoYi-Vue/blob/0e2d75c23c0d7a1fa85f660f06a59a4dd1ba14c0/ruoyi-framework/src/main/java/com/ruoyi/framework/web/service/SysPermissionService.java",
+      "sha256": "ad2cc6aec31b69cf255b2af42183aa308903fc366dfa3deb8a39679a78316832",
+      "lines": [
+        [
+          37,
+          48
+        ],
+        [
+          58,
+          86
+        ]
+      ],
+      "finding": "角色标识当前查询，菜单权限结合LoginUser已有角色列表查询"
+    },
+    {
+      "project": "ruoyi",
+      "tag": "v3.9.2",
+      "commit": "0e2d75c23c0d7a1fa85f660f06a59a4dd1ba14c0",
+      "path": "ruoyi-admin/src/main/java/com/ruoyi/web/controller/system/SysRoleController.java",
+      "url": "https://github.com/yangzongzhuan/RuoYi-Vue/blob/0e2d75c23c0d7a1fa85f660f06a59a4dd1ba14c0/ruoyi-admin/src/main/java/com/ruoyi/web/controller/system/SysRoleController.java",
+      "sha256": "d595ad8b1d886bbaf43028d7b6f6467c7e8428a95dbcf0c05ac5844b7951250f",
+      "lines": [
+        [
+          115,
+          154
+        ]
+      ],
+      "finding": "角色修改刷新当前操作者会话，数据范围单独管理"
+    },
+    {
+      "project": "ruoyi",
+      "tag": "v3.9.2",
+      "commit": "0e2d75c23c0d7a1fa85f660f06a59a4dd1ba14c0",
+      "path": "ruoyi-admin/src/main/java/com/ruoyi/web/controller/monitor/SysUserOnlineController.java",
+      "url": "https://github.com/yangzongzhuan/RuoYi-Vue/blob/0e2d75c23c0d7a1fa85f660f06a59a4dd1ba14c0/ruoyi-admin/src/main/java/com/ruoyi/web/controller/monitor/SysUserOnlineController.java",
+      "sha256": "5c35ea2f33b365892e54791b48a1cc10d4a6264dc3bc8c535c8a3cc4cc450413",
+      "lines": [
+        [
+          73,
+          81
+        ]
+      ],
+      "finding": "强制下线删除指定会话缓存"
+    },
+    {
+      "commit": "e6e3cc1413827247c0887808c6e155bd7f8351e6",
+      "path": "frappe/app.py",
+      "tag_bytes_match": true,
+      "sha256": "81ec940ad65a2e8dd935fe4897df394504276572ec1d0577e066e5daffc93a0a",
+      "url": "https://github.com/frappe/frappe/blob/e6e3cc1413827247c0887808c6e155bd7f8351e6/frappe/app.py",
+      "project": "frappe/frappe",
+      "report_line_anchors": [
+        404
+      ]
+    },
+    {
+      "commit": "e6e3cc1413827247c0887808c6e155bd7f8351e6",
+      "path": "frappe/permissions.py",
+      "tag_bytes_match": true,
+      "sha256": "f8bbeb355327cde0bc219149a37db067d654d8f9c09c77877a7b4c7a10dc85cd",
+      "url": "https://github.com/frappe/frappe/blob/e6e3cc1413827247c0887808c6e155bd7f8351e6/frappe/permissions.py",
+      "project": "frappe/frappe",
+      "report_line_anchors": [
+        77,
+        270
+      ]
+    },
+    {
+      "commit": "e6e3cc1413827247c0887808c6e155bd7f8351e6",
+      "path": "frappe/database/database.py",
+      "tag_bytes_match": true,
+      "sha256": "a8e0f67e82756f02b30f3bcd4ec394a13d4f463fcf5326c6a6e7afe9ab7976b4",
+      "url": "https://github.com/frappe/frappe/blob/e6e3cc1413827247c0887808c6e155bd7f8351e6/frappe/database/database.py",
+      "project": "frappe/frappe"
+    },
+    {
+      "commit": "e6e3cc1413827247c0887808c6e155bd7f8351e6",
+      "path": "frappe/model/document.py",
+      "tag_bytes_match": true,
+      "sha256": "69f8f0e924d4fc265645a798b9e5e5ca6f974f30c9b8429561e1025b51a175bc",
+      "url": "https://github.com/frappe/frappe/blob/e6e3cc1413827247c0887808c6e155bd7f8351e6/frappe/model/document.py",
+      "project": "frappe/frappe",
+      "report_line_anchors": [
+        807,
+        1115
+      ]
+    },
+    {
+      "commit": "e6e3cc1413827247c0887808c6e155bd7f8351e6",
+      "path": "frappe/model/workflow.py",
+      "tag_bytes_match": true,
+      "sha256": "94a9ed9a167d9fcfe8f957c5670969a8ad922c30302c53af79f32fa49e0d094f",
+      "url": "https://github.com/frappe/frappe/blob/e6e3cc1413827247c0887808c6e155bd7f8351e6/frappe/model/workflow.py",
+      "project": "frappe/frappe",
+      "report_line_anchors": [
+        39,
+        221
+      ]
+    },
+    {
+      "commit": "e6e3cc1413827247c0887808c6e155bd7f8351e6",
+      "path": "frappe/model/db_query.py",
+      "tag_bytes_match": true,
+      "sha256": "ec2bc09ed234e434ae73cc0bcbc7e0a43d1fb40c525bf2e0d4c27b3e80292add",
+      "url": "https://github.com/frappe/frappe/blob/e6e3cc1413827247c0887808c6e155bd7f8351e6/frappe/model/db_query.py",
+      "project": "frappe/frappe"
+    },
+    {
+      "commit": "e6e3cc1413827247c0887808c6e155bd7f8351e6",
+      "path": "frappe/utils/user.py",
+      "tag_bytes_match": true,
+      "sha256": "d35b28207957a33d05e54f5d22e96833ca092d6c453074f08131bf24e2bce51c",
+      "url": "https://github.com/frappe/frappe/blob/e6e3cc1413827247c0887808c6e155bd7f8351e6/frappe/utils/user.py",
+      "project": "frappe/frappe"
+    },
+    {
+      "commit": "e6e3cc1413827247c0887808c6e155bd7f8351e6",
+      "path": "frappe/workflow/doctype/workflow_action/workflow_action.py",
+      "tag_bytes_match": true,
+      "sha256": "28090c817b5ab51f5ed2841bbd79a45436590a4b71d929d464ae62e0ee34671f",
+      "url": "https://github.com/frappe/frappe/blob/e6e3cc1413827247c0887808c6e155bd7f8351e6/frappe/workflow/doctype/workflow_action/workflow_action.py",
+      "project": "frappe/frappe"
+    },
+    {
+      "commit": "e6e3cc1413827247c0887808c6e155bd7f8351e6",
+      "path": "frappe/desk/form/assign_to.py",
+      "tag_bytes_match": true,
+      "sha256": "c772c6d6be8ab7a0b8f36096a5d972128d3d31edf155c53873980c9201384c18",
+      "url": "https://github.com/frappe/frappe/blob/e6e3cc1413827247c0887808c6e155bd7f8351e6/frappe/desk/form/assign_to.py",
+      "project": "frappe/frappe"
+    },
+    {
+      "commit": "e6e3cc1413827247c0887808c6e155bd7f8351e6",
+      "path": "frappe/core/doctype/user/user.py",
+      "tag_bytes_match": true,
+      "sha256": "d66a24490f00e89a5cd08da7f00f1858c3556da426f8e585af492f11d45c1aac",
+      "url": "https://github.com/frappe/frappe/blob/e6e3cc1413827247c0887808c6e155bd7f8351e6/frappe/core/doctype/user/user.py",
+      "project": "frappe/frappe",
+      "report_line_anchors": [
+        220
+      ]
+    },
+    {
+      "commit": "c5cd0fcd29138ca5736fdde938a36e3528c9fda5",
+      "path": "license.txt",
+      "tag_bytes_match": true,
+      "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+      "url": "https://github.com/frappe/erpnext/blob/c5cd0fcd29138ca5736fdde938a36e3528c9fda5/license.txt",
+      "project": "frappe/erpnext"
+    },
+    {
+      "commit": "c5cd0fcd29138ca5736fdde938a36e3528c9fda5",
+      "path": "erpnext/buying/doctype/purchase_order/purchase_order.py",
+      "tag_bytes_match": true,
+      "sha256": "30ec7c24262547c110de5f5eac3e6b6fff09c2aad07fb6532ba782fc85e79b9c",
+      "url": "https://github.com/frappe/erpnext/blob/c5cd0fcd29138ca5736fdde938a36e3528c9fda5/erpnext/buying/doctype/purchase_order/purchase_order.py",
+      "project": "frappe/erpnext",
+      "report_line_anchors": [
+        476
+      ]
+    },
+    {
+      "commit": "c5cd0fcd29138ca5736fdde938a36e3528c9fda5",
+      "path": "erpnext/setup/doctype/authorization_rule/authorization_rule.py",
+      "tag_bytes_match": true,
+      "sha256": "16d429a5f6139e189a614a9d32d1e5755e87e95a19763d2f2cc9722d4a7600a4",
+      "url": "https://github.com/frappe/erpnext/blob/c5cd0fcd29138ca5736fdde938a36e3528c9fda5/erpnext/setup/doctype/authorization_rule/authorization_rule.py",
+      "project": "frappe/erpnext"
+    },
+    {
+      "commit": "e6e3cc1413827247c0887808c6e155bd7f8351e6",
+      "path": "frappe/cache_manager.py",
+      "tag_bytes_match": null,
+      "sha256": "2e3d628518c9b10ed4a5d15680c3acf7068517c1779c6d396ed8249a0da1a185",
+      "url": "https://github.com/frappe/frappe/blob/e6e3cc1413827247c0887808c6e155bd7f8351e6/frappe/cache_manager.py",
+      "project": "frappe/frappe"
+    },
+    {
+      "commit": "e6e3cc1413827247c0887808c6e155bd7f8351e6",
+      "path": "frappe/core/doctype/user_permission/user_permission.py",
+      "tag_bytes_match": null,
+      "sha256": "7b11f9847d9746b2d3379f2a9293e0664519f668b1c047d1412b9f11447088df",
+      "url": "https://github.com/frappe/frappe/blob/e6e3cc1413827247c0887808c6e155bd7f8351e6/frappe/core/doctype/user_permission/user_permission.py",
+      "project": "frappe/frappe",
+      "report_line_anchors": [
+        36,
+        85
+      ]
+    },
+    {
+      "commit": "88791bbf5b6b26c7077119021e687554272933fa",
+      "path": "hrms/hr/utils.py",
+      "tag_bytes_match": null,
+      "sha256": "1f3ff777dc24d33994680696fc4a653ffc1a225d0c1638e65a00afcb9fc7ea76",
+      "url": "https://github.com/frappe/hrms/blob/88791bbf5b6b26c7077119021e687554272933fa/hrms/hr/utils.py",
+      "project": "frappe/hrms",
+      "report_line_anchors": [
+        675
+      ]
+    },
+    {
+      "commit": "88791bbf5b6b26c7077119021e687554272933fa",
+      "path": "hrms/hooks.py",
+      "tag_bytes_match": null,
+      "sha256": "7b92d7ce932a6c1d90fddad062294caf1990ed1151b7f9f3b30240e1f04ac9f5",
+      "url": "https://github.com/frappe/hrms/blob/88791bbf5b6b26c7077119021e687554272933fa/hrms/hooks.py",
+      "project": "frappe/hrms"
+    },
+    {
+      "commit": "c5cd0fcd29138ca5736fdde938a36e3528c9fda5",
+      "path": "erpnext/setup/doctype/authorization_control/authorization_control.py",
+      "sha256": "e85087fdb3a3c7fd24794d224e7cdadc8b8bd8857f1c00a1685ee11aa72e6098",
+      "url": "https://github.com/frappe/erpnext/blob/c5cd0fcd29138ca5736fdde938a36e3528c9fda5/erpnext/setup/doctype/authorization_control/authorization_control.py",
+      "project": "frappe/erpnext",
+      "report_line_anchors": [
+        151
+      ]
+    },
+    {
+      "project": "frappe/hrms",
+      "commit": "88791bbf5b6b26c7077119021e687554272933fa",
+      "path": "hrms/hr/doctype/leave_application/leave_application.py",
+      "url": "https://github.com/frappe/hrms/blob/88791bbf5b6b26c7077119021e687554272933fa/hrms/hr/doctype/leave_application/leave_application.py",
+      "sha256": "416b0131fb5f223d9f22ecb89c97526672f24ab4b8fdd2d5276734158ae763c9",
+      "report_line_anchors": [
+        799,
+        1377
+      ]
+    },
+    {
+      "project": "flowable/flowable-engine",
+      "commit": "11a1cf83a8c03e343040b4d8edc751f9534d7323",
+      "path": "modules/flowable-engine/src/main/java/org/flowable/engine/TaskService.java",
+      "url": "https://github.com/flowable/flowable-engine/blob/11a1cf83a8c03e343040b4d8edc751f9534d7323/modules/flowable-engine/src/main/java/org/flowable/engine/TaskService.java",
+      "sha256": "26a92d74e75cf9bfacc9371cc1a96a8d939e512de843e16284356a1e538a2fc7",
+      "report_line_anchors": [
+        169
+      ]
+    },
+    {
+      "project": "flowable/flowable-engine",
+      "commit": "11a1cf83a8c03e343040b4d8edc751f9534d7323",
+      "path": "modules/flowable-engine/src/main/java/org/flowable/engine/impl/cmd/ClaimTaskCmd.java",
+      "url": "https://github.com/flowable/flowable-engine/blob/11a1cf83a8c03e343040b4d8edc751f9534d7323/modules/flowable-engine/src/main/java/org/flowable/engine/impl/cmd/ClaimTaskCmd.java",
+      "sha256": "ce614f837f2ba4f1e33dcdf291a02f573a7ef6b33c4523e769137b39d24ed46a",
+      "report_line_anchors": [
+        41
+      ]
+    },
+    {
+      "project": "flowable/flowable-engine",
+      "commit": "11a1cf83a8c03e343040b4d8edc751f9534d7323",
+      "path": "modules/flowable-engine/src/main/java/org/flowable/engine/impl/util/TaskHelper.java",
+      "url": "https://github.com/flowable/flowable-engine/blob/11a1cf83a8c03e343040b4d8edc751f9534d7323/modules/flowable-engine/src/main/java/org/flowable/engine/impl/util/TaskHelper.java",
+      "sha256": "2876869e05c0077b1fcd88c75636f36738717f7d0c7cbd11593068d2592adbf0",
+      "report_line_anchors": [
+        67
+      ]
+    },
+    {
+      "project": "flowable/flowable-engine",
+      "commit": "11a1cf83a8c03e343040b4d8edc751f9534d7323",
+      "path": "modules/flowable-task-service/src/main/java/org/flowable/task/service/impl/TaskQueryImpl.java",
+      "url": "https://github.com/flowable/flowable-engine/blob/11a1cf83a8c03e343040b4d8edc751f9534d7323/modules/flowable-task-service/src/main/java/org/flowable/task/service/impl/TaskQueryImpl.java",
+      "sha256": "3bd56afd0d060945b9182f9329e82242a1500898f92edcd128c246cda0a1c746",
+      "report_line_anchors": [
+        1984
+      ]
+    },
+    {
+      "project": "flowable/flowable-engine",
+      "commit": "11a1cf83a8c03e343040b4d8edc751f9534d7323",
+      "path": "modules/flowable-idm-engine/src/main/java/org/flowable/idm/engine/impl/cmd/DeleteMembershipCmd.java",
+      "url": "https://github.com/flowable/flowable-engine/blob/11a1cf83a8c03e343040b4d8edc751f9534d7323/modules/flowable-idm-engine/src/main/java/org/flowable/idm/engine/impl/cmd/DeleteMembershipCmd.java",
+      "sha256": "c575b5b458df9ef7a65df7204b7716a2967d1cb58338d227b1f9074f68ee76e7",
+      "report_line_anchors": [
+        36
+      ]
+    },
+    {
+      "project": "flowable/flowable-engine",
+      "commit": "11a1cf83a8c03e343040b4d8edc751f9534d7323",
+      "path": "modules/flowable-task-service/src/main/resources/org/flowable/task/service/db/mapping/entity/Task.xml",
+      "url": "https://github.com/flowable/flowable-engine/blob/11a1cf83a8c03e343040b4d8edc751f9534d7323/modules/flowable-task-service/src/main/resources/org/flowable/task/service/db/mapping/entity/Task.xml",
+      "sha256": "9205dd24c12aa8984de349285b92d52bcc3a286dccda7139c888a05c7599e394",
+      "report_line_anchors": [
+        168
+      ]
+    },
+    {
+      "project": "flowable/flowable-engine",
+      "commit": "11a1cf83a8c03e343040b4d8edc751f9534d7323",
+      "path": "modules/flowable-engine-common/src/main/java/org/flowable/common/engine/impl/db/DbSqlSession.java",
+      "url": "https://github.com/flowable/flowable-engine/blob/11a1cf83a8c03e343040b4d8edc751f9534d7323/modules/flowable-engine-common/src/main/java/org/flowable/common/engine/impl/db/DbSqlSession.java",
+      "sha256": "d9a2c8c737b8afdf04f2bc46bca7abbb5adebfed6a9fcf10a9f2e64626289488",
+      "report_line_anchors": [
+        611
+      ]
+    },
+    {
+      "project": "flowable/flowable-engine",
+      "commit": "11a1cf83a8c03e343040b4d8edc751f9534d7323",
+      "path": "modules/flowable-engine/src/main/java/org/flowable/engine/impl/cfg/DefaultInternalJobManager.java",
+      "url": "https://github.com/flowable/flowable-engine/blob/11a1cf83a8c03e343040b4d8edc751f9534d7323/modules/flowable-engine/src/main/java/org/flowable/engine/impl/cfg/DefaultInternalJobManager.java",
+      "sha256": "68bf153748fc3cbbb5857a0e4b683015a9ecac0f48ad24a5f72d5e4d30b78e0b",
+      "report_line_anchors": [
+        185
+      ]
+    },
+    {
+      "project": "flowable/flowable-engine",
+      "commit": "11a1cf83a8c03e343040b4d8edc751f9534d7323",
+      "path": "modules/flowable-engine/src/main/resources/org/flowable/db/mapping/entity/Execution.xml",
+      "url": "https://github.com/flowable/flowable-engine/blob/11a1cf83a8c03e343040b4d8edc751f9534d7323/modules/flowable-engine/src/main/resources/org/flowable/db/mapping/entity/Execution.xml",
+      "sha256": "33cce8cd551341a08065e09bbcfb6ed068aaedfb32f4028c2a9564bc07cb0965",
+      "report_line_anchors": [
+        281
+      ]
+    },
+    {
+      "project": "flowable/flowable-engine",
+      "commit": "11a1cf83a8c03e343040b4d8edc751f9534d7323",
+      "path": "docs/docusaurus/docs/bpmn/ch07b-BPMN-Constructs.md",
+      "url": "https://github.com/flowable/flowable-engine/blob/11a1cf83a8c03e343040b4d8edc751f9534d7323/docs/docusaurus/docs/bpmn/ch07b-BPMN-Constructs.md",
+      "sha256": "4764b0943ba48e141c6e24249d595c76f23759426c592919c3ccd4242bf6e8b8",
+      "report_line_anchors": [
+        4354
+      ]
+    },
+    {
+      "project": "flowable/flowable-engine",
+      "commit": "11a1cf83a8c03e343040b4d8edc751f9534d7323",
+      "path": "docs/docusaurus/docs/bpmn/ch05-Spring.md",
+      "url": "https://github.com/flowable/flowable-engine/blob/11a1cf83a8c03e343040b4d8edc751f9534d7323/docs/docusaurus/docs/bpmn/ch05-Spring.md",
+      "sha256": "83bf3e211b1730d24a79c4f2919cbb25f16ee3d9ab128997b88993973cf9db81",
+      "report_line_anchors": [
+        95
+      ]
+    }
+  ],
+  "online_documents": [
+    {
+      "name": "frappe-workflows",
+      "url": "https://docs.frappe.io/erpnext/user/manual/en/workflows",
+      "final_url": "https://docs.frappe.io/erpnext/workflows",
+      "sha256": "d2416cf1c286e2ca7a50fe211d8977cdff0778e554999e29145bf3e7f18676a8",
+      "digest_scope": "normalized HTML text",
+      "bytes": 46400
+    },
+    {
+      "name": "frappe-user-permissions",
+      "url": "https://docs.frappe.io/erpnext/user/manual/en/user-permissions",
+      "final_url": "https://docs.frappe.io/erpnext/user-permissions",
+      "sha256": "835dae0225e65375397de3d50ad400f6cb78efe1dca1d07910ff5b7fc05817cb",
+      "digest_scope": "normalized HTML text",
+      "bytes": 46585
+    },
+    {
+      "name": "frappe-transactions",
+      "url": "https://docs.frappe.io/framework/user/en/api/database",
+      "final_url": "https://docs.frappe.io/framework/user/en/api/database",
+      "sha256": "c336ef9022060c64743eedca33238b601475e2b1f2cbea22607eed3ddc434b52",
+      "digest_scope": "normalized HTML text",
+      "bytes": 25044
+    },
+    {
+      "name": "frappe-leave",
+      "url": "https://docs.frappe.io/hr/leave-application",
+      "final_url": "https://docs.frappe.io/hr/leave-application",
+      "sha256": "9fe5909a1e3b126f2c34c628c37c0314d096fa00beadfb1cf41b221bc369fa59",
+      "digest_scope": "normalized HTML text",
+      "bytes": 15042
+    }
+  ],
+  "limitations": [
+    "Sample tags are not claimed to be latest releases.",
+    "Frappe/ERPNext/HRMS revisions read separately; combined deployment compatibility not tested.",
+    "O2OA topology-change/failover fencing not assessed.",
+    "Flowable embedded API authorization is application responsibility; no inference of downstream OA vulnerabilities.",
+    "Cache invalidation and local business conflict control do not by themselves establish Stage revocation-to-commit ordering."
+  ]
+}

@@ -16,6 +16,7 @@ from app.identity import assurance_administration
 from app.identity.authentication import AuthenticationRejected
 from app.models.execution import TenantGuardTable
 from app.models.identity_foundation import TrustStateTable
+from app.storage.coordination import LockMode
 from tests.support.authenticated_commands import (
     authenticated_context,
     authenticated_kernel,
@@ -45,16 +46,16 @@ async def test_mfa_policy_first_blocks_and_rejects_an_already_authenticated_weak
     locked = asyncio.Event()
     release = asyncio.Event()
     writer_pid: int | None = None
-    original_lock = assurance_administration.lock_tenant
+    original_lock = assurance_administration.lock_organization
 
-    async def hold_guard(session: AsyncSession, organization_ref: str) -> None:
+    async def hold_guard(session: AsyncSession, organization_ref: str, *, mode: LockMode) -> None:
         nonlocal writer_pid
-        await original_lock(session, organization_ref)
+        await original_lock(session, organization_ref, mode=mode)
         writer_pid = await session.scalar(text("SELECT pg_backend_pid()"))
         locked.set()
         await release.wait()
 
-    monkeypatch.setattr(assurance_administration, "lock_tenant", hold_guard)
+    monkeypatch.setattr(assurance_administration, "lock_organization", hold_guard)
     async with jwt_client(signing_key) as client:
         identity = identity_service(persistence_sessions, client)
         context = await authenticated_context(identity, token(signing_key))

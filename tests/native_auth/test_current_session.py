@@ -55,13 +55,13 @@ async def test_userinfo_reads_one_current_authority_snapshot_and_rejects_revoked
         code_verifier=VERIFIER,
     )
     locked_accounts: list[str] = []
-    lock_account = oauth.credentials.lock_account
+    lock_account = oauth.credentials.read_account
 
     async def observe_authority_lock(session: AsyncSession, account_ref: str) -> NativeAccountTable:
         locked_accounts.append(account_ref)
         return await lock_account(session, account_ref)
 
-    monkeypatch.setattr(oauth.credentials, "lock_account", observe_authority_lock)
+    monkeypatch.setattr(oauth.credentials, "read_account", observe_authority_lock)
     expected = {"sub": "account:native"}
     if "profile" in scope.split():
         expected["preferred_username"] = "native-test"

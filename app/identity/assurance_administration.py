@@ -19,7 +19,6 @@ from app.control.operations import (
     operation_transaction,
     validate_operator,
 )
-from app.execution.storage import lock_tenant
 from app.identity.assurance import AssuranceReference, HumanAssurancePolicy, HumanAssuranceRule
 from app.identity.native import NATIVE_PROFILE_SCHEMA
 from app.identity.service import (
@@ -40,6 +39,7 @@ from app.models.identity_foundation import (
     OrganizationRootTable,
     TrustStateTable,
 )
+from app.storage.coordination import LockMode, lock_organization
 
 OPERATION_TYPE = "configure.human-authentication"
 
@@ -172,7 +172,7 @@ async def configure_human_authentication(
             await _lock_rule_trusts(session, request.policy.rules)
             if await session.get(TenantGuardTable, request.organization_ref) is None:
                 raise AdministrationError("identity_not_initialized")
-            await lock_tenant(session, request.organization_ref)
+            await lock_organization(session, request.organization_ref, mode=LockMode.EXCLUSIVE)
             organization = await session.get(OrganizationRootTable, request.organization_ref, populate_existing=True)
             if organization is None or organization.status != "active":
                 raise AdministrationError("organization_not_active")

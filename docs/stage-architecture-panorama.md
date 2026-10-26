@@ -13,9 +13,11 @@ policy_effect: none
 
 配套阅读：
 
+- [并发优化实现复查](reviews/concurrency-optimization-2026-10-26.md)：当前组织准入门、S/X、同键恢复与实测边界。
+
 - [P2/P3 整改与复查](reviews/p2p3-architecture-closeout-2026-10-26.md)：本轮逐项落实、验证与剩余边界。
 - [详细审计报告](reviews/stage-engineering-audit-2026-10-26.md)：证据、问题分级、合理取舍与改进次序。
-- [完整代码树与函数签名](stage-code-map.md)：107 个 app 模块、244 个类、622 个函数/方法定义，含内部与嵌套定义。
+- [完整代码树与函数签名](stage-code-map.md)：108 个 app 模块、246 个类、637 个函数/方法定义，含内部与嵌套定义。
 - [机器清单](reviews/stage-architecture-inventory-2026-10-26.json)：源码摘要、分层规模、导入、25 个 HTTP 操作和37 张物理表。
 - [高分辨率架构图](diagrams/stage-panorama.svg)、[PNG](diagrams/stage-panorama.png)、[Mermaid 源码](diagrams/stage-panorama.mmd)。
 
@@ -198,7 +200,7 @@ OrchestraCorp/
 │   │   ├── delivery/               OutboxWorker 与 sink 协议，生产未接
 │   │   ├── features/work/          唯一实接领域写入：details.py
 │   │   ├── models/                 37 张物理表的映射
-│   │   ├── storage/                UTC/精确字符串数据库类型
+│   │   ├── storage/                UTC/精确字符串、组织S/X与幂等键协调
 │   │   └── core/                   Settings、DB工厂、错误、中间件等框架辅助
 │   ├── migrations/versions/        11 个增量迁移；head c6f3a19d820b
 │   ├── contracts/openapi.yaml      25 个操作的机器合同

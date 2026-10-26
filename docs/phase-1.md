@@ -117,7 +117,11 @@ Activation 采用 expected_active_revision 条件更新；加载时校验准入�
 
 P1 延续部署组织持久 AuthorizationGuard，把受控授权变更、激活/撤销、资格事实 revision 变更和评估提交放进明确锁序。前置身份验证与输入投影读取尽量短；WASM 执行、签名服务和任何网络 I/O 均不在业务锁/事务内等待。
 
-统一锁序设计为：相关信任域的 TrustState 行 → 涉及的全局主体状态行 → tenant AuthorizationGuard → ApprovalIntent / challenge / approval记录 → Activation → QualificationFactSet及领域对象 → CommandExecution / 结果行。只取所需锁，同类别按稳定ID排序；批准、撤销、激活、事实更新、初次快照和最终提交均遵守此序，不能先拿challenge再等待guard。权威写入与读取协议共同验收，不只在评估命令端加锁。
+2026-10-26 并发优化已落实：已核查的授权读者使用组织共享保护，授权写者保留排他保护；实现与复测见[记录](reviews/concurrency-optimization-2026-10-26.md)，[改进计划](stage-concurrency-improvement-plan.md)保留推导与路线约束。不能把“普通元数据编辑可共享”推广为全部业务命令，新增批准／激活／资格事实写者须先纳入完整冲突矩阵。
+
+统一目标锁序为：本次短事务需要的逻辑命令入口幂等 mutex（如适用）→ 相关信任域的 TrustState 行 → 涉及的全局主体状态行 → tenant AuthorizationGuard（入口确定 S/X）→ ApprovalIntent / challenge / approval记录 → Activation → QualificationFactSet及领域对象 → 持久 CommandExecution / 结果行。入口的逻辑键 mutex 与最后的 execution 行锁是两类对象。只取所需锁，同类别按稳定ID排序；批准、撤销、激活、事实更新、初次快照和最终提交均遵守此序，不能先拿challenge再等待guard，也不能在普通 handler 中嵌套取得另一条命令的键。权威写入与读取协议共同验收，不只在评估命令端加锁。
+
+事务级入口 mutex 只覆盖一次短数据库事务，不能跨 WASM、签名服务、网络或人工等待持有。EvaluateQualification 的受理与最终提交分别取得必要保护；中间执行权由持久 execution/attempt 状态与条件终态维护，重启后的旧 attempt 不能覆盖新尝试。该最低恢复保证在 P1d 验收，P4 再验证跨节点租约/fencing，不能把持久执行权推迟为单纯的进程内状态。详见[并发提案路线接缝](stage-concurrency-improvement-plan.md#route-compatibility)。
 
 TrustState记录平台受控 `trust_config_revision / key_status_revision`，key区分可签可验、停止新签但按政策可验旧签、已撤销等用途状态。首次准入、批准证据、调用记录保存其验证到的revision和认证新鲜度引用；加载、dispatch与最终提交核验当前状态。revision变化时按现行政策重新验证或拒绝陈旧结果，不能仅信manifest自报epoch，也不把正常轮换与泄露撤销混为一谈。此状态反映本地已验证的信任配置，不承诺即时观察外部IdP/KMS的一切变化。
 

@@ -91,6 +91,8 @@ Stage 的三层运行边界是：Component Runtime 管 provider、连接器、WA
 
 命令状态草案：`accepted → running → succeeded / failed`；等待批准可用 `needs_approval`，但 P1 不实现通用审批流。无法确定外部执行结果时使用 `pending / unknown` 并对账；不能把已明确提交的业务命令因通知未送达改成 failed。`cancel_requested` 是请求，只有确认停止且结果已核对才能标记 cancelled。API 响应丢失时，用稳定命令身份读取结果。
 
+上述是目标状态机，当前 CommandKernel 是单事务短命令实现，running 只在该事务内部存在，确定提交的正常结果为 succeeded。拟新增的事务级幂等键锁仅协调一次短事务，不能被当成 ExecutionAttempt 的持久 lease。P1d 首次引入锁外计算前，必须单独实现并验收持久受理、attempt 身份、恢复和条件终态，明确迁移／响应兼容；不能把合法的未来 running 状态按当前短命令异常处理，也不能看到 running 就自动重跑。跨阶段保留逻辑幂等身份，释放 Session、事务锁与临时持锁证明；详见[路线接缝](stage-concurrency-improvement-plan.md#route-compatibility)。
+
 ### 2.4 流程定义与实例
 
 | 对象 | 关键字段 | 责任 |

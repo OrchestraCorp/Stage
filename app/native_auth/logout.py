@@ -10,7 +10,6 @@ from typing import Any
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from app.execution.storage import lock_tenant
 from app.models.identity import PrincipalTable
 from app.models.identity_foundation import TrustStateTable
 from app.models.native_auth import (
@@ -28,6 +27,7 @@ from app.native_auth.keys import NativeKeyError
 from app.native_auth.oauth import NativeOAuth
 from app.native_auth.protocol import OAuthError
 from app.native_auth.redirects import validate_issuer_redirect
+from app.storage.coordination import LockMode, lock_organization
 
 
 @dataclass(frozen=True)
@@ -164,7 +164,7 @@ class NativeLogout:
         )
         if trust is None or trust.purpose != "authentication" or principal is None:
             raise OAuthError("invalid_request")
-        await lock_tenant(session, self.config.organization_ref)
+        await lock_organization(session, self.config.organization_ref, mode=LockMode.SHARED)
         browser = await session.scalar(
             select(NativeBrowserSessionTable)
             .where(NativeBrowserSessionTable.session_hash == session_hash)

@@ -1,0 +1,2 @@
+<?xml version='1.0' encoding='utf-8'?>
+<testsuites><testsuite name="chromium" tests="2" failures="0" errors="0" skipped="0" time="0"><testcase name="test_real_browser_factor_reset_requires_rebind_proof_and_new_otp" classname="tests.integration.test_native_recovery_browser" time="45.836" /><testcase name="test_real_browser_sso_consent_form_post_and_confirmed_logout" classname="tests.integration.test_native_oauth_browser" time="29.702" /></testsuite></testsuites>

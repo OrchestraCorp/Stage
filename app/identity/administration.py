@@ -43,7 +43,6 @@ from app.control.operations import (
 from app.control.operations import (
     operation_result as operation_result,
 )
-from app.execution.storage import lock_tenant
 from app.identity.authentication import AccessTokenProfile
 from app.identity.service import (
     PROFILE_SCHEMA,
@@ -66,6 +65,7 @@ from app.models.identity_foundation import (
     TrustStateTable,
     WorkloadRegistrationTable,
 )
+from app.storage.coordination import LockMode, lock_organization
 
 __all__ = [
     "BOOTSTRAP_TYPE",
@@ -563,7 +563,7 @@ async def _lock_target(
             )
         if await session.get(TenantGuardTable, organization_ref) is None:
             raise IdentityAdministrationError("target_not_found")
-        await lock_tenant(session, organization_ref)
+        await lock_organization(session, organization_ref, mode=LockMode.EXCLUSIVE)
         model = OrganizationRootTable if request.kind == "organization" else OrganizationMembershipTable
         criteria = [model.organization_ref == organization_ref]
         if request.kind == "membership":

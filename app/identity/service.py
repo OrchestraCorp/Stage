@@ -18,7 +18,6 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.authz.context import validity_failure
 from app.authz.identity import permits_self_identity
-from app.execution.storage import lock_tenant
 from app.identity.assurance_verification import verify_human_assurance
 from app.identity.authentication import (
     AccessTokenProfile,
@@ -42,6 +41,7 @@ from app.models.identity_foundation import (
     WorkloadRegistrationTable,
 )
 from app.native_auth.keys import KeyRing
+from app.storage.coordination import LockMode, lock_organization
 
 PROFILE_SCHEMA = "stage.keycloak-access.v1"
 
@@ -304,7 +304,7 @@ class IdentityService:
             guard = await session.get(TenantGuardTable, organization_ref)
             if guard is None:
                 raise IdentityDenied()
-            await lock_tenant(session, organization_ref)
+            await lock_organization(session, organization_ref, mode=LockMode.SHARED)
             # Re-read using a fresh session identity map for any rows loaded before locking.
             session.expire_all()
             latest = await self._snapshot(session, profile_ref, profile_version)

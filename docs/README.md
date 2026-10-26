@@ -38,6 +38,10 @@ OrchestraCorp 的长期愿景是 **AI 驱动、安全可靠的分布式工作协
 
 | 文档 | 回答的问题 |
 |---|---|
+| [并发优化实现与复查](reviews/concurrency-optimization-2026-10-26.md) | 显式协调协议、真实 PG 竞争、浏览器回归和容量对比 |
+| [Stage 授权与业务并发改进提案](stage-concurrency-improvement-plan.md) | 验证去重、组织读写保护、幂等同步及后续路线约束；已实现，验收另见记录 |
+| [成熟 OA 的身份、权限与并发调研](reviews/oa-identity-permission-concurrency-research-2026-10-26.md) | O2OA、Frappe/ERPNext/HR、Flowable、RuoYi 固定源码对照；研究候选，不是新增业务承诺 |
+| [组织锁与成熟方案调研](reviews/organization-lock-industry-research-2026-10-26.md) | PostgreSQL、Zanzibar、SpiceDB/OpenFGA 的一致性与并发做法；研究候选，不是已批准实现 |
 | [P2/P3 整改复查](reviews/p2p3-architecture-closeout-2026-10-26.md) | 审计 A–H 的公共入口、HTTP 分工、浏览器 CI、冻结、容量与共享协议整改 |
 | [公共受保护业务入口](protected-business-operations.md) | 新业务如何复用 HumanOperations 与 CommandKernel.read，不复制安全装配顺序 |
 | [交付冻结与浏览器门禁](../deployment/dev/release-freeze.md) | 精确提交、锁文件、迁移、源码/包制品与拒绝跳过的 Chromium CI |

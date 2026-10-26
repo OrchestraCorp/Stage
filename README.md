@@ -1,6 +1,6 @@
 # Stage
 
-当前代码导航：[架构全景](docs/stage-architecture-panorama.md) · [完整目录与函数](docs/stage-code-map.md) · [整体工程审计](docs/reviews/stage-engineering-audit-2026-10-26.md) · [P2/P3 整改复查](docs/reviews/p2p3-architecture-closeout-2026-10-26.md)。
+当前代码导航：[架构全景](docs/stage-architecture-panorama.md) · [完整目录与函数](docs/stage-code-map.md) · [整体工程审计](docs/reviews/stage-engineering-audit-2026-10-26.md) · [P2/P3 整改复查](docs/reviews/p2p3-architecture-closeout-2026-10-26.md) · [并发优化与复查](docs/reviews/concurrency-optimization-2026-10-26.md)。
 
 一期协作模式为 **人员—公司—人员**：人员持有成员资格、任职和业务责任，Agent 只作为人员监督下的工具；手动与工具辅助操作共用业务接口。独立 Agent 身份、承载绑定及委托链不属于一期门槛。已按用户确认恢复开发，以既有工作项的标题/说明编辑落实[一期协作边界](docs/people-company-collaboration.md)。
 

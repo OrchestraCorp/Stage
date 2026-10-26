@@ -27,9 +27,10 @@ from app.execution.errors import (
     TransactionOwnershipError,
 )
 from app.execution.kernel import CommandKernel
-from app.execution.storage import UnitOfWork, lock_tenant
+from app.execution.storage import UnitOfWork
 from app.models.execution import OutboxRecordTable
 from app.models.identity import PrincipalTable
+from app.storage.coordination import LockMode, lock_organization
 from tests.support.command_kernel import (
     TestFactsLoader,
     claim,
@@ -79,7 +80,7 @@ async def test_replay_and_result_lookup_reauthorize_after_revocation(
     engine = kernel(sessions)
     first = await engine.execute(context(), command())
     async with sessions.begin() as session:
-        await lock_tenant(session, "tenant:a")
+        await lock_organization(session, "tenant:a", mode=LockMode.EXCLUSIVE)
         principal = await session.scalar(select(PrincipalTable).where(PrincipalTable.principal_ref == "person:1"))
         assert principal is not None
         principal.status = "revoked"
@@ -429,7 +430,7 @@ async def test_command_to_delivery_lost_ack_pipeline(persistence_sessions: async
         async def deliver(self, envelope: DeliveryEnvelope) -> DeliveryReceipt:
             # This lock must be obtainable: no dispatch transaction spans I/O.
             async with sessions.begin() as session:
-                await lock_tenant(session, envelope.tenant_ref)
+                await lock_organization(session, envelope.tenant_ref, mode=LockMode.EXCLUSIVE)
             self.sends += 1
             self.receipt = DeliveryReceipt(envelope.message_id, envelope.dedupe_key, "receiver:1")
             raise TimeoutError("receiver accepted, acknowledgement lost")

@@ -2360,7 +2360,7 @@
       "module": "app.authz.administration",
       "lines": 547,
       "nonblank": 499,
-      "sha256": "6fa851d6dc9223914f19a3b29bd986f190be4c02c9136b9ab365730702361b79",
+      "sha256": "d81e3a4b695d71c31eafbe1d2e9ce4a2f1b98c09cf91ad03bc8b6f7af0768e23",
       "doc": "Explicit local development authorization installation; never an HTTP grant API.\n\nThis bounded registrar supports human assignments and direct WorkItem ACLs.\nThe operator is the local OS installation identity. It cannot create accounts,\ninvent domain objects, install arbitrary actions, or replace published grants.",
       "classes": [
         {
@@ -2726,19 +2726,11 @@
           "context": "top"
         },
         {
-          "module": "app.execution.storage",
-          "symbols": [
-            "lock_tenant"
-          ],
-          "line": 38,
-          "context": "top"
-        },
-        {
           "module": "app.identity.service",
           "symbols": [
             "content_digest"
           ],
-          "line": 39,
+          "line": 38,
           "context": "top"
         },
         {
@@ -2753,7 +2745,7 @@
             "RoleVersionActionTable",
             "RoleVersionTable"
           ],
-          "line": 40,
+          "line": 39,
           "context": "top"
         },
         {
@@ -2761,7 +2753,7 @@
           "symbols": [
             "TenantGuardTable"
           ],
-          "line": 50,
+          "line": 49,
           "context": "top"
         },
         {
@@ -2769,7 +2761,7 @@
           "symbols": [
             "PrincipalTable"
           ],
-          "line": 51,
+          "line": 50,
           "context": "top"
         },
         {
@@ -2779,13 +2771,22 @@
             "OrganizationMembershipTable",
             "OrganizationRootTable"
           ],
-          "line": 52,
+          "line": 51,
           "context": "top"
         },
         {
           "module": "app.models.work",
           "symbols": [
             "WorkItemTable"
+          ],
+          "line": 52,
+          "context": "top"
+        },
+        {
+          "module": "app.storage.coordination",
+          "symbols": [
+            "LockMode",
+            "lock_organization"
           ],
           "line": 53,
           "context": "top"
@@ -2954,15 +2955,15 @@
     },
     "app/authz/authenticated.py": {
       "module": "app.authz.authenticated",
-      "lines": 101,
-      "nonblank": 88,
-      "sha256": "ca678857ff8a5804608fe7131142933db162065908656b320f8aac391d00f020",
+      "lines": 103,
+      "nonblank": 90,
+      "sha256": "98a33241325d674f0183d3fd10b3046d75f85b725e797bfb169509976d39cd2a",
       "doc": "Join verified human identity with current assignment authorization in one transaction.",
       "classes": [
         {
           "name": "HumanIdentityVerifier",
-          "line": 16,
-          "end": 24,
+          "line": 17,
+          "end": 25,
           "bases": [
             "Protocol"
           ],
@@ -2970,8 +2971,8 @@
         },
         {
           "name": "AuthenticatedAuthorizationLoader",
-          "line": 27,
-          "end": 101,
+          "line": 28,
+          "end": 103,
           "bases": [],
           "doc": ""
         }
@@ -2979,8 +2980,8 @@
       "functions": [
         {
           "name": "HumanIdentityVerifier.acquire_human_locks",
-          "line": 17,
-          "end": 17,
+          "line": 18,
+          "end": 18,
           "async": true,
           "args": "self, session: AsyncSession, evidence: HumanAuthenticationEvidence",
           "returns": "None",
@@ -2990,8 +2991,8 @@
         },
         {
           "name": "HumanIdentityVerifier.validate_human",
-          "line": 19,
-          "end": 24,
+          "line": 20,
+          "end": 25,
           "async": true,
           "args": "self, session: AsyncSession, evidence: HumanAuthenticationEvidence, now: datetime",
           "returns": "None",
@@ -3001,8 +3002,8 @@
         },
         {
           "name": "AuthenticatedAuthorizationLoader.__init__",
-          "line": 28,
-          "end": 31,
+          "line": 29,
+          "end": 32,
           "async": false,
           "args": "self, identity: HumanIdentityVerifier",
           "returns": "None",
@@ -3012,8 +3013,8 @@
         },
         {
           "name": "AuthenticatedAuthorizationLoader._evidence",
-          "line": 34,
-          "end": 46,
+          "line": 35,
+          "end": 47,
           "async": false,
           "args": "context: ExecutionContext",
           "returns": "HumanAuthenticationEvidence",
@@ -3023,8 +3024,8 @@
         },
         {
           "name": "AuthenticatedAuthorizationLoader.acquire_locks",
-          "line": 48,
-          "end": 54,
+          "line": 49,
+          "end": 55,
           "async": true,
           "args": "self, session: AsyncSession, context: ExecutionContext",
           "returns": "None",
@@ -3034,8 +3035,8 @@
         },
         {
           "name": "AuthenticatedAuthorizationLoader._check_locks",
-          "line": 56,
-          "end": 63,
+          "line": 57,
+          "end": 64,
           "async": false,
           "args": "self, session: AsyncSession, context: ExecutionContext",
           "returns": "HumanAuthenticationEvidence",
@@ -3045,10 +3046,10 @@
         },
         {
           "name": "AuthenticatedAuthorizationLoader.load",
-          "line": 65,
-          "end": 90,
+          "line": 66,
+          "end": 92,
           "async": true,
-          "args": "self, session: AsyncSession, context: ExecutionContext, *, action: str, target_ref: str, expected_version: int | None, now: datetime",
+          "args": "self, session: AsyncSession, context: ExecutionContext, *, action: str, target_ref: str, expected_version: int | None, now: datetime, lock_mode: LockMode=LockMode.EXCLUSIVE",
           "returns": "AuthorizationContext",
           "context": "top",
           "public": true,
@@ -3056,8 +3057,8 @@
         },
         {
           "name": "AuthenticatedAuthorizationLoader.validate_before_commit",
-          "line": 92,
-          "end": 101,
+          "line": 94,
+          "end": 103,
           "async": true,
           "args": "self, session: AsyncSession, context: ExecutionContext, now: datetime",
           "returns": "None",
@@ -3137,6 +3138,14 @@
             "HumanAuthenticationEvidence"
           ],
           "line": 13,
+          "context": "top"
+        },
+        {
+          "module": "app.storage.coordination",
+          "symbols": [
+            "LockMode"
+          ],
+          "line": 14,
           "context": "top"
         }
       ]
@@ -3499,10 +3508,10 @@
     },
     "app/authz/loader.py": {
       "module": "app.authz.loader",
-      "lines": 446,
-      "nonblank": 423,
-      "sha256": "283715c156ae42f045ca14425f8384a13a3d6524135cf35010bdcf1656d36f42",
-      "doc": "Current human authorization facts from the deployment's authoritative database.\n\nThis is an internal adapter, not authentication. Its ExecutionContext must come\nfrom a trusted host adapter. No route may deserialize that context from a body.\nAll authorization writers acquire the same organization guard; the caller keeps\nthat guard until the command transaction commits. No cached decision or network\nrequest participates in this loader.",
+      "lines": 450,
+      "nonblank": 427,
+      "sha256": "d40e5343207ae9c882ab4ea61a5ce133d87e971b0039baa6a74f82c6f1e46fd1",
+      "doc": "Current human authorization facts from the deployment's authoritative database.\n\nThis is an internal adapter, not authentication. Its ExecutionContext must come\nfrom a trusted host adapter. No route may deserialize that context from a body.\nAuthorization readers hold the shared organization guard; writers acquire its\nexclusive mode. The caller keeps protection until its transaction ends. No cached decision or network\nrequest participates in this loader.",
       "classes": [
         {
           "name": "ValidatedRoleVersion",
@@ -3514,7 +3523,7 @@
         {
           "name": "DatabaseAuthorizationLoader",
           "line": 179,
-          "end": 446,
+          "end": 450,
           "bases": [],
           "doc": "Load one selected human assignment and one registered WorkItem.\n\nP1b.2 supports the code-defined action policies and internal classification\nceiling. Scope registration is authoritative; legacy WorkItem.scope_ref is\nrequired to agree until its compatibility field can be removed. Only direct\nviewer/owner ACLs are supported. Assignee, reviewer and eligibility facts\nrequire future domain loaders rather than arbitrary tuples."
         }
@@ -3573,14 +3582,14 @@
           "returns": "None",
           "context": "top",
           "public": true,
-          "doc": "Acquire global identity locks before the organization's write guard.\n\nThe marker belongs to this loader and this exact transaction, so a\nprior transaction or a different loader cannot stand in for the lock."
+          "doc": "Acquire global identity locks before the caller's organization protection.\n\nThe marker belongs to this loader and this exact transaction, so a\nprior transaction or a different loader cannot stand in for the lock."
         },
         {
           "name": "DatabaseAuthorizationLoader.load",
           "line": 216,
-          "end": 446,
+          "end": 450,
           "async": true,
-          "args": "self, session: AsyncSession, context: ExecutionContext, *, action: str, target_ref: str, expected_version: int | None, now: datetime",
+          "args": "self, session: AsyncSession, context: ExecutionContext, *, action: str, target_ref: str, expected_version: int | None, now: datetime, lock_mode: LockMode=LockMode.EXCLUSIVE",
           "returns": "AuthorizationContext",
           "context": "top",
           "public": true,
@@ -3685,14 +3694,6 @@
           "context": "top"
         },
         {
-          "module": "app.execution.storage",
-          "symbols": [
-            "lock_tenant"
-          ],
-          "line": 23,
-          "context": "top"
-        },
-        {
           "module": "app.models.authorization",
           "symbols": [
             "AuthorizationResourceTable",
@@ -3704,7 +3705,7 @@
             "RoleVersionActionTable",
             "RoleVersionTable"
           ],
-          "line": 24,
+          "line": 23,
           "context": "top"
         },
         {
@@ -3712,7 +3713,7 @@
           "symbols": [
             "TenantGuardTable"
           ],
-          "line": 34,
+          "line": 33,
           "context": "top"
         },
         {
@@ -3720,7 +3721,7 @@
           "symbols": [
             "PrincipalTable"
           ],
-          "line": 35,
+          "line": 34,
           "context": "top"
         },
         {
@@ -3729,13 +3730,22 @@
             "OrganizationMembershipTable",
             "OrganizationRootTable"
           ],
-          "line": 36,
+          "line": 35,
           "context": "top"
         },
         {
           "module": "app.models.work",
           "symbols": [
             "WorkItemTable"
+          ],
+          "line": 36,
+          "context": "top"
+        },
+        {
+          "module": "app.storage.coordination",
+          "symbols": [
+            "LockMode",
+            "assert_organization_lock"
           ],
           "line": 37,
           "context": "top"
@@ -5515,29 +5525,29 @@
     },
     "app/delivery/worker.py": {
       "module": "app.delivery.worker",
-      "lines": 694,
-      "nonblank": 653,
-      "sha256": "d713c06930f1ecebd29808c34c37e39b1e7753bc51e5b4b56011f88a4fbdfb02",
+      "lines": 695,
+      "nonblank": 654,
+      "sha256": "4468dcec68bfb358034f42164c80acd00f522a376b4827b69bba58513bd02973",
       "doc": "Short-transaction outbox ownership, external I/O, and fenced receipts.\n\nThis worker is deliberately not wired into an application or HTTP endpoint.\nThe composition root must supply a real current-authorization adapter and\nreviewed sinks. The clock/leases assume the current single-host deployment;\ncross-host clock and fencing protocols require separate verification.",
       "classes": [
         {
           "name": "_Claim",
-          "line": 50,
-          "end": 55,
+          "line": 51,
+          "end": 56,
           "bases": [],
           "doc": ""
         },
         {
           "name": "_Selection",
-          "line": 59,
-          "end": 61,
+          "line": 60,
+          "end": 62,
           "bases": [],
           "doc": ""
         },
         {
           "name": "OutboxWorker",
-          "line": 64,
-          "end": 694,
+          "line": 65,
+          "end": 695,
           "bases": [],
           "doc": "Own delivery tasks until close completes, with no implicit authorization.\n\n``run_once`` only sends pending messages. Unknown messages require explicit\n``reconcile_one``; it never sends. Reconciliation appends a separate attempt\nand preserves the original uncertain attempt. An authoritative absence is\nrecorded as a failed reconciliation attempt with ``reconcile.not_found``;\nonly a sink promising both deduplication and safe absence can requeue it."
         }
@@ -5545,8 +5555,8 @@
       "functions": [
         {
           "name": "_utc_now",
-          "line": 45,
-          "end": 46,
+          "line": 46,
+          "end": 47,
           "async": false,
           "args": "",
           "returns": "datetime",
@@ -5556,8 +5566,8 @@
         },
         {
           "name": "OutboxWorker.__init__",
-          "line": 74,
-          "end": 130,
+          "line": 75,
+          "end": 131,
           "async": false,
           "args": "self, session_factory: async_sessionmaker[AsyncSession], *, authorizer: CurrentDeliveryAuthorizer, sinks: Mapping[str, DeliverySink], service_ref: str, worker_ref: str, clock: Callable[[], datetime]=_utc_now, lease_duration: timedelta=timedelta(seconds=30), delivery_timeout: float=10, close_timeout: float=10, poll_interval: float=1, retry_delay: timedelta=timedelta(seconds=1), per_tenant_limit: int=10, max_send_attempts: int=3",
           "returns": "None",
@@ -5567,8 +5577,8 @@
         },
         {
           "name": "OutboxWorker.status",
-          "line": 133,
-          "end": 141,
+          "line": 134,
+          "end": 142,
           "async": false,
           "args": "self",
           "returns": "DeliveryWorkerStatus",
@@ -5578,8 +5588,8 @@
         },
         {
           "name": "OutboxWorker._now",
-          "line": 143,
-          "end": 147,
+          "line": 144,
+          "end": 148,
           "async": false,
           "args": "self",
           "returns": "datetime",
@@ -5589,8 +5599,8 @@
         },
         {
           "name": "OutboxWorker._operation",
-          "line": 150,
-          "end": 159,
+          "line": 151,
+          "end": 160,
           "async": true,
           "args": "self",
           "returns": "AsyncIterator[None]",
@@ -5600,8 +5610,8 @@
         },
         {
           "name": "OutboxWorker._envelope",
-          "line": 162,
-          "end": 173,
+          "line": 163,
+          "end": 174,
           "async": false,
           "args": "row: OutboxRecordTable",
           "returns": "DeliveryEnvelope",
@@ -5611,8 +5621,8 @@
         },
         {
           "name": "OutboxWorker._decision_matches",
-          "line": 175,
-          "end": 183,
+          "line": 176,
+          "end": 184,
           "async": false,
           "args": "self, decision: AuthorizationDecision, envelope: DeliveryEnvelope, request_id: str",
           "returns": "bool",
@@ -5622,8 +5632,8 @@
         },
         {
           "name": "OutboxWorker._authorization_error",
-          "line": 185,
-          "end": 204,
+          "line": 186,
+          "end": 205,
           "async": true,
           "args": "self, uow: UnitOfWork, envelope: DeliveryEnvelope, operation: Operation, request_id: str",
           "returns": "str | None",
@@ -5633,8 +5643,8 @@
         },
         {
           "name": "OutboxWorker._send_count",
-          "line": 206,
-          "end": 218,
+          "line": 207,
+          "end": 219,
           "async": true,
           "args": "self, session: AsyncSession, envelope: DeliveryEnvelope",
           "returns": "int",
@@ -5644,8 +5654,8 @@
         },
         {
           "name": "OutboxWorker._recover_expired",
-          "line": 220,
-          "end": 243,
+          "line": 221,
+          "end": 244,
           "async": true,
           "args": "self, tenant_ref: str",
           "returns": "int",
@@ -5655,8 +5665,8 @@
         },
         {
           "name": "OutboxWorker._expire",
-          "line": 245,
-          "end": 260,
+          "line": 246,
+          "end": 261,
           "async": true,
           "args": "self, session: AsyncSession, row: OutboxRecordTable, now: datetime",
           "returns": "None",
@@ -5666,8 +5676,8 @@
         },
         {
           "name": "OutboxWorker._claim",
-          "line": 262,
-          "end": 334,
+          "line": 263,
+          "end": 335,
           "async": true,
           "args": "self, tenant_ref: str, *, operation: Operation, message_id: str | None=None",
           "returns": "_Selection | None",
@@ -5677,8 +5687,8 @@
         },
         {
           "name": "OutboxWorker._finish",
-          "line": 336,
-          "end": 410,
+          "line": 337,
+          "end": 411,
           "async": true,
           "args": "self, claim: _Claim, *, status: Literal['sent', 'unknown', 'pending'], error_code: str | None=None, receipt: DeliveryReceipt | None=None, attempt_status: str | None=None",
           "returns": "bool",
@@ -5688,8 +5698,8 @@
         },
         {
           "name": "OutboxWorker._receipt_matches",
-          "line": 413,
-          "end": 427,
+          "line": 414,
+          "end": 428,
           "async": false,
           "args": "receipt: object, envelope: DeliveryEnvelope",
           "returns": "bool",
@@ -5699,8 +5709,8 @@
         },
         {
           "name": "OutboxWorker._send",
-          "line": 429,
-          "end": 455,
+          "line": 430,
+          "end": 456,
           "async": true,
           "args": "self, claim: _Claim",
           "returns": "str",
@@ -5710,8 +5720,8 @@
         },
         {
           "name": "OutboxWorker._finish_cancelled",
-          "line": 457,
-          "end": 464,
+          "line": 458,
+          "end": 465,
           "async": true,
           "args": "self, claim: _Claim, code: str, cancelled: asyncio.CancelledError",
           "returns": "None",
@@ -5721,8 +5731,8 @@
         },
         {
           "name": "OutboxWorker.run_once",
-          "line": 466,
-          "end": 483,
+          "line": 467,
+          "end": 484,
           "async": true,
           "args": "self, tenant_ref: str",
           "returns": "DeliveryRunSummary",
@@ -5732,8 +5742,8 @@
         },
         {
           "name": "OutboxWorker.reconcile_one",
-          "line": 485,
-          "end": 531,
+          "line": 486,
+          "end": 532,
           "async": true,
           "args": "self, tenant_ref: str, message_id: str",
           "returns": "str",
@@ -5743,8 +5753,8 @@
         },
         {
           "name": "OutboxWorker.retry_blocked",
-          "line": 533,
-          "end": 574,
+          "line": 534,
+          "end": 575,
           "async": true,
           "args": "self, tenant_ref: str, message_id: str",
           "returns": "str",
@@ -5754,8 +5764,8 @@
         },
         {
           "name": "OutboxWorker.start",
-          "line": 576,
-          "end": 590,
+          "line": 577,
+          "end": 591,
           "async": false,
           "args": "self, tenant_refs: Sequence[str]",
           "returns": "asyncio.Task[None]",
@@ -5765,8 +5775,8 @@
         },
         {
           "name": "OutboxWorker.run",
-          "line": 592,
-          "end": 636,
+          "line": 593,
+          "end": 637,
           "async": true,
           "args": "self, tenant_refs: Sequence[str]",
           "returns": "None",
@@ -5776,8 +5786,8 @@
         },
         {
           "name": "OutboxWorker.request_stop",
-          "line": 638,
-          "end": 651,
+          "line": 639,
+          "end": 652,
           "async": false,
           "args": "self, *, cancel_operation: bool=False",
           "returns": "None",
@@ -5787,8 +5797,8 @@
         },
         {
           "name": "OutboxWorker.wait",
-          "line": 653,
-          "end": 659,
+          "line": 654,
+          "end": 660,
           "async": true,
           "args": "self",
           "returns": "None",
@@ -5798,8 +5808,8 @@
         },
         {
           "name": "OutboxWorker.close",
-          "line": 661,
-          "end": 694,
+          "line": 662,
+          "end": 695,
           "async": true,
           "args": "self",
           "returns": "None",
@@ -5954,7 +5964,6 @@
           "module": "app.execution.storage",
           "symbols": [
             "UnitOfWork",
-            "lock_tenant",
             "managed_uow"
           ],
           "line": 38,
@@ -5967,6 +5976,15 @@
             "OutboxRecordTable"
           ],
           "line": 39,
+          "context": "top"
+        },
+        {
+          "module": "app.storage.coordination",
+          "symbols": [
+            "LockMode",
+            "lock_organization"
+          ],
+          "line": 40,
           "context": "top"
         }
       ]
@@ -5983,50 +6001,50 @@
     },
     "app/execution/contracts.py": {
       "module": "app.execution.contracts",
-      "lines": 216,
-      "nonblank": 176,
-      "sha256": "141ee9a689a46f5b629ac746788bf72715d76b590fa4c2dbcb816e0e9f07c24c",
+      "lines": 221,
+      "nonblank": 181,
+      "sha256": "b54e573bfdc7a8a5c8a8c1ae8858cfad4ac46091896e101b66c7685cc6327d2b",
       "doc": "Versioned internal contracts, constructed only by trusted host adapters.\n\nFrozen dataclasses are not authentication. No endpoint accepts ExecutionContext\nfrom a request body. A current authorization loader is mandatory in the kernel.",
       "classes": [
         {
           "name": "ExecutionContext",
-          "line": 45,
-          "end": 89,
+          "line": 46,
+          "end": 90,
           "bases": [],
           "doc": ""
         },
         {
           "name": "CommandEnvelope",
-          "line": 93,
-          "end": 107,
+          "line": 94,
+          "end": 108,
           "bases": [],
           "doc": ""
         },
         {
           "name": "OutboxIntent",
-          "line": 111,
-          "end": 127,
+          "line": 112,
+          "end": 128,
           "bases": [],
           "doc": ""
         },
         {
           "name": "CommandEffect",
-          "line": 131,
-          "end": 135,
+          "line": 132,
+          "end": 136,
           "bases": [],
           "doc": ""
         },
         {
           "name": "CommandResult",
-          "line": 139,
-          "end": 144,
+          "line": 140,
+          "end": 145,
           "bases": [],
           "doc": ""
         },
         {
           "name": "AuthorizationLockCoordinator",
-          "line": 147,
-          "end": 154,
+          "line": 148,
+          "end": 155,
           "bases": [
             "Protocol"
           ],
@@ -6034,8 +6052,8 @@
         },
         {
           "name": "CommandIdentityValidator",
-          "line": 157,
-          "end": 165,
+          "line": 158,
+          "end": 166,
           "bases": [
             "Protocol"
           ],
@@ -6043,8 +6061,8 @@
         },
         {
           "name": "AuthorizationLoader",
-          "line": 168,
-          "end": 184,
+          "line": 169,
+          "end": 189,
           "bases": [
             "Protocol"
           ],
@@ -6052,8 +6070,8 @@
         },
         {
           "name": "CommandSpec",
-          "line": 191,
-          "end": 212,
+          "line": 196,
+          "end": 217,
           "bases": [],
           "doc": ""
         }
@@ -6061,8 +6079,8 @@
       "functions": [
         {
           "name": "utc_clock",
-          "line": 24,
-          "end": 25,
+          "line": 25,
+          "end": 26,
           "async": false,
           "args": "",
           "returns": "datetime",
@@ -6072,8 +6090,8 @@
         },
         {
           "name": "require_ref",
-          "line": 28,
-          "end": 36,
+          "line": 29,
+          "end": 37,
           "async": false,
           "args": "value: str, maximum: int",
           "returns": "None",
@@ -6083,8 +6101,8 @@
         },
         {
           "name": "require_time",
-          "line": 39,
-          "end": 41,
+          "line": 40,
+          "end": 42,
           "async": false,
           "args": "value: datetime",
           "returns": "None",
@@ -6094,8 +6112,8 @@
         },
         {
           "name": "ExecutionContext.__post_init__",
-          "line": 57,
-          "end": 80,
+          "line": 58,
+          "end": 81,
           "async": false,
           "args": "self",
           "returns": "None",
@@ -6105,8 +6123,8 @@
         },
         {
           "name": "ExecutionContext.check_live",
-          "line": 82,
-          "end": 89,
+          "line": 83,
+          "end": 90,
           "async": false,
           "args": "self, now: datetime",
           "returns": "None",
@@ -6116,8 +6134,8 @@
         },
         {
           "name": "CommandEnvelope.__post_init__",
-          "line": 101,
-          "end": 107,
+          "line": 102,
+          "end": 108,
           "async": false,
           "args": "self",
           "returns": "None",
@@ -6127,8 +6145,8 @@
         },
         {
           "name": "OutboxIntent.__post_init__",
-          "line": 119,
-          "end": 127,
+          "line": 120,
+          "end": 128,
           "async": false,
           "args": "self",
           "returns": "None",
@@ -6138,8 +6156,8 @@
         },
         {
           "name": "AuthorizationLockCoordinator.acquire_locks",
-          "line": 148,
-          "end": 154,
+          "line": 149,
+          "end": 155,
           "async": true,
           "args": "self, session: AsyncSession, context: ExecutionContext",
           "returns": "None",
@@ -6149,8 +6167,8 @@
         },
         {
           "name": "CommandIdentityValidator.validate_before_commit",
-          "line": 158,
-          "end": 165,
+          "line": 159,
+          "end": 166,
           "async": true,
           "args": "self, session: AsyncSession, context: ExecutionContext, now: datetime",
           "returns": "None",
@@ -6160,19 +6178,19 @@
         },
         {
           "name": "AuthorizationLoader.load",
-          "line": 169,
-          "end": 184,
+          "line": 170,
+          "end": 189,
           "async": true,
-          "args": "self, session: AsyncSession, context: ExecutionContext, *, action: str, target_ref: str, expected_version: int | None, now: datetime",
+          "args": "self, session: AsyncSession, context: ExecutionContext, *, action: str, target_ref: str, expected_version: int | None, now: datetime, lock_mode: LockMode=LockMode.EXCLUSIVE",
           "returns": "AuthorizationContext",
           "context": "top",
           "public": true,
-          "doc": "Read authoritative tenant-scoped facts using the current transaction.\n\nAuthorization changes must acquire the same tenant guard. This loader\nmust not perform network I/O or return a cached AuthorizationDecision."
+          "doc": "Read authoritative tenant-scoped facts using the current transaction.\n\nThe caller already holds explicit organization protection; lock_mode\ndeclares the resource row mode, not the organization mode. Loaders must\nnot implicitly upgrade the organization guard. Authorization writers\nacquire its EXCLUSIVE mode. No network I/O or cached allow decisions.\nIdentity is validated by the kernel separately before decision/disclosure."
         },
         {
           "name": "CommandSpec.__post_init__",
-          "line": 200,
-          "end": 212,
+          "line": 205,
+          "end": 217,
           "async": false,
           "args": "self",
           "returns": "None",
@@ -6269,11 +6287,19 @@
           "context": "top"
         },
         {
+          "module": "app.storage.coordination",
+          "symbols": [
+            "LockMode"
+          ],
+          "line": 19,
+          "context": "top"
+        },
+        {
           "module": "app.execution.storage",
           "symbols": [
             "UnitOfWork"
           ],
-          "line": 216,
+          "line": 221,
           "context": "top"
         }
       ]
@@ -6521,24 +6547,46 @@
     },
     "app/execution/kernel.py": {
       "module": "app.execution.kernel",
-      "lines": 434,
-      "nonblank": 415,
-      "sha256": "348151725ab25422bdb997795754070cdacb18e0b32af422985ebb7e91a6d79a",
+      "lines": 495,
+      "nonblank": 470,
+      "sha256": "dbaefc9fe560301deda96394e017745dbcad19de0a4f3280b3d1e7d950889b3d",
       "doc": "Execute trusted, bounded local commands atomically with audit and outbox.\n\nPublic human commands use server-issued identity evidence and the authenticated\ndatabase authorization adapter; fixture-only callers remain explicitly trusted.\nHandlers must not do external I/O, commit, or change the security facts they use.",
       "classes": [
         {
           "name": "CommandKernel",
-          "line": 49,
-          "end": 434,
+          "line": 73,
+          "end": 495,
           "bases": [],
           "doc": ""
         }
       ],
       "functions": [
         {
+          "name": "_operation_entry",
+          "line": 57,
+          "end": 70,
+          "async": false,
+          "args": "operation: Callable[P, Awaitable[T]]",
+          "returns": "Callable[P, Coroutine[Any, Any, T]]",
+          "context": "top",
+          "public": false,
+          "doc": "Nested operations could wait on locks owned by their own caller."
+        },
+        {
+          "name": "_operation_entry.guarded",
+          "line": 61,
+          "end": 68,
+          "async": true,
+          "args": "*args: P.args, **kwargs: P.kwargs",
+          "returns": "T",
+          "context": "nested",
+          "public": true,
+          "doc": ""
+        },
+        {
           "name": "CommandKernel.__init__",
-          "line": 50,
-          "end": 72,
+          "line": 74,
+          "end": 96,
           "async": false,
           "args": "self, sessions: async_sessionmaker[AsyncSession], *, loader: AuthorizationLoader, commands: Sequence[CommandSpec], clock: Clock=utc_clock, coordinator: AuthorizationLockCoordinator | None=None, identity_validator: CommandIdentityValidator | None=None",
           "returns": "None",
@@ -6548,8 +6596,8 @@
         },
         {
           "name": "CommandKernel._spec",
-          "line": 74,
-          "end": 78,
+          "line": 98,
+          "end": 102,
           "async": false,
           "args": "self, name: str, version: str",
           "returns": "CommandSpec",
@@ -6559,10 +6607,10 @@
         },
         {
           "name": "CommandKernel._authorize",
-          "line": 80,
-          "end": 143,
+          "line": 104,
+          "end": 174,
           "async": true,
-          "args": "self, session: AsyncSession, context: ExecutionContext, *, action: str, target_ref: str, expected_version: int | None",
+          "args": "self, session: AsyncSession, context: ExecutionContext, *, action: str, target_ref: str, expected_version: int | None, lock_mode: LockMode=LockMode.SHARED",
           "returns": "tuple[AuthorizationDecision, AuthorizationContext]",
           "context": "top",
           "public": false,
@@ -6570,8 +6618,8 @@
         },
         {
           "name": "CommandKernel._result",
-          "line": 146,
-          "end": 151,
+          "line": 177,
+          "end": 182,
           "async": false,
           "args": "row: CommandExecutionTable, *, replayed: bool",
           "returns": "CommandResult",
@@ -6581,8 +6629,8 @@
         },
         {
           "name": "CommandKernel.execute",
-          "line": 153,
-          "end": 301,
+          "line": 185,
+          "end": 345,
           "async": true,
           "args": "self, context: ExecutionContext, command: CommandEnvelope",
           "returns": "CommandResult",
@@ -6592,8 +6640,8 @@
         },
         {
           "name": "CommandKernel.get_result",
-          "line": 303,
-          "end": 331,
+          "line": 348,
+          "end": 378,
           "async": true,
           "args": "self, context: ExecutionContext, execution_id: str",
           "returns": "CommandResult",
@@ -6603,8 +6651,8 @@
         },
         {
           "name": "CommandKernel.read",
-          "line": 333,
-          "end": 363,
+          "line": 381,
+          "end": 412,
           "async": true,
           "args": "self, context: ExecutionContext, *, action: str, target_ref: str, reader: Callable[[AsyncSession], Awaitable[T]]",
           "returns": "T",
@@ -6614,8 +6662,8 @@
         },
         {
           "name": "CommandKernel.get_result_by_key",
-          "line": 365,
-          "end": 400,
+          "line": 415,
+          "end": 461,
           "async": true,
           "args": "self, context: ExecutionContext, *, command_name: str, command_version: str, idempotency_key: str, target_ref: str",
           "returns": "CommandResult",
@@ -6625,8 +6673,8 @@
         },
         {
           "name": "CommandKernel._check_identity_integration",
-          "line": 402,
-          "end": 404,
+          "line": 463,
+          "end": 465,
           "async": false,
           "args": "self, context: ExecutionContext",
           "returns": "None",
@@ -6636,8 +6684,8 @@
         },
         {
           "name": "CommandKernel._authorization_evidence",
-          "line": 407,
-          "end": 434,
+          "line": 468,
+          "end": 495,
           "async": false,
           "args": "facts: AuthorizationContext, decision: AuthorizationDecision, context: ExecutionContext",
           "returns": "dict[str, object] | None",
@@ -6658,9 +6706,18 @@
           "symbols": [
             "Awaitable",
             "Callable",
+            "Coroutine",
             "Sequence"
           ],
           "line": 9,
+          "context": "top"
+        },
+        {
+          "module": "contextvars",
+          "symbols": [
+            "ContextVar"
+          ],
+          "line": 10,
           "context": "top"
         },
         {
@@ -6668,7 +6725,15 @@
           "symbols": [
             "replace"
           ],
-          "line": 10,
+          "line": 11,
+          "context": "top"
+        },
+        {
+          "module": "functools",
+          "symbols": [
+            "wraps"
+          ],
+          "line": 12,
           "context": "top"
         },
         {
@@ -6676,7 +6741,15 @@
           "symbols": [
             "MappingProxyType"
           ],
-          "line": 11,
+          "line": 13,
+          "context": "top"
+        },
+        {
+          "module": "typing",
+          "symbols": [
+            "Any"
+          ],
+          "line": 14,
           "context": "top"
         },
         {
@@ -6684,7 +6757,7 @@
           "symbols": [
             "uuid4"
           ],
-          "line": 12,
+          "line": 15,
           "context": "top"
         },
         {
@@ -6692,7 +6765,7 @@
           "symbols": [
             "ValidationError"
           ],
-          "line": 14,
+          "line": 17,
           "context": "top"
         },
         {
@@ -6700,7 +6773,7 @@
           "symbols": [
             "select"
           ],
-          "line": 15,
+          "line": 18,
           "context": "top"
         },
         {
@@ -6709,7 +6782,7 @@
             "AsyncSession",
             "async_sessionmaker"
           ],
-          "line": 16,
+          "line": 19,
           "context": "top"
         },
         {
@@ -6717,7 +6790,7 @@
           "symbols": [
             "AuthorizationContext"
           ],
-          "line": 18,
+          "line": 21,
           "context": "top"
         },
         {
@@ -6726,7 +6799,7 @@
             "AuthorizationDecision",
             "AuthorizationEngine"
           ],
-          "line": 19,
+          "line": 22,
           "context": "top"
         },
         {
@@ -6735,7 +6808,7 @@
             "DecisionOutcome",
             "PrincipalType"
           ],
-          "line": 20,
+          "line": 23,
           "context": "top"
         },
         {
@@ -6752,7 +6825,7 @@
             "ExecutionContext",
             "utc_clock"
           ],
-          "line": 21,
+          "line": 24,
           "context": "top"
         },
         {
@@ -6761,7 +6834,7 @@
             "copied_object",
             "digest"
           ],
-          "line": 33,
+          "line": 36,
           "context": "top"
         },
         {
@@ -6773,18 +6846,18 @@
             "IdempotencyConflict",
             "InvalidCommand",
             "ObjectVersionConflict",
+            "TransactionOwnershipError",
             "UnknownCommand"
           ],
-          "line": 34,
+          "line": 37,
           "context": "top"
         },
         {
           "module": "app.execution.storage",
           "symbols": [
-            "lock_tenant",
             "managed_uow"
           ],
-          "line": 43,
+          "line": 47,
           "context": "top"
         },
         {
@@ -6794,22 +6867,33 @@
             "CommandExecutionTable",
             "OutboxRecordTable"
           ],
-          "line": 44,
+          "line": 48,
+          "context": "top"
+        },
+        {
+          "module": "app.storage.coordination",
+          "symbols": [
+            "LockMode",
+            "assert_organization_lock",
+            "lock_command_key",
+            "lock_organization"
+          ],
+          "line": 49,
           "context": "top"
         }
       ]
     },
     "app/execution/storage.py": {
       "module": "app.execution.storage",
-      "lines": 173,
-      "nonblank": 147,
-      "sha256": "7d942eeef50190224eb72e81a9cc4ae652b2463170240695d132d07507071bd2",
-      "doc": "Short command transactions with one commit owner and tenant serialization.",
+      "lines": 149,
+      "nonblank": 126,
+      "sha256": "cb739a32cec58bbd280bbac853a177139d3f03bd6ad4c18e5a5913b4edb374e7",
+      "doc": "Short command transactions with one commit owner and cancellation-safe cleanup.",
       "classes": [
         {
           "name": "UnitOfWork",
-          "line": 102,
-          "end": 173,
+          "line": 78,
+          "end": 149,
           "bases": [],
           "doc": "A trusted handler may use the session and flush, but cannot end the root transaction.\n\nThis is an accidental misuse guard, not a sandbox against hostile Python.\nNever expose this object or its session to WASM or untrusted plugins."
         }
@@ -6817,8 +6901,8 @@
       "functions": [
         {
           "name": "_finish_cleanup",
-          "line": 20,
-          "end": 39,
+          "line": 19,
+          "end": 38,
           "async": true,
           "args": "operation: Any",
           "returns": "None",
@@ -6828,8 +6912,8 @@
         },
         {
           "name": "managed_uow",
-          "line": 43,
-          "end": 76,
+          "line": 42,
+          "end": 75,
           "async": true,
           "args": "sessions: async_sessionmaker[AsyncSession]",
           "returns": "AsyncIterator['UnitOfWork']",
@@ -6838,20 +6922,9 @@
           "doc": "Always attempt rollback and close, without hiding an uncertain commit."
         },
         {
-          "name": "lock_tenant",
-          "line": 79,
-          "end": 99,
-          "async": true,
-          "args": "session: AsyncSession, tenant_ref: str",
-          "returns": "None",
-          "context": "top",
-          "public": true,
-          "doc": "Lock an explicitly provisioned tenant; never create one from caller input.\n\nSQLite needs a write reservation because SELECT FOR UPDATE is ignored.\nPostgreSQL uses row locking. All relevant trusted writers must use this\nsame guard; this helper cannot protect against arbitrary out-of-band SQL."
-        },
-        {
           "name": "UnitOfWork.__init__",
-          "line": 109,
-          "end": 122,
+          "line": 85,
+          "end": 98,
           "async": false,
           "args": "self, session: AsyncSession, connection: Connection",
           "returns": "None",
@@ -6861,8 +6934,8 @@
         },
         {
           "name": "UnitOfWork._before_commit",
-          "line": 124,
-          "end": 127,
+          "line": 100,
+          "end": 103,
           "async": false,
           "args": "self, _session: Session",
           "returns": "None",
@@ -6872,8 +6945,8 @@
         },
         {
           "name": "UnitOfWork._after_rollback",
-          "line": 129,
-          "end": 130,
+          "line": 105,
+          "end": 106,
           "async": false,
           "args": "self, _session: Session",
           "returns": "None",
@@ -6883,8 +6956,8 @@
         },
         {
           "name": "UnitOfWork._before_connection_commit",
-          "line": 132,
-          "end": 135,
+          "line": 108,
+          "end": 111,
           "async": false,
           "args": "self, _connection: Connection",
           "returns": "None",
@@ -6894,8 +6967,8 @@
         },
         {
           "name": "UnitOfWork._before_connection_rollback",
-          "line": 137,
-          "end": 139,
+          "line": 113,
+          "end": 115,
           "async": false,
           "args": "self, _connection: Connection",
           "returns": "None",
@@ -6905,8 +6978,8 @@
         },
         {
           "name": "UnitOfWork.assert_owned",
-          "line": 143,
-          "end": 147,
+          "line": 119,
+          "end": 123,
           "async": false,
           "args": "self",
           "returns": "None",
@@ -6916,8 +6989,8 @@
         },
         {
           "name": "UnitOfWork.flush",
-          "line": 149,
-          "end": 151,
+          "line": 125,
+          "end": 127,
           "async": true,
           "args": "self",
           "returns": "None",
@@ -6927,8 +7000,8 @@
         },
         {
           "name": "UnitOfWork.commit",
-          "line": 153,
-          "end": 155,
+          "line": 129,
+          "end": 131,
           "async": true,
           "args": "self",
           "returns": "None",
@@ -6938,8 +7011,8 @@
         },
         {
           "name": "UnitOfWork._commit_by_owner",
-          "line": 157,
-          "end": 163,
+          "line": 133,
+          "end": 139,
           "async": true,
           "args": "self",
           "returns": "None",
@@ -6949,8 +7022,8 @@
         },
         {
           "name": "UnitOfWork.detach",
-          "line": 165,
-          "end": 169,
+          "line": 141,
+          "end": 145,
           "async": false,
           "args": "self",
           "returns": "None",
@@ -6960,8 +7033,8 @@
         },
         {
           "name": "UnitOfWork.add",
-          "line": 171,
-          "end": 173,
+          "line": 147,
+          "end": 149,
           "async": false,
           "args": "self, instance: Any",
           "returns": "None",
@@ -7010,9 +7083,7 @@
         {
           "module": "sqlalchemy",
           "symbols": [
-            "event",
-            "select",
-            "update"
+            "event"
           ],
           "line": 9,
           "context": "top"
@@ -7046,18 +7117,9 @@
           "module": "app.execution.errors",
           "symbols": [
             "ExecutionCleanupFailed",
-            "TenantNotProvisioned",
             "TransactionOwnershipError"
           ],
           "line": 14,
-          "context": "top"
-        },
-        {
-          "module": "app.models.execution",
-          "symbols": [
-            "TenantGuardTable"
-          ],
-          "line": 15,
           "context": "top"
         }
       ]
@@ -7294,7 +7356,7 @@
       "module": "app.identity.administration",
       "lines": 574,
       "nonblank": 542,
-      "sha256": "9872dbaadfd986ef57c2e8869b0ce179749285b1c5e4bedb570d737b8cbf7284",
+      "sha256": "55171bd516d479134db22691e4a6915ce4079d4156b7d72775ff5099c70c257d",
       "doc": "Offline development identity installation and revocation; never a public IAM API.",
       "classes": [
         {
@@ -7627,19 +7689,11 @@
           "context": "top"
         },
         {
-          "module": "app.execution.storage",
-          "symbols": [
-            "lock_tenant"
-          ],
-          "line": 46,
-          "context": "top"
-        },
-        {
           "module": "app.identity.authentication",
           "symbols": [
             "AccessTokenProfile"
           ],
-          "line": 47,
+          "line": 46,
           "context": "top"
         },
         {
@@ -7651,7 +7705,7 @@
             "content_digest",
             "profile_content"
           ],
-          "line": 48,
+          "line": 47,
           "context": "top"
         },
         {
@@ -7659,7 +7713,7 @@
           "symbols": [
             "TenantGuardTable"
           ],
-          "line": 55,
+          "line": 54,
           "context": "top"
         },
         {
@@ -7667,7 +7721,7 @@
           "symbols": [
             "PrincipalTable"
           ],
-          "line": 56,
+          "line": 55,
           "context": "top"
         },
         {
@@ -7684,7 +7738,16 @@
             "TrustStateTable",
             "WorkloadRegistrationTable"
           ],
-          "line": 57,
+          "line": 56,
+          "context": "top"
+        },
+        {
+          "module": "app.storage.coordination",
+          "symbols": [
+            "LockMode",
+            "lock_organization"
+          ],
+          "line": 68,
           "context": "top"
         }
       ]
@@ -7779,7 +7842,7 @@
       "module": "app.identity.assurance_administration",
       "lines": 216,
       "nonblank": 200,
-      "sha256": "f256b626441c9375a889d2112727f2463701d638abab03cc39088024035f5f19",
+      "sha256": "a57bfc8a5264b1c02e3eb6852e454cf421136bea498d016f4be41157c7c522ae",
       "doc": "Explicit local dev/test control of organization-wide human login assurance.",
       "classes": [
         {
@@ -7925,21 +7988,13 @@
           "context": "top"
         },
         {
-          "module": "app.execution.storage",
-          "symbols": [
-            "lock_tenant"
-          ],
-          "line": 22,
-          "context": "top"
-        },
-        {
           "module": "app.identity.assurance",
           "symbols": [
             "AssuranceReference",
             "HumanAssurancePolicy",
             "HumanAssuranceRule"
           ],
-          "line": 23,
+          "line": 22,
           "context": "top"
         },
         {
@@ -7947,7 +8002,7 @@
           "symbols": [
             "NATIVE_PROFILE_SCHEMA"
           ],
-          "line": 24,
+          "line": 23,
           "context": "top"
         },
         {
@@ -7960,7 +8015,7 @@
             "current",
             "profile_content"
           ],
-          "line": 25,
+          "line": 24,
           "context": "top"
         },
         {
@@ -7968,7 +8023,7 @@
           "symbols": [
             "TenantGuardTable"
           ],
-          "line": 33,
+          "line": 32,
           "context": "top"
         },
         {
@@ -7982,7 +8037,16 @@
             "OrganizationRootTable",
             "TrustStateTable"
           ],
-          "line": 34,
+          "line": 33,
+          "context": "top"
+        },
+        {
+          "module": "app.storage.coordination",
+          "symbols": [
+            "LockMode",
+            "lock_organization"
+          ],
+          "line": 42,
           "context": "top"
         }
       ]
@@ -8566,7 +8630,7 @@
       "module": "app.identity.service",
       "lines": 573,
       "nonblank": 539,
-      "sha256": "a272a4d73e0394877b487acb58f646c3c1fdb7669bc3a4d9c923889d74b8842d",
+      "sha256": "d563c452d9216763bb28ffc0df0d904bd68d5978034e42f696b53438ccf4c7fd",
       "doc": "Private-deployment identity: verify outside transactions, reload under current locks.",
       "classes": [
         {
@@ -8872,19 +8936,11 @@
           "context": "top"
         },
         {
-          "module": "app.execution.storage",
-          "symbols": [
-            "lock_tenant"
-          ],
-          "line": 21,
-          "context": "top"
-        },
-        {
           "module": "app.identity.assurance_verification",
           "symbols": [
             "verify_human_assurance"
           ],
-          "line": 22,
+          "line": 21,
           "context": "top"
         },
         {
@@ -8896,7 +8952,7 @@
             "KeycloakAuthenticator",
             "VerifiedCredential"
           ],
-          "line": 23,
+          "line": 22,
           "context": "top"
         },
         {
@@ -8904,7 +8960,7 @@
           "symbols": [
             "HumanAuthenticationEvidence"
           ],
-          "line": 30,
+          "line": 29,
           "context": "top"
         },
         {
@@ -8914,7 +8970,7 @@
             "NativeAuthenticator",
             "revalidate_native_credential"
           ],
-          "line": 31,
+          "line": 30,
           "context": "top"
         },
         {
@@ -8922,7 +8978,7 @@
           "symbols": [
             "TenantGuardTable"
           ],
-          "line": 32,
+          "line": 31,
           "context": "top"
         },
         {
@@ -8930,7 +8986,7 @@
           "symbols": [
             "PrincipalTable"
           ],
-          "line": 33,
+          "line": 32,
           "context": "top"
         },
         {
@@ -8945,13 +9001,22 @@
             "TrustStateTable",
             "WorkloadRegistrationTable"
           ],
-          "line": 34,
+          "line": 33,
           "context": "top"
         },
         {
           "module": "app.native_auth.keys",
           "symbols": [
             "KeyRing"
+          ],
+          "line": 43,
+          "context": "top"
+        },
+        {
+          "module": "app.storage.coordination",
+          "symbols": [
+            "LockMode",
+            "lock_organization"
           ],
           "line": 44,
           "context": "top"
@@ -10043,7 +10108,7 @@
       "module": "app.native_auth.administration",
       "lines": 277,
       "nonblank": 261,
-      "sha256": "be6760883cb6f20a76683586b04bac76c3902c76d8959d981d63c6eaaf6e5d1a",
+      "sha256": "ef17a63922ffb6f25582ae7d36301ad090949b16bf2d1fddc55cb0563935c5be",
       "doc": "Explicit offline native-account migration; never infer identity from usernames.",
       "classes": [
         {
@@ -10221,20 +10286,12 @@
           "context": "top"
         },
         {
-          "module": "app.execution.storage",
-          "symbols": [
-            "lock_tenant"
-          ],
-          "line": 25,
-          "context": "top"
-        },
-        {
           "module": "app.identity.native",
           "symbols": [
             "NATIVE_ACR",
             "NATIVE_PROFILE_SCHEMA"
           ],
-          "line": 26,
+          "line": 25,
           "context": "top"
         },
         {
@@ -10246,7 +10303,7 @@
             "current",
             "profile_content"
           ],
-          "line": 27,
+          "line": 26,
           "context": "top"
         },
         {
@@ -10254,7 +10311,7 @@
           "symbols": [
             "TenantGuardTable"
           ],
-          "line": 28,
+          "line": 27,
           "context": "top"
         },
         {
@@ -10262,7 +10319,7 @@
           "symbols": [
             "PrincipalTable"
           ],
-          "line": 29,
+          "line": 28,
           "context": "top"
         },
         {
@@ -10276,7 +10333,7 @@
             "OrganizationRootTable",
             "TrustStateTable"
           ],
-          "line": 30,
+          "line": 29,
           "context": "top"
         },
         {
@@ -10285,7 +10342,7 @@
             "NativeAccountTable",
             "NativeClientTable"
           ],
-          "line": 39,
+          "line": 38,
           "context": "top"
         },
         {
@@ -10293,7 +10350,7 @@
           "symbols": [
             "NativeAuthConfig"
           ],
-          "line": 40,
+          "line": 39,
           "context": "top"
         },
         {
@@ -10301,7 +10358,7 @@
           "symbols": [
             "authentication_event"
           ],
-          "line": 41,
+          "line": 40,
           "context": "top"
         },
         {
@@ -10311,13 +10368,22 @@
             "normalize_username",
             "validate_password"
           ],
-          "line": 42,
+          "line": 41,
           "context": "top"
         },
         {
           "module": "app.native_auth.redirects",
           "symbols": [
             "validate_issuer_redirect"
+          ],
+          "line": 42,
+          "context": "top"
+        },
+        {
+          "module": "app.storage.coordination",
+          "symbols": [
+            "LockMode",
+            "lock_organization"
           ],
           "line": 43,
           "context": "top"
@@ -10526,7 +10592,7 @@
       "module": "app.native_auth.client_administration",
       "lines": 432,
       "nonblank": 397,
-      "sha256": "95745f57b586e58b3340136c577da94fdc3d25732ef1f2d3e83e8c8e9956103c",
+      "sha256": "387079554ceb0d358b3742ae4fdacb60d4339433b4920b39bfb1c53979a4b55a",
       "doc": "Explicit OAuth client registration and separate Stage admission by local operators.",
       "classes": [
         {
@@ -10791,21 +10857,13 @@
           "context": "top"
         },
         {
-          "module": "app.execution.storage",
-          "symbols": [
-            "lock_tenant"
-          ],
-          "line": 22,
-          "context": "top"
-        },
-        {
           "module": "app.identity.assurance",
           "symbols": [
             "AssuranceReference",
             "HumanAssurancePolicy",
             "HumanAssuranceRule"
           ],
-          "line": 23,
+          "line": 22,
           "context": "top"
         },
         {
@@ -10814,7 +10872,7 @@
             "NATIVE_ACR",
             "NATIVE_PROFILE_SCHEMA"
           ],
-          "line": 24,
+          "line": 23,
           "context": "top"
         },
         {
@@ -10825,7 +10883,7 @@
             "content_digest",
             "profile_content"
           ],
-          "line": 25,
+          "line": 24,
           "context": "top"
         },
         {
@@ -10833,7 +10891,7 @@
           "symbols": [
             "TenantGuardTable"
           ],
-          "line": 26,
+          "line": 25,
           "context": "top"
         },
         {
@@ -10846,7 +10904,7 @@
             "OrganizationRootTable",
             "TrustStateTable"
           ],
-          "line": 27,
+          "line": 26,
           "context": "top"
         },
         {
@@ -10856,7 +10914,7 @@
             "NativeClientTable",
             "NativeSessionTable"
           ],
-          "line": 35,
+          "line": 34,
           "context": "top"
         },
         {
@@ -10866,7 +10924,7 @@
             "PROVIDER",
             "TRUST"
           ],
-          "line": 36,
+          "line": 35,
           "context": "top"
         },
         {
@@ -10874,6 +10932,15 @@
           "symbols": [
             "validate_issuer_redirect",
             "validate_redirect_uri"
+          ],
+          "line": 36,
+          "context": "top"
+        },
+        {
+          "module": "app.storage.coordination",
+          "symbols": [
+            "LockMode",
+            "lock_organization"
           ],
           "line": 37,
           "context": "top"
@@ -10941,9 +11008,9 @@
     },
     "app/native_auth/credentials.py": {
       "module": "app.native_auth.credentials",
-      "lines": 761,
-      "nonblank": 716,
-      "sha256": "05ea7355f51314010261cc8c61e5f50b7a7b608ef9c5654da18d2bad6d4fbde3",
+      "lines": 774,
+      "nonblank": 728,
+      "sha256": "96afda3d80f63ab79785786e4ce516adf42fb542489b5faba4345120edb28506",
       "doc": "Password/TOTP state machines; account changes serialize with business commits.\n\nBrowser passwords and OTPs are never accepted as OAuth grants. Login-request\nproofs bind every factor to one short-lived client authorization. The trusted\nprovider supplies session references only after verifying the access token.",
       "classes": [
         {
@@ -10969,8 +11036,8 @@
         },
         {
           "name": "NativeCredentials",
-          "line": 135,
-          "end": 761,
+          "line": 137,
+          "end": 774,
           "bases": [],
           "doc": ""
         }
@@ -10979,9 +11046,9 @@
         {
           "name": "acquire_account_lock",
           "line": 67,
-          "end": 103,
+          "end": 105,
           "async": true,
-          "args": "session: AsyncSession, account_ref: str, *, organization_ref: str, trust_ref: str",
+          "args": "session: AsyncSession, account_ref: str, *, organization_ref: str, trust_ref: str, mode: LockMode",
           "returns": "NativeAccountTable",
           "context": "top",
           "public": true,
@@ -10989,8 +11056,8 @@
         },
         {
           "name": "authentication_event",
-          "line": 106,
-          "end": 123,
+          "line": 108,
+          "end": 125,
           "async": false,
           "args": "session: AsyncSession, event: str, *, account_ref: str | None=None, client_id: str | None=None, version: int | None=None, actor_ref: str | None=None",
           "returns": "None",
@@ -11000,8 +11067,8 @@
         },
         {
           "name": "commit_authentication",
-          "line": 126,
-          "end": 132,
+          "line": 128,
+          "end": 134,
           "async": true,
           "args": "session: AsyncSession",
           "returns": "None",
@@ -11011,8 +11078,8 @@
         },
         {
           "name": "NativeCredentials.__init__",
-          "line": 136,
-          "end": 164,
+          "line": 138,
+          "end": 166,
           "async": false,
           "args": "self, sessions: async_sessionmaker[AsyncSession], *, fernet_key: bytes | str, organization_ref: str, trust_ref: str, issuer_label: str='OrchestraCorp', peer_attempt_limit: int=30, authorization_attempt_limit: int=30, rate_window_seconds: int=600",
           "returns": "None",
@@ -11022,8 +11089,8 @@
         },
         {
           "name": "NativeCredentials.lock_account",
-          "line": 166,
-          "end": 172,
+          "line": 168,
+          "end": 175,
           "async": true,
           "args": "self, session: AsyncSession, account_ref: str",
           "returns": "NativeAccountTable",
@@ -11032,9 +11099,20 @@
           "doc": ""
         },
         {
+          "name": "NativeCredentials.read_account",
+          "line": 177,
+          "end": 185,
+          "async": true,
+          "args": "self, session: AsyncSession, account_ref: str",
+          "returns": "NativeAccountTable",
+          "context": "top",
+          "public": true,
+          "doc": "Pin current account facts without serializing pure readers."
+        },
+        {
           "name": "NativeCredentials.validate_browser_request",
-          "line": 175,
-          "end": 199,
+          "line": 188,
+          "end": 212,
           "async": true,
           "args": "session: AsyncSession, request_ref: str, browser_secret: str, csrf_token: str | None, *, lock: bool=False",
           "returns": "NativeLoginRequestTable",
@@ -11044,8 +11122,8 @@
         },
         {
           "name": "NativeCredentials._throttle",
-          "line": 201,
-          "end": 236,
+          "line": 214,
+          "end": 249,
           "async": true,
           "args": "self, client_address: str, *, limit: int | None=None",
           "returns": "None",
@@ -11055,8 +11133,8 @@
         },
         {
           "name": "NativeCredentials.throttle_authorization",
-          "line": 238,
-          "end": 240,
+          "line": 251,
+          "end": 253,
           "async": true,
           "args": "self, client_address: str",
           "returns": "None",
@@ -11066,8 +11144,8 @@
         },
         {
           "name": "NativeCredentials.throttle_logout",
-          "line": 242,
-          "end": 244,
+          "line": 255,
+          "end": 257,
           "async": true,
           "args": "self, client_address: str",
           "returns": "None",
@@ -11077,8 +11155,8 @@
         },
         {
           "name": "NativeCredentials._active",
-          "line": 247,
-          "end": 248,
+          "line": 260,
+          "end": 261,
           "async": false,
           "args": "account: NativeAccountTable, now: datetime",
           "returns": "bool",
@@ -11088,8 +11166,8 @@
         },
         {
           "name": "NativeCredentials._failed",
-          "line": 251,
-          "end": 259,
+          "line": 264,
+          "end": 272,
           "async": false,
           "args": "session: AsyncSession, account: NativeAccountTable | None, client_id: str, now: datetime",
           "returns": "None",
@@ -11099,8 +11177,8 @@
         },
         {
           "name": "NativeCredentials._revoke_sessions",
-          "line": 261,
-          "end": 274,
+          "line": 274,
+          "end": 287,
           "async": true,
           "args": "self, session: AsyncSession, account_ref: str, now: datetime",
           "returns": "None",
@@ -11110,8 +11188,8 @@
         },
         {
           "name": "NativeCredentials._progress",
-          "line": 276,
-          "end": 288,
+          "line": 289,
+          "end": 301,
           "async": false,
           "args": "self, request: NativeLoginRequestTable, account: NativeAccountTable | None=None",
           "returns": "LoginProgress",
@@ -11121,8 +11199,8 @@
         },
         {
           "name": "NativeCredentials.progress",
-          "line": 290,
-          "end": 302,
+          "line": 303,
+          "end": 315,
           "async": true,
           "args": "self, request_ref: str, browser_secret: str",
           "returns": "LoginProgress",
@@ -11132,8 +11210,8 @@
         },
         {
           "name": "NativeCredentials.password",
-          "line": 304,
-          "end": 361,
+          "line": 317,
+          "end": 374,
           "async": true,
           "args": "self, request_ref: str, browser_secret: str, csrf_token: str, username: str, password: str, *, client_address: str='local'",
           "returns": "LoginProgress",
@@ -11143,8 +11221,8 @@
         },
         {
           "name": "NativeCredentials._factor_context",
-          "line": 363,
-          "end": 387,
+          "line": 376,
+          "end": 400,
           "async": true,
           "args": "self, session: AsyncSession, request_ref: str, browser_secret: str, csrf_token: str",
           "returns": "tuple[NativeLoginRequestTable, NativeAccountTable]",
@@ -11154,8 +11232,8 @@
         },
         {
           "name": "NativeCredentials._factor_deadline",
-          "line": 390,
-          "end": 398,
+          "line": 403,
+          "end": 411,
           "async": false,
           "args": "request: NativeLoginRequestTable",
           "returns": "None",
@@ -11165,8 +11243,8 @@
         },
         {
           "name": "NativeCredentials.otp",
-          "line": 400,
-          "end": 454,
+          "line": 413,
+          "end": 467,
           "async": true,
           "args": "self, request_ref: str, browser_secret: str, csrf_token: str, code: str, *, client_address: str='local'",
           "returns": "LoginProgress",
@@ -11176,8 +11254,8 @@
         },
         {
           "name": "NativeCredentials.recover",
-          "line": 456,
-          "end": 503,
+          "line": 469,
+          "end": 516,
           "async": true,
           "args": "self, request_ref: str, browser_secret: str, csrf_token: str, recovery_code: str, *, client_address: str='local'",
           "returns": "LoginProgress",
@@ -11187,8 +11265,8 @@
         },
         {
           "name": "NativeCredentials.create_account",
-          "line": 505,
-          "end": 550,
+          "line": 518,
+          "end": 563,
           "async": true,
           "args": "self, account_ref: str, principal_ref: str, username: str, password: str",
           "returns": "str",
@@ -11198,8 +11276,8 @@
         },
         {
           "name": "NativeCredentials._session_snapshot",
-          "line": 552,
-          "end": 558,
+          "line": 565,
+          "end": 571,
           "async": true,
           "args": "self, session_ref: str",
           "returns": "tuple[str, str, int]",
@@ -11209,8 +11287,8 @@
         },
         {
           "name": "NativeCredentials._strong_session",
-          "line": 560,
-          "end": 592,
+          "line": 573,
+          "end": 605,
           "async": true,
           "args": "self, session: AsyncSession, session_ref: str, account: NativeAccountTable, *, version: int",
           "returns": "tuple[NativeSessionTable, datetime]",
@@ -11220,8 +11298,8 @@
         },
         {
           "name": "NativeCredentials._access_proof",
-          "line": 594,
-          "end": 607,
+          "line": 607,
+          "end": 620,
           "async": true,
           "args": "self, session: AsyncSession, claims: dict[str, Any] | None, login: NativeSessionTable",
           "returns": "None",
@@ -11231,8 +11309,8 @@
         },
         {
           "name": "NativeCredentials._final_deadline",
-          "line": 610,
-          "end": 617,
+          "line": 623,
+          "end": 630,
           "async": false,
           "args": "login: NativeSessionTable, claims: dict[str, Any] | None, authentication_deadline: datetime",
           "returns": "None",
@@ -11242,8 +11320,8 @@
         },
         {
           "name": "NativeCredentials.change_password",
-          "line": 619,
-          "end": 652,
+          "line": 632,
+          "end": 665,
           "async": true,
           "args": "self, session_ref: str, old_password: str, new_password: str, *, access_claims: dict[str, Any] | None=None",
           "returns": "int",
@@ -11253,8 +11331,8 @@
         },
         {
           "name": "NativeCredentials.reset_totp",
-          "line": 654,
-          "end": 696,
+          "line": 667,
+          "end": 709,
           "async": true,
           "args": "self, session_ref: str, password: str, otp: str, *, access_claims: dict[str, Any] | None=None",
           "returns": "FactorResetResult",
@@ -11264,8 +11342,8 @@
         },
         {
           "name": "NativeCredentials.disable_account",
-          "line": 698,
-          "end": 716,
+          "line": 711,
+          "end": 729,
           "async": true,
           "args": "self, account_ref: str, expected_version: int, *, actor_ref: str | None=None",
           "returns": "int",
@@ -11275,8 +11353,8 @@
         },
         {
           "name": "NativeCredentials.admin_reset",
-          "line": 718,
-          "end": 761,
+          "line": 731,
+          "end": 774,
           "async": true,
           "args": "self, account_ref: str, expected_version: int, *, new_password: str | None=None, reset_totp: bool=False, actor_ref: str | None=None",
           "returns": "AdminResetResult",
@@ -11346,19 +11424,11 @@
           "context": "top"
         },
         {
-          "module": "app.execution.storage",
-          "symbols": [
-            "lock_tenant"
-          ],
-          "line": 18,
-          "context": "top"
-        },
-        {
           "module": "app.models.identity",
           "symbols": [
             "PrincipalTable"
           ],
-          "line": 19,
+          "line": 18,
           "context": "top"
         },
         {
@@ -11367,7 +11437,7 @@
             "OrganizationRootTable",
             "TrustStateTable"
           ],
-          "line": 20,
+          "line": 19,
           "context": "top"
         },
         {
@@ -11381,7 +11451,7 @@
             "NativeLoginThrottleTable",
             "NativeSessionTable"
           ],
-          "line": 21,
+          "line": 20,
           "context": "top"
         },
         {
@@ -11395,7 +11465,7 @@
             "recovery_codes",
             "verify_password"
           ],
-          "line": 30,
+          "line": 29,
           "context": "top"
         },
         {
@@ -11403,7 +11473,7 @@
           "symbols": [
             "validate_native_session"
           ],
-          "line": 39,
+          "line": 38,
           "context": "top"
         },
         {
@@ -11412,7 +11482,7 @@
             "NativeCommitUnknown",
             "NativeCredentialError"
           ],
-          "line": 40,
+          "line": 39,
           "context": "top"
         },
         {
@@ -11420,13 +11490,22 @@
           "symbols": [
             "current_authentication_deadline"
           ],
-          "line": 41,
+          "line": 40,
           "context": "top"
         },
         {
           "module": "app.native_auth.protocol",
           "symbols": [
             "OAuthError"
+          ],
+          "line": 41,
+          "context": "top"
+        },
+        {
+          "module": "app.storage.coordination",
+          "symbols": [
+            "LockMode",
+            "lock_organization"
           ],
           "line": 42,
           "context": "top"
@@ -11436,7 +11515,7 @@
           "symbols": [
             "insert"
           ],
-          "line": 212,
+          "line": 225,
           "context": "nested"
         },
         {
@@ -11444,7 +11523,7 @@
           "symbols": [
             "insert"
           ],
-          "line": 214,
+          "line": 227,
           "context": "nested"
         }
       ]
@@ -12122,7 +12201,7 @@
       "module": "app.native_auth.logout",
       "lines": 268,
       "nonblank": 250,
-      "sha256": "74503d2f9fc4ac08a4fa066fd26ddf427e2b6af74cfad1253d84754353283786",
+      "sha256": "f480cb12b06e7f81846ebab90d992673dccbd3ad8d4fe710d43b98daf6cc9772",
       "doc": "RP initiated logout requires browser possession and an explicit CSRF-bound confirmation.",
       "classes": [
         {
@@ -12287,19 +12366,11 @@
           "context": "top"
         },
         {
-          "module": "app.execution.storage",
-          "symbols": [
-            "lock_tenant"
-          ],
-          "line": 13,
-          "context": "top"
-        },
-        {
           "module": "app.models.identity",
           "symbols": [
             "PrincipalTable"
           ],
-          "line": 14,
+          "line": 13,
           "context": "top"
         },
         {
@@ -12307,7 +12378,7 @@
           "symbols": [
             "TrustStateTable"
           ],
-          "line": 15,
+          "line": 14,
           "context": "top"
         },
         {
@@ -12320,7 +12391,7 @@
             "NativeLogoutRequestTable",
             "NativeSessionTable"
           ],
-          "line": 16,
+          "line": 15,
           "context": "top"
         },
         {
@@ -12328,7 +12399,7 @@
           "symbols": [
             "NativeAuthConfig"
           ],
-          "line": 24,
+          "line": 23,
           "context": "top"
         },
         {
@@ -12337,7 +12408,7 @@
             "NativeCredentials",
             "commit_authentication"
           ],
-          "line": 25,
+          "line": 24,
           "context": "top"
         },
         {
@@ -12346,7 +12417,7 @@
             "digest_secret",
             "random_secret"
           ],
-          "line": 26,
+          "line": 25,
           "context": "top"
         },
         {
@@ -12354,7 +12425,7 @@
           "symbols": [
             "NativeKeyError"
           ],
-          "line": 27,
+          "line": 26,
           "context": "top"
         },
         {
@@ -12362,7 +12433,7 @@
           "symbols": [
             "NativeOAuth"
           ],
-          "line": 28,
+          "line": 27,
           "context": "top"
         },
         {
@@ -12370,13 +12441,22 @@
           "symbols": [
             "OAuthError"
           ],
-          "line": 29,
+          "line": 28,
           "context": "top"
         },
         {
           "module": "app.native_auth.redirects",
           "symbols": [
             "validate_issuer_redirect"
+          ],
+          "line": 29,
+          "context": "top"
+        },
+        {
+          "module": "app.storage.coordination",
+          "symbols": [
+            "LockMode",
+            "lock_organization"
           ],
           "line": 30,
           "context": "top"
@@ -12393,15 +12473,15 @@
     },
     "app/native_auth/oauth.py": {
       "module": "app.native_auth.oauth",
-      "lines": 708,
-      "nonblank": 677,
-      "sha256": "91eebfe4ded4797ec3d5b980ee583bb62bf4699b6a931cbd2efcd520dcb54f5c",
+      "lines": 711,
+      "nonblank": 680,
+      "sha256": "3d33d4ddf0996c71d7d98119984b00859616f7ce03d760f262368b583b7cf3d0",
       "doc": "Narrow first-party OIDC issuer with persistent, single-use credentials.\n\nProtocol helpers come from Authlib; PostgreSQL owns code consumption and refresh\nfamilies. This is intentionally not a general authorization-server framework.",
       "classes": [
         {
           "name": "NativeOAuth",
           "line": 75,
-          "end": 708,
+          "end": 711,
           "bases": [],
           "doc": ""
         }
@@ -12531,7 +12611,7 @@
         {
           "name": "NativeOAuth._authenticated_account",
           "line": 492,
-          "end": 518,
+          "end": 521,
           "async": true,
           "args": "self, token: str, *, max_age_seconds: int | None, allow_userinfo_audience: bool",
           "returns": "AsyncIterator[tuple[NativeAccountTable, dict[str, Any]]]",
@@ -12541,8 +12621,8 @@
         },
         {
           "name": "NativeOAuth.userinfo",
-          "line": 520,
-          "end": 528,
+          "line": 523,
+          "end": 531,
           "async": true,
           "args": "self, token: str",
           "returns": "dict[str, str]",
@@ -12552,8 +12632,8 @@
         },
         {
           "name": "NativeOAuth.authenticate_client",
-          "line": 530,
-          "end": 549,
+          "line": 533,
+          "end": 552,
           "async": true,
           "args": "self, session: AsyncSession, client_id: str, client_secret: str | None=None, client_auth_method: str='none'",
           "returns": "NativeClientTable",
@@ -12563,8 +12643,8 @@
         },
         {
           "name": "NativeOAuth._lock_account",
-          "line": 551,
-          "end": 557,
+          "line": 554,
+          "end": 560,
           "async": true,
           "args": "self, session: AsyncSession, account_ref: str, error: str='invalid_grant', *, status_code: int=400",
           "returns": "NativeAccountTable",
@@ -12574,8 +12654,8 @@
         },
         {
           "name": "NativeOAuth._lock_session",
-          "line": 559,
-          "end": 592,
+          "line": 562,
+          "end": 595,
           "async": true,
           "args": "self, session: AsyncSession, session_ref: str, *, allow_inactive: bool=False",
           "returns": "NativeSessionTable",
@@ -12585,8 +12665,8 @@
         },
         {
           "name": "NativeOAuth._client",
-          "line": 594,
-          "end": 607,
+          "line": 597,
+          "end": 610,
           "async": true,
           "args": "self, session: AsyncSession, client_id: str, redirect_uri: str | None=None",
           "returns": "NativeClientTable",
@@ -12596,8 +12676,8 @@
         },
         {
           "name": "NativeOAuth._live_session",
-          "line": 610,
-          "end": 618,
+          "line": 613,
+          "end": 621,
           "async": false,
           "args": "login: NativeSessionTable, now: datetime",
           "returns": "None",
@@ -12607,8 +12687,8 @@
         },
         {
           "name": "NativeOAuth._issue_tokens",
-          "line": 620,
-          "end": 688,
+          "line": 623,
+          "end": 691,
           "async": false,
           "args": "self, session: AsyncSession, login: NativeSessionTable, now: datetime, client: NativeClientTable, *, include_nonce: bool=True, scope: str | None=None",
           "returns": "dict[str, Any]",
@@ -12618,8 +12698,8 @@
         },
         {
           "name": "NativeOAuth._event",
-          "line": 691,
-          "end": 699,
+          "line": 694,
+          "end": 702,
           "async": false,
           "args": "session: AsyncSession, event: str, login: NativeSessionTable",
           "returns": "None",
@@ -12629,8 +12709,8 @@
         },
         {
           "name": "NativeOAuth._commit",
-          "line": 702,
-          "end": 708,
+          "line": 705,
+          "end": 711,
           "async": true,
           "args": "session: AsyncSession",
           "returns": "None",
@@ -13028,15 +13108,15 @@
     },
     "app/native_auth/sessions.py": {
       "module": "app.native_auth.sessions",
-      "lines": 322,
-      "nonblank": 304,
-      "sha256": "522534ac2b49443554feb3ff95c78d5de9332d844e196f2346a129945d55278c",
+      "lines": 326,
+      "nonblank": 308,
+      "sha256": "40aacbb57bf7e244b8470f9baa7977e87796b5e8cb98ecf3b93115be638aadfe",
       "doc": "Current-user session and application consent management under identity locks.",
       "classes": [
         {
           "name": "AccountSessions",
           "line": 46,
-          "end": 322,
+          "end": 326,
           "bases": [],
           "doc": ""
         }
@@ -13078,9 +13158,9 @@
         {
           "name": "AccountSessions._actor",
           "line": 61,
-          "end": 84,
+          "end": 88,
           "async": true,
-          "args": "self, access_token: str, *, fresh: bool",
+          "args": "self, access_token: str, *, fresh: bool, write: bool",
           "returns": "AsyncIterator[tuple[AsyncSession, NativeAccountTable, NativeSessionTable, dict[str, Any], datetime | None]]",
           "context": "top",
           "public": false,
@@ -13088,8 +13168,8 @@
         },
         {
           "name": "AccountSessions._deadline",
-          "line": 87,
-          "end": 94,
+          "line": 91,
+          "end": 98,
           "async": false,
           "args": "claims: dict[str, Any], login: NativeSessionTable, *, authentication_deadline: datetime | None",
           "returns": "None",
@@ -13099,8 +13179,8 @@
         },
         {
           "name": "AccountSessions._event",
-          "line": 97,
-          "end": 110,
+          "line": 101,
+          "end": 114,
           "async": false,
           "args": "session: AsyncSession, event: str, account: NativeAccountTable, *, client_id: str | None=None, target_session: str | None=None",
           "returns": "None",
@@ -13110,8 +13190,8 @@
         },
         {
           "name": "AccountSessions.list_sessions",
-          "line": 112,
-          "end": 167,
+          "line": 116,
+          "end": 171,
           "async": true,
           "args": "self, access_token: str, *, limit: int=20, after: str | None=None",
           "returns": "dict[str, Any]",
@@ -13121,8 +13201,8 @@
         },
         {
           "name": "AccountSessions.revoke_session",
-          "line": 169,
-          "end": 198,
+          "line": 173,
+          "end": 202,
           "async": true,
           "args": "self, access_token: str, session_ref: str",
           "returns": "None",
@@ -13132,8 +13212,8 @@
         },
         {
           "name": "AccountSessions.revoke_all",
-          "line": 200,
-          "end": 228,
+          "line": 204,
+          "end": 232,
           "async": true,
           "args": "self, access_token: str",
           "returns": "dict[str, int]",
@@ -13143,8 +13223,8 @@
         },
         {
           "name": "AccountSessions.list_consents",
-          "line": 230,
-          "end": 261,
+          "line": 234,
+          "end": 265,
           "async": true,
           "args": "self, access_token: str, *, limit: int=20, after: str | None=None",
           "returns": "dict[str, Any]",
@@ -13154,8 +13234,8 @@
         },
         {
           "name": "AccountSessions.revoke_consent",
-          "line": 263,
-          "end": 322,
+          "line": 267,
+          "end": 326,
           "async": true,
           "args": "self, access_token: str, client_id: str",
           "returns": "None",
@@ -13324,15 +13404,15 @@
     },
     "app/providers/assignments.py": {
       "module": "app.providers.assignments",
-      "lines": 58,
-      "nonblank": 49,
-      "sha256": "c809135e55f48df91a37cf3f18e8cc3b48ae483abc349059330213d26745fc7c",
+      "lines": 59,
+      "nonblank": 50,
+      "sha256": "b82e4bf57f79659440bc783398dfb7b865b75b75d8902b1cc60b08f751ddaf33",
       "doc": "Current assignment discovery with one leased identity/storage transaction.",
       "classes": [
         {
           "name": "AssignmentService",
-          "line": 17,
-          "end": 51,
+          "line": 18,
+          "end": 52,
           "bases": [],
           "doc": ""
         }
@@ -13340,8 +13420,8 @@
       "functions": [
         {
           "name": "AssignmentService.__init__",
-          "line": 18,
-          "end": 20,
+          "line": 19,
+          "end": 21,
           "async": false,
           "args": "self, context: ComponentContext, timeout_seconds: float",
           "returns": "None",
@@ -13351,8 +13431,8 @@
         },
         {
           "name": "AssignmentService.list_self",
-          "line": 22,
-          "end": 51,
+          "line": 23,
+          "end": 52,
           "async": true,
           "args": "self, token: str, *, profile_ref: str, profile_version: int, limit: int=20, after: str | None=None",
           "returns": "AssignmentList",
@@ -13362,8 +13442,8 @@
         },
         {
           "name": "assignments_plugin",
-          "line": 54,
-          "end": 58,
+          "line": 55,
+          "end": 59,
           "async": false,
           "args": "config: Settings",
           "returns": "PluginSpec",
@@ -13373,8 +13453,8 @@
         },
         {
           "name": "assignments_plugin.setup",
-          "line": 55,
-          "end": 56,
+          "line": 56,
+          "end": 57,
           "async": false,
           "args": "ctx: ComponentContext",
           "returns": "None",
@@ -13419,7 +13499,6 @@
         {
           "module": "app.execution.storage",
           "symbols": [
-            "lock_tenant",
             "managed_uow"
           ],
           "line": 8,
@@ -13457,6 +13536,15 @@
             "ServiceKey"
           ],
           "line": 12,
+          "context": "top"
+        },
+        {
+          "module": "app.storage.coordination",
+          "symbols": [
+            "LockMode",
+            "lock_organization"
+          ],
+          "line": 13,
           "context": "top"
         }
       ]
@@ -17071,6 +17159,276 @@
       "functions": [],
       "imports": []
     },
+    "app/storage/coordination.py": {
+      "module": "app.storage.coordination",
+      "lines": 239,
+      "nonblank": 199,
+      "sha256": "ddd38e8e4163884e6fb6eb9280f2eab263f7440ba5c596323d3ad5115d5103da",
+      "doc": "Transaction-bound authorization barriers and short-command key mutexes.\n\nOrganization admission uses a PostgreSQL transaction advisory gate before the\nexisting shared/exclusive guard row. Waiting writers stop later gate readers\nfrom repeatedly joining a row MultiXact ahead of them. This does not promise\nFIFO scheduling or change principal/trust row-lock admission. Command keys\nprecede the trust/principal/organization chain; neither lock is a durable lease.\nOrganization bigint keys reserve the STGO prefix, separate from the existing\ncontrol mutex; command keys use PostgreSQL's disjoint two-integer namespace.\nSQLite deliberately retains a database write reservation for both modes.\n\nThese checks guard accidental misuse in trusted Python; they are not a sandbox.",
+      "classes": [
+        {
+          "name": "LockMode",
+          "line": 32,
+          "end": 34,
+          "bases": [
+            "StrEnum"
+          ],
+          "doc": ""
+        },
+        {
+          "name": "_Protection",
+          "line": 41,
+          "end": 51,
+          "bases": [],
+          "doc": ""
+        }
+      ],
+      "functions": [
+        {
+          "name": "_Protection.reject_savepoint",
+          "line": 49,
+          "end": 51,
+          "async": false,
+          "args": "self, _connection: Connection, _name: str | None",
+          "returns": "None",
+          "context": "top",
+          "public": true,
+          "doc": ""
+        },
+        {
+          "name": "_reject_nested_transaction",
+          "line": 60,
+          "end": 69,
+          "async": false,
+          "args": "_session: Session, transaction: SessionTransaction",
+          "returns": "None",
+          "context": "top",
+          "public": false,
+          "doc": ""
+        },
+        {
+          "name": "_release_proof",
+          "line": 73,
+          "end": 76,
+          "async": false,
+          "args": "_session: Session, transaction: SessionTransaction",
+          "returns": "None",
+          "context": "top",
+          "public": false,
+          "doc": ""
+        },
+        {
+          "name": "_root_transaction",
+          "line": 79,
+          "end": 83,
+          "async": false,
+          "args": "session: AsyncSession",
+          "returns": "SessionTransaction",
+          "context": "top",
+          "public": false,
+          "doc": ""
+        },
+        {
+          "name": "_assert_connection",
+          "line": 86,
+          "end": 93,
+          "async": false,
+          "args": "protection: _Protection",
+          "returns": "None",
+          "context": "top",
+          "public": false,
+          "doc": ""
+        },
+        {
+          "name": "_protection",
+          "line": 96,
+          "end": 110,
+          "async": true,
+          "args": "session: AsyncSession",
+          "returns": "_Protection",
+          "context": "top",
+          "public": false,
+          "doc": ""
+        },
+        {
+          "name": "_check_mode",
+          "line": 113,
+          "end": 115,
+          "async": false,
+          "args": "mode: LockMode",
+          "returns": "None",
+          "context": "top",
+          "public": false,
+          "doc": ""
+        },
+        {
+          "name": "_sqlite_reservation",
+          "line": 118,
+          "end": 128,
+          "async": true,
+          "args": "session: AsyncSession, organization_ref: str",
+          "returns": "None",
+          "context": "top",
+          "public": false,
+          "doc": ""
+        },
+        {
+          "name": "lock_organization",
+          "line": 131,
+          "end": 163,
+          "async": true,
+          "args": "session: AsyncSession, organization_ref: str, *, mode: LockMode",
+          "returns": "None",
+          "context": "top",
+          "public": true,
+          "doc": "Protect an existing organization; never upgrade SHARED within a transaction."
+        },
+        {
+          "name": "assert_organization_lock",
+          "line": 166,
+          "end": 177,
+          "async": false,
+          "args": "session: AsyncSession, organization_ref: str, *, mode: LockMode=LockMode.SHARED",
+          "returns": "None",
+          "context": "top",
+          "public": true,
+          "doc": "Require current transaction proof; an exclusive lock also permits reads."
+        },
+        {
+          "name": "_organization_key",
+          "line": 180,
+          "end": 191,
+          "async": false,
+          "args": "organization_ref: str",
+          "returns": "int",
+          "context": "top",
+          "public": false,
+          "doc": ""
+        },
+        {
+          "name": "_advisory_key",
+          "line": 194,
+          "end": 199,
+          "async": false,
+          "args": "key: CommandKey",
+          "returns": "tuple[int, int]",
+          "context": "top",
+          "public": false,
+          "doc": ""
+        },
+        {
+          "name": "lock_command_key",
+          "line": 202,
+          "end": 239,
+          "async": true,
+          "args": "session: AsyncSession, *, organization_ref: str, actor_ref: str, command_name: str, command_version: str, idempotency_key: str",
+          "returns": "None",
+          "context": "top",
+          "public": true,
+          "doc": "Acquire one stable logical command key before organization protection.\n\nHash collisions only add waiting: uniqueness and full input comparison are\nstill enforced by the command journal. A repeated identical key is a no-op;\nacquiring another key or acquiring a first key after the organization fails."
+        }
+      ],
+      "imports": [
+        {
+          "module": "__future__",
+          "symbols": [
+            "annotations"
+          ],
+          "line": 15,
+          "context": "top"
+        },
+        {
+          "module": "hashlib",
+          "symbols": [],
+          "line": 17,
+          "context": "top"
+        },
+        {
+          "module": "json",
+          "symbols": [],
+          "line": 18,
+          "context": "top"
+        },
+        {
+          "module": "dataclasses",
+          "symbols": [
+            "dataclass"
+          ],
+          "line": 19,
+          "context": "top"
+        },
+        {
+          "module": "enum",
+          "symbols": [
+            "StrEnum"
+          ],
+          "line": 20,
+          "context": "top"
+        },
+        {
+          "module": "weakref",
+          "symbols": [
+            "WeakKeyDictionary"
+          ],
+          "line": 21,
+          "context": "top"
+        },
+        {
+          "module": "sqlalchemy",
+          "symbols": [
+            "event",
+            "select",
+            "text",
+            "update"
+          ],
+          "line": 23,
+          "context": "top"
+        },
+        {
+          "module": "sqlalchemy.engine",
+          "symbols": [
+            "Connection",
+            "Transaction"
+          ],
+          "line": 24,
+          "context": "top"
+        },
+        {
+          "module": "sqlalchemy.ext.asyncio",
+          "symbols": [
+            "AsyncSession"
+          ],
+          "line": 25,
+          "context": "top"
+        },
+        {
+          "module": "sqlalchemy.orm",
+          "symbols": [
+            "Session",
+            "SessionTransaction"
+          ],
+          "line": 26,
+          "context": "top"
+        },
+        {
+          "module": "app.execution.errors",
+          "symbols": [
+            "TenantNotProvisioned",
+            "TransactionOwnershipError"
+          ],
+          "line": 28,
+          "context": "top"
+        },
+        {
+          "module": "app.models.execution",
+          "symbols": [
+            "TenantGuardTable"
+          ],
+          "line": 29,
+          "context": "top"
+        }
+      ]
+    },
     "app/storage/types.py": {
       "module": "app.storage.types",
       "lines": 89,
@@ -17276,7 +17634,7 @@
     },
     "authz": {
       "files": 11,
-      "lines": 1873,
+      "lines": 1879,
       "functions": 51,
       "classes": 23
     },
@@ -17300,14 +17658,14 @@
     },
     "delivery": {
       "files": 3,
-      "lines": 845,
+      "lines": 846,
       "functions": 28,
       "classes": 14
     },
     "execution": {
       "files": 6,
-      "lines": 959,
-      "functions": 41,
+      "lines": 1001,
+      "functions": 42,
       "classes": 24
     },
     "features": {
@@ -17336,13 +17694,13 @@
     },
     "native_auth": {
       "files": 16,
-      "lines": 3727,
-      "functions": 125,
+      "lines": 3747,
+      "functions": 126,
       "classes": 25
     },
     "providers": {
       "files": 8,
-      "lines": 708,
+      "lines": 709,
       "functions": 43,
       "classes": 11
     },
@@ -17353,10 +17711,10 @@
       "classes": 34
     },
     "storage": {
-      "files": 2,
-      "lines": 90,
-      "functions": 8,
-      "classes": 3
+      "files": 3,
+      "lines": 329,
+      "functions": 21,
+      "classes": 5
     }
   },
   "tables": [
@@ -17665,7 +18023,7 @@
     {
       "from": "authz",
       "to": "execution",
-      "imports": 7
+      "imports": 5
     },
     {
       "from": "authz",
@@ -17676,6 +18034,11 @@
       "from": "authz",
       "to": "models",
       "imports": 11
+    },
+    {
+      "from": "authz",
+      "to": "storage",
+      "imports": 3
     },
     {
       "from": "bootstrap",
@@ -17728,6 +18091,11 @@
       "imports": 1
     },
     {
+      "from": "delivery",
+      "to": "storage",
+      "imports": 1
+    },
+    {
       "from": "execution",
       "to": "authz",
       "imports": 3
@@ -17745,6 +18113,11 @@
     {
       "from": "execution",
       "to": "models",
+      "imports": 1
+    },
+    {
+      "from": "execution",
+      "to": "storage",
       "imports": 2
     },
     {
@@ -17774,11 +18147,6 @@
     },
     {
       "from": "identity",
-      "to": "execution",
-      "imports": 3
-    },
-    {
-      "from": "identity",
       "to": "models",
       "imports": 9
     },
@@ -17786,6 +18154,11 @@
       "from": "identity",
       "to": "native_auth",
       "imports": 4
+    },
+    {
+      "from": "identity",
+      "to": "storage",
+      "imports": 3
     },
     {
       "from": "main",
@@ -17814,11 +18187,6 @@
     },
     {
       "from": "native_auth",
-      "to": "execution",
-      "imports": 4
-    },
-    {
-      "from": "native_auth",
       "to": "identity",
       "imports": 5
     },
@@ -17826,6 +18194,11 @@
       "from": "native_auth",
       "to": "models",
       "imports": 19
+    },
+    {
+      "from": "native_auth",
+      "to": "storage",
+      "imports": 4
     },
     {
       "from": "providers",
@@ -17871,6 +18244,21 @@
       "from": "providers",
       "to": "runtime",
       "imports": 7
+    },
+    {
+      "from": "providers",
+      "to": "storage",
+      "imports": 1
+    },
+    {
+      "from": "storage",
+      "to": "execution",
+      "imports": 1
+    },
+    {
+      "from": "storage",
+      "to": "models",
+      "imports": 1
     }
   ],
   "type_only_layer_edges": [],

@@ -140,10 +140,10 @@ flowchart TB
 | [authz/authenticated.py](../app/authz/authenticated.py)、[identity/evidence.py](../app/identity/evidence.py) | 联合真实人员认证证据与当前单任职授权；trust/principal/组织锁序及提交前重验 |
 | [providers/work.py](../app/providers/work.py)、[api/work.py](../app/api/work.py)、[features/work/details.py](../app/features/work/details.py) | 默认人员服务、三个 v1 路由与只修改标题/说明的受控 handler；原 key 恢复始终重验当前权限 |
 | [providers/execution.py](../app/providers/execution.py) | 可信内部 CommandService 持存储 lease，但未接人员 identity_validator，不能直接作为公开人员入口模板；delivery plugin 管理 worker 停止、关闭与任务 |
-| [execution/kernel.py](../app/execution/kernel.py)、[execution/storage.py](../app/execution/storage.py) | 版本化命令、当前授权、tenant guard、稳定幂等、事务唯一提交者、结果/审计/outbox 同事务写入 |
+| [execution/kernel.py](../app/execution/kernel.py)、[execution/storage.py](../app/execution/storage.py)、[storage/coordination.py](../app/storage/coordination.py) | 版本化命令、完整身份检查、组织S/X、事务级幂等键、对象锁和单一提交；结果/审计/outbox同事务 |
 | [authz/decision.py](../app/authz/decision.py)、[delivery/worker.py](../app/delivery/worker.py) | 纯授权判定；数据库驱动的投递、回执和未知结果对账 |
 
-身份服务负责真实凭据验证、当前组织成员读取以及短期 `HumanAuthenticationEvidence`。默认人员工作项 provider 在事务外认证，再由 `AuthenticatedAuthorizationLoader` 联合数据库角色/资源 loader；先取得 trust/principal 共享锁，再锁组织 guard，读取固定成员经历、单任职、角色版本、scope 和直接 ACL。最小命令只改标题/说明及版本，原角色不自动获得新 action。
+身份服务负责真实凭据验证、当前组织成员读取以及短期 `HumanAuthenticationEvidence`。默认人员工作项 provider 在事务外认证，再由 `AuthenticatedAuthorizationLoader` 联合数据库角色/资源 loader；短命令先取得原幂等键事务锁，然后取得trust/principal共享锁与组织共享保护，读取固定成员经历、单任职、角色版本、scope 和直接 ACL。最小命令只改标题/说明及版本，原角色不自动获得新 action。
 
 人员链已接入真实认证证据的锁后与提交前重验；内部 `ExecutionContext` 由可信宿主构造，不能从 HTTP body 或 `/identity/me` 响应反序列化。业务结果、命令结果、原认证和授权审计同事务提交；元数据命令不生成 Outbox。原 key 结果查询按当前认证和读权限检查，刷新 token 不改变幂等身份。WASM、签名与完整任务业务继续后续阶段；Redis 仍无正式业务缓存/限流消费者，独立 Agent/Delegation 和通用 ServiceGrant 继续后置。
 
@@ -210,6 +210,8 @@ P1b.4 已实现本人任职发现和组织统一 MFA，用户选定密码＋TOTP
 这个关闭屏障借鉴论文 Algorithm 5 的整体等待思想，业务调用租约属于 Stage 增强；默认顶层 LIFO 则是 Stage 自身选择，不能归因为论文要求。组件释放资源与数据库撤销业务是两件事：disposer 不会撤销已提交的命令、审计或外部通知。
 
 ## 4. 对齐证据与范围
+
+当前并发协议与专项复查见[实现记录](reviews/concurrency-optimization-2026-10-26.md)：业务读者与普通元数据写入共享组织保护，授权写者排他；同键、对象、账号分别协调，最终身份与期限检查保留。事务锁不跨WASM／人工等待，新增writer和多节点按阶段单独验收。
 
 2026-10-26 的 P2/P3 整改补齐了几个实际复用边界：`HumanOperations.request()` 统一人员身份/截止/租约和完整 kernel 装配，`CommandKernel.read()` 提供同事务授权与披露前重验；`app.control` 复用管理 journal/幂等/unknown，`native_auth.current_session` 独立复核会话事实。认证 HTTP 按共享安全边界、浏览器、退出、OAuth、账户分为同层模块。Runtime 成功卸载记录和 observations 有界，未完成/失败清理继续保留。它们没有增加新的插件平台、业务命令或物理表。详见[公共业务入口](protected-business-operations.md)与[整改复查](reviews/p2p3-architecture-closeout-2026-10-26.md)。
 

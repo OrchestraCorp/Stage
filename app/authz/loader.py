@@ -2,8 +2,8 @@
 
 This is an internal adapter, not authentication. Its ExecutionContext must come
 from a trusted host adapter. No route may deserialize that context from a body.
-All authorization writers acquire the same organization guard; the caller keeps
-that guard until the command transaction commits. No cached decision or network
+Authorization readers hold the shared organization guard; writers acquire its
+exclusive mode. The caller keeps protection until its transaction ends. No cached decision or network
 request participates in this loader.
 """
 
@@ -20,7 +20,6 @@ from app.core.enums import PrincipalType
 from app.execution.contracts import ExecutionContext
 from app.execution.encoding import digest
 from app.execution.errors import AuthorizationDenied
-from app.execution.storage import lock_tenant
 from app.models.authorization import (
     AuthorizationResourceTable,
     AuthorizationScopeTable,
@@ -35,6 +34,7 @@ from app.models.execution import TenantGuardTable
 from app.models.identity import PrincipalTable
 from app.models.identity_foundation import OrganizationMembershipTable, OrganizationRootTable
 from app.models.work import WorkItemTable
+from app.storage.coordination import LockMode, assert_organization_lock
 
 
 def role_permissions_digest(
@@ -192,7 +192,7 @@ class DatabaseAuthorizationLoader:
         self._lock_marker = object()
 
     async def acquire_locks(self, session: AsyncSession, context: ExecutionContext) -> None:
-        """Acquire global identity locks before the organization's write guard.
+        """Acquire global identity locks before the caller's organization protection.
 
         The marker belongs to this loader and this exact transaction, so a
         prior transaction or a different loader cannot stand in for the lock.
@@ -222,6 +222,7 @@ class DatabaseAuthorizationLoader:
         target_ref: str,
         expected_version: int | None,
         now: datetime,
+        lock_mode: LockMode = LockMode.EXCLUSIVE,
     ) -> AuthorizationContext:
         missing = AuthorizationContext(
             request_id=context.request_id,
@@ -239,9 +240,9 @@ class DatabaseAuthorizationLoader:
         lock_identity = (session.sync_session.get_transaction(), context.actor_ref, context.tenant_ref)
         if not session.in_transaction() or session.info.get(self._lock_marker) != lock_identity:
             raise AuthorizationDenied()
-        # The kernel already holds this guard. Reacquiring it is harmless and
-        # keeps direct internal loader callers on the same writer protocol.
-        await lock_tenant(session, context.tenant_ref)
+        # The caller declares the guard mode before loading any resource.
+        # Never upgrade a shared authorization reader implicitly.
+        assert_organization_lock(session, context.tenant_ref)
         if now.tzinfo is None or now.utcoffset() is None:
             return missing
         now = now.astimezone(UTC)
@@ -343,7 +344,10 @@ class DatabaseAuthorizationLoader:
         if not 1 <= work_id <= 2**31 - 1:
             return missing
         work = await session.scalar(
-            select(WorkItemTable).where(WorkItemTable.id == work_id).with_for_update().execution_options(**refresh)
+            select(WorkItemTable)
+            .where(WorkItemTable.id == work_id)
+            .with_for_update(read=lock_mode is LockMode.SHARED)
+            .execution_options(**refresh)
         )
         if work is None or work.scope_ref != resource.scope_ref:
             return missing

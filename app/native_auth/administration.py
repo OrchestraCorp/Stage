@@ -22,7 +22,6 @@ from app.control.operations import (
     operation_transaction,
     validate_operator,
 )
-from app.execution.storage import lock_tenant
 from app.identity.native import NATIVE_ACR, NATIVE_PROFILE_SCHEMA
 from app.identity.service import AdmissionConstraints, ProfileConfiguration, content_digest, current, profile_content
 from app.models.execution import TenantGuardTable
@@ -41,6 +40,7 @@ from app.native_auth.config import NativeAuthConfig
 from app.native_auth.credentials import authentication_event
 from app.native_auth.crypto import hash_password, normalize_username, validate_password
 from app.native_auth.redirects import validate_issuer_redirect
+from app.storage.coordination import LockMode, lock_organization
 
 TRUST = "trust:native-auth"
 PROVIDER = "provider:native-auth"
@@ -157,7 +157,7 @@ async def _install(
         or principal.disabled_at is not None
     ):
         raise AdministrationError("existing_active_human_required")
-    await lock_tenant(session, plan.organization_ref)
+    await lock_organization(session, plan.organization_ref, mode=LockMode.EXCLUSIVE)
     now = datetime.now(UTC)
     root = await session.get(OrganizationRootTable, plan.organization_ref, populate_existing=True)
     membership = await session.get(OrganizationMembershipTable, (plan.organization_ref, plan.membership_ref))

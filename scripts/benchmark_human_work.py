@@ -37,12 +37,11 @@ from sqlalchemy import func, select, text  # noqa: E402
 from sqlalchemy.engine import make_url  # noqa: E402
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker  # noqa: E402
 
-from app.authz import administration, loader  # noqa: E402
+from app.authz import administration  # noqa: E402
 from app.authz.administration import AuthorizationRevocationRequest, revoke_authorization  # noqa: E402
 from app.core.config import Settings  # noqa: E402
 from app.core.db import create_engine, create_session_factory  # noqa: E402
 from app.execution import kernel  # noqa: E402
-from app.execution.storage import lock_tenant  # noqa: E402
 from app.identity import service as identity_module  # noqa: E402
 from app.identity.evidence import HumanAuthenticationEvidence  # noqa: E402
 from app.main import create_app  # noqa: E402
@@ -54,6 +53,7 @@ from app.providers.identity import IDENTITY, IdentityFacade  # noqa: E402
 from app.providers.storage import STORAGE, Storage  # noqa: E402
 from app.providers.work import WORK, human_work_plugin  # noqa: E402
 from app.runtime import ComponentContext, PluginSpec, RuntimeHost  # noqa: E402
+from app.storage.coordination import LockMode, lock_organization  # noqa: E402
 from scripts.check_database import validate_test_database  # noqa: E402
 from tests.support.authenticated_commands import identity_service, jwt_client, seed_authenticated_command  # noqa: E402
 from tests.support.authorization import ORG, PERSON  # noqa: E402
@@ -190,21 +190,21 @@ def instrument(engine: AsyncEngine) -> Iterator[None]:
             if (sample := ACTIVE.get()) is not None:
                 sample.pool.append(time.perf_counter() - start)
 
-    async def guard(session: AsyncSession, organization: str) -> None:
+    async def guard(session: AsyncSession, organization: str, *, mode: LockMode) -> None:
         sample = ACTIVE.get()
         start = time.perf_counter()
         if sample is not None:
             sample.guard_entered.set()
         try:
-            await lock_tenant(session, organization)
+            await lock_organization(session, organization, mode=mode)
         finally:
             if sample is not None:
                 sample.guard.append(time.perf_counter() - start)
 
     with ExitStack() as stack:
         stack.enter_context(patch.object(pool, "_do_get", checkout))
-        for module in (kernel, loader, administration, identity_module):
-            stack.enter_context(patch.object(module, "lock_tenant", guard))
+        for module in (kernel, administration, identity_module):
+            stack.enter_context(patch.object(module, "lock_organization", guard))
         yield
 
 
@@ -448,7 +448,7 @@ async def cancellation_baseline(
                 await asyncio.wait_for(authenticated.wait(), 5)
                 # Authentication has finished and released its locks. Now block the command transaction.
                 async with sessions.begin() as holder:
-                    await lock_tenant(holder, ORG)
+                    await lock_organization(holder, ORG, mode=LockMode.EXCLUSIVE)
                     holder_pid = await holder.scalar(text("SELECT pg_backend_pid()"))
                     require(isinstance(holder_pid, int), "PostgreSQL holder PID unavailable")
                     sample.guard_entered.clear()

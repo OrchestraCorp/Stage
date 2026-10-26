@@ -1,0 +1,3898 @@
+{
+  "schema": "stage.mixed-native-work-capacity.v1",
+  "recorded_at": "2026-10-26T06:25:24.115529+00:00",
+  "source_sha256": "9cb5ed8e8a3bc934ba67e0c2669ed03259434893cd0af2cf037db2aefa09f5f2",
+  "postgresql": "17.11 (Ubuntu 17.11-1.pgdg24.04+2)",
+  "migration_head": "c6f3a19d820b",
+  "configuration": {
+    "database_name": "stage_test_capacity_concurrency",
+    "users": 16,
+    "sessions": 16,
+    "scope": "openid profile offline_access",
+    "organization_mfa": "required",
+    "processes": 1,
+    "event_loops": 1,
+    "pool_size": 16,
+    "rsa_bits": 3072,
+    "max_overflow": 0,
+    "requests_per_level": 512,
+    "concurrency_levels": [
+      1,
+      4,
+      8,
+      16
+    ],
+    "available_cpus": 24,
+    "cgroup_cpu_max": null,
+    "load_average_before": [
+      0.11962890625,
+      0.1591796875,
+      0.421875
+    ],
+    "load_average_after": [
+      0.7783203125,
+      0.3427734375,
+      0.47021484375
+    ],
+    "environment_note": "Final gate+row protocol. Dedicated window; no concurrent test suites or fairness experiments. Existing dev services remain running. Host not exclusively reserved."
+  },
+  "boundaries": [
+    "Service methods and runtime leases; real PostgreSQL TCP; no HTTP/TLS/frontend.",
+    "Synthetic completed MFA fixture; actual PKCE, JWT verification, refresh and current authorization.",
+    "Separate shared-peer login burst includes Argon2/TOTP, browser sessions and PKCE issuance.",
+    "One person/session/item per worker; equal mix, no intentional object conflict or refresh reuse.",
+    "Per-operation throughput is its contribution to the common mixed window, not an isolated capacity.",
+    "Guard acquisition includes SQL/driver/round-trip; an upper bound for server lock waiting.",
+    "Guard hold starts after acquisition until transaction end, including commit/rollback and pool return.",
+    "SQL counts include ORM/cursor statements, excluding driver transaction-control and pre-ping traffic.",
+    "Closed-loop warm service baseline; no production SLO, arrival model or multi-process capacity claim."
+  ],
+  "results": [
+    {
+      "concurrency": 1,
+      "elapsed_seconds": 14.961,
+      "all": {
+        "operations": 512,
+        "throughput_per_second": 34.222,
+        "errors": {},
+        "latency_ms": {
+          "samples": 512,
+          "p50": 30.614,
+          "p95": 51.177,
+          "p99": 55.542,
+          "max": 72.912
+        },
+        "sql_statements": {
+          "total": 23424,
+          "mean": 45.75
+        },
+        "locks": {
+          "account": {
+            "acquire_ms": {
+              "samples": 256,
+              "p50": 0.211,
+              "p95": 0.27,
+              "p99": 0.355,
+              "max": 0.695
+            },
+            "hold_ms": {
+              "samples": 256,
+              "p50": 7.093,
+              "p95": 9.594,
+              "p99": 11.178,
+              "max": 13.089
+            }
+          },
+          "command_key": {
+            "acquire_ms": {
+              "samples": 128,
+              "p50": 0.292,
+              "p95": 0.352,
+              "p99": 0.406,
+              "max": 0.706
+            },
+            "hold_ms": {
+              "samples": 128,
+              "p50": 27.938,
+              "p95": 32.551,
+              "p99": 40.62,
+              "max": 55.849
+            }
+          },
+          "organization": {
+            "acquire_ms": {
+              "samples": 768,
+              "p50": 0.176,
+              "p95": 0.222,
+              "p99": 0.244,
+              "max": 0.273
+            },
+            "hold_ms": {
+              "samples": 768,
+              "p50": 9.449,
+              "p95": 30.14,
+              "p99": 32.708,
+              "max": 53.44
+            }
+          },
+          "organization_gate": {
+            "acquire_ms": {
+              "samples": 768,
+              "p50": 0.169,
+              "p95": 0.213,
+              "p99": 0.23,
+              "max": 0.272
+            },
+            "hold_ms": {
+              "samples": 768,
+              "p50": 9.878,
+              "p95": 30.575,
+              "p99": 33.205,
+              "max": 53.902
+            }
+          },
+          "principal": {
+            "acquire_ms": {
+              "samples": 768,
+              "p50": 0.193,
+              "p95": 0.246,
+              "p99": 0.266,
+              "max": 0.702
+            },
+            "hold_ms": {
+              "samples": 768,
+              "p50": 10.371,
+              "p95": 31.598,
+              "p99": 34.322,
+              "max": 54.815
+            }
+          },
+          "session": {
+            "acquire_ms": {
+              "samples": 128,
+              "p50": 0.209,
+              "p95": 0.265,
+              "p99": 0.361,
+              "max": 4.196
+            },
+            "hold_ms": {
+              "samples": 128,
+              "p50": 8.227,
+              "p95": 9.243,
+              "p99": 10.402,
+              "max": 11.413
+            }
+          },
+          "trust": {
+            "acquire_ms": {
+              "samples": 768,
+              "p50": 0.263,
+              "p95": 0.375,
+              "p99": 0.415,
+              "max": 0.475
+            },
+            "hold_ms": {
+              "samples": 768,
+              "p50": 10.89,
+              "p95": 32.158,
+              "p99": 34.919,
+              "max": 55.349
+            }
+          },
+          "work_item": {
+            "acquire_ms": {
+              "samples": 256,
+              "p50": 0.202,
+              "p95": 0.251,
+              "p99": 0.288,
+              "max": 0.487
+            },
+            "hold_ms": {
+              "samples": 256,
+              "p50": 22.431,
+              "p95": 25.986,
+              "p99": 28.554,
+              "max": 46.828
+            }
+          }
+        },
+        "organization_acquire_ms_per_operation": {
+          "samples": 512,
+          "p50": 0.556,
+          "p95": 0.805,
+          "p99": 0.884,
+          "max": 0.916
+        },
+        "guard_queries": 768,
+        "guard_transactions": 768,
+        "guard_acquire_ms_per_operation": {
+          "samples": 512,
+          "p50": 0.285,
+          "p95": 0.415,
+          "p99": 0.453,
+          "max": 0.483
+        },
+        "guard_hold_ms_per_operation": {
+          "samples": 512,
+          "p50": 22.627,
+          "p95": 39.08,
+          "p99": 42.299,
+          "max": 60.879
+        },
+        "guard_acquire_ms_per_transaction": {
+          "samples": 768,
+          "p50": 0.176,
+          "p95": 0.222,
+          "p99": 0.244,
+          "max": 0.273
+        },
+        "guard_hold_ms_per_transaction": {
+          "samples": 768,
+          "p50": 9.449,
+          "p95": 30.14,
+          "p99": 32.708,
+          "max": 53.44
+        }
+      },
+      "by_operation": {
+        "userinfo": {
+          "operations": 128,
+          "throughput_per_second": 8.556,
+          "errors": {},
+          "latency_ms": {
+            "samples": 128,
+            "p50": 6.886,
+            "p95": 7.808,
+            "p99": 8.625,
+            "max": 10.639
+          },
+          "sql_statements": {
+            "total": 1408,
+            "mean": 11.0
+          },
+          "locks": {
+            "account": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 0.211,
+                "p95": 0.295,
+                "p99": 0.386,
+                "max": 0.695
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 2.296,
+                "p95": 2.641,
+                "p99": 3.046,
+                "max": 5.947
+              }
+            },
+            "organization": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 0.178,
+                "p95": 0.224,
+                "p99": 0.234,
+                "max": 0.244
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 3.323,
+                "p95": 3.79,
+                "p99": 4.677,
+                "max": 6.979
+              }
+            },
+            "organization_gate": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 0.169,
+                "p95": 0.214,
+                "p99": 0.224,
+                "max": 0.272
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 3.758,
+                "p95": 4.287,
+                "p99": 5.131,
+                "max": 7.43
+              }
+            },
+            "principal": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 0.193,
+                "p95": 0.241,
+                "p99": 0.255,
+                "max": 0.257
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 4.276,
+                "p95": 4.886,
+                "p99": 5.735,
+                "max": 7.952
+              }
+            },
+            "trust": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 0.199,
+                "p95": 0.255,
+                "p99": 0.264,
+                "max": 0.269
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 4.804,
+                "p95": 5.432,
+                "p99": 6.305,
+                "max": 8.498
+              }
+            }
+          },
+          "organization_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 0.349,
+            "p95": 0.427,
+            "p99": 0.449,
+            "max": 0.517
+          },
+          "guard_queries": 128,
+          "guard_transactions": 128,
+          "guard_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 0.178,
+            "p95": 0.224,
+            "p99": 0.234,
+            "max": 0.244
+          },
+          "guard_hold_ms_per_operation": {
+            "samples": 128,
+            "p50": 3.323,
+            "p95": 3.79,
+            "p99": 4.677,
+            "max": 6.979
+          },
+          "guard_acquire_ms_per_transaction": {
+            "samples": 128,
+            "p50": 0.178,
+            "p95": 0.224,
+            "p99": 0.234,
+            "max": 0.244
+          },
+          "guard_hold_ms_per_transaction": {
+            "samples": 128,
+            "p50": 3.323,
+            "p95": 3.79,
+            "p99": 4.677,
+            "max": 6.979
+          }
+        },
+        "refresh": {
+          "operations": 128,
+          "throughput_per_second": 8.556,
+          "errors": {},
+          "latency_ms": {
+            "samples": 128,
+            "p50": 14.241,
+            "p95": 16.404,
+            "p99": 18.54,
+            "max": 18.777
+          },
+          "sql_statements": {
+            "total": 2176,
+            "mean": 17.0
+          },
+          "locks": {
+            "account": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 0.21,
+                "p95": 0.258,
+                "p99": 0.272,
+                "max": 0.295
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 8.822,
+                "p95": 9.964,
+                "p99": 11.943,
+                "max": 13.089
+              }
+            },
+            "organization": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 0.177,
+                "p95": 0.23,
+                "p99": 0.258,
+                "max": 0.273
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 9.819,
+                "p95": 11.022,
+                "p99": 13.266,
+                "max": 14.127
+              }
+            },
+            "organization_gate": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 0.168,
+                "p95": 0.218,
+                "p99": 0.23,
+                "max": 0.236
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 10.255,
+                "p95": 11.496,
+                "p99": 13.808,
+                "max": 14.571
+              }
+            },
+            "principal": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 0.192,
+                "p95": 0.24,
+                "p99": 0.265,
+                "max": 0.269
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 10.752,
+                "p95": 12.132,
+                "p99": 14.392,
+                "max": 15.08
+              }
+            },
+            "session": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 0.209,
+                "p95": 0.265,
+                "p99": 0.361,
+                "max": 4.196
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 8.227,
+                "p95": 9.243,
+                "p99": 10.402,
+                "max": 11.413
+              }
+            },
+            "trust": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 0.191,
+                "p95": 0.242,
+                "p99": 0.26,
+                "max": 0.262
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 11.262,
+                "p95": 12.743,
+                "p99": 14.986,
+                "max": 15.613
+              }
+            }
+          },
+          "organization_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 0.344,
+            "p95": 0.443,
+            "p99": 0.464,
+            "max": 0.506
+          },
+          "guard_queries": 128,
+          "guard_transactions": 128,
+          "guard_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 0.177,
+            "p95": 0.23,
+            "p99": 0.258,
+            "max": 0.273
+          },
+          "guard_hold_ms_per_operation": {
+            "samples": 128,
+            "p50": 9.819,
+            "p95": 11.022,
+            "p99": 13.266,
+            "max": 14.127
+          },
+          "guard_acquire_ms_per_transaction": {
+            "samples": 128,
+            "p50": 0.177,
+            "p95": 0.23,
+            "p99": 0.258,
+            "max": 0.273
+          },
+          "guard_hold_ms_per_transaction": {
+            "samples": 128,
+            "p50": 9.819,
+            "p95": 11.022,
+            "p99": 13.266,
+            "max": 14.127
+          }
+        },
+        "work_read": {
+          "operations": 128,
+          "throughput_per_second": 8.556,
+          "errors": {},
+          "latency_ms": {
+            "samples": 128,
+            "p50": 48.412,
+            "p95": 54.308,
+            "p99": 57.394,
+            "max": 61.234
+          },
+          "sql_statements": {
+            "total": 10368,
+            "mean": 81.0
+          },
+          "locks": {
+            "organization": {
+              "acquire_ms": {
+                "samples": 256,
+                "p50": 0.176,
+                "p95": 0.226,
+                "p99": 0.242,
+                "max": 0.269
+              },
+              "hold_ms": {
+                "samples": 256,
+                "p50": 19.287,
+                "p95": 31.825,
+                "p99": 34.332,
+                "max": 35.873
+              }
+            },
+            "organization_gate": {
+              "acquire_ms": {
+                "samples": 256,
+                "p50": 0.17,
+                "p95": 0.213,
+                "p99": 0.23,
+                "max": 0.248
+              },
+              "hold_ms": {
+                "samples": 256,
+                "p50": 19.694,
+                "p95": 32.296,
+                "p99": 34.787,
+                "max": 36.382
+              }
+            },
+            "principal": {
+              "acquire_ms": {
+                "samples": 256,
+                "p50": 0.195,
+                "p95": 0.249,
+                "p99": 0.267,
+                "max": 0.702
+              },
+              "hold_ms": {
+                "samples": 256,
+                "p50": 20.645,
+                "p95": 33.416,
+                "p99": 35.836,
+                "max": 37.517
+              }
+            },
+            "trust": {
+              "acquire_ms": {
+                "samples": 256,
+                "p50": 0.314,
+                "p95": 0.405,
+                "p99": 0.442,
+                "max": 0.475
+              },
+              "hold_ms": {
+                "samples": 256,
+                "p50": 21.172,
+                "p95": 34.023,
+                "p99": 36.432,
+                "max": 38.09
+              }
+            },
+            "work_item": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 0.203,
+                "p95": 0.246,
+                "p99": 0.263,
+                "max": 0.281
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 23.364,
+                "p95": 26.412,
+                "p99": 28.045,
+                "max": 29.197
+              }
+            }
+          },
+          "organization_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 0.693,
+            "p95": 0.859,
+            "p99": 0.906,
+            "max": 0.916
+          },
+          "guard_queries": 256,
+          "guard_transactions": 256,
+          "guard_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 0.35,
+            "p95": 0.439,
+            "p99": 0.479,
+            "max": 0.483
+          },
+          "guard_hold_ms_per_operation": {
+            "samples": 128,
+            "p50": 36.927,
+            "p95": 41.323,
+            "p99": 44.21,
+            "max": 45.348
+          },
+          "guard_acquire_ms_per_transaction": {
+            "samples": 256,
+            "p50": 0.176,
+            "p95": 0.226,
+            "p99": 0.242,
+            "max": 0.269
+          },
+          "guard_hold_ms_per_transaction": {
+            "samples": 256,
+            "p50": 19.287,
+            "p95": 31.825,
+            "p99": 34.332,
+            "max": 35.873
+          }
+        },
+        "work_edit": {
+          "operations": 128,
+          "throughput_per_second": 8.556,
+          "errors": {},
+          "latency_ms": {
+            "samples": 128,
+            "p50": 45.286,
+            "p95": 50.902,
+            "p99": 62.512,
+            "max": 72.912
+          },
+          "sql_statements": {
+            "total": 9472,
+            "mean": 74.0
+          },
+          "locks": {
+            "command_key": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 0.292,
+                "p95": 0.352,
+                "p99": 0.406,
+                "max": 0.706
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 27.938,
+                "p95": 32.551,
+                "p99": 40.62,
+                "max": 55.849
+              }
+            },
+            "organization": {
+              "acquire_ms": {
+                "samples": 256,
+                "p50": 0.177,
+                "p95": 0.216,
+                "p99": 0.239,
+                "max": 0.261
+              },
+              "hold_ms": {
+                "samples": 256,
+                "p50": 18.489,
+                "p95": 28.275,
+                "p99": 31.796,
+                "max": 53.44
+              }
+            },
+            "organization_gate": {
+              "acquire_ms": {
+                "samples": 256,
+                "p50": 0.166,
+                "p95": 0.209,
+                "p99": 0.226,
+                "max": 0.245
+              },
+              "hold_ms": {
+                "samples": 256,
+                "p50": 18.945,
+                "p95": 28.725,
+                "p99": 32.255,
+                "max": 53.902
+              }
+            },
+            "principal": {
+              "acquire_ms": {
+                "samples": 256,
+                "p50": 0.191,
+                "p95": 0.244,
+                "p99": 0.262,
+                "max": 0.28
+              },
+              "hold_ms": {
+                "samples": 256,
+                "p50": 19.918,
+                "p95": 29.747,
+                "p99": 33.211,
+                "max": 54.815
+              }
+            },
+            "trust": {
+              "acquire_ms": {
+                "samples": 256,
+                "p50": 0.265,
+                "p95": 0.351,
+                "p99": 0.398,
+                "max": 0.417
+              },
+              "hold_ms": {
+                "samples": 256,
+                "p50": 20.466,
+                "p95": 30.339,
+                "p99": 33.774,
+                "max": 55.349
+              }
+            },
+            "work_item": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 0.202,
+                "p95": 0.256,
+                "p99": 0.315,
+                "max": 0.487
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 19.125,
+                "p95": 23.163,
+                "p99": 27.869,
+                "max": 46.828
+              }
+            }
+          },
+          "organization_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 0.686,
+            "p95": 0.827,
+            "p99": 0.883,
+            "max": 0.902
+          },
+          "guard_queries": 256,
+          "guard_transactions": 256,
+          "guard_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 0.352,
+            "p95": 0.425,
+            "p99": 0.451,
+            "max": 0.482
+          },
+          "guard_hold_ms_per_operation": {
+            "samples": 128,
+            "p50": 33.274,
+            "p95": 37.982,
+            "p99": 49.245,
+            "max": 60.879
+          },
+          "guard_acquire_ms_per_transaction": {
+            "samples": 256,
+            "p50": 0.177,
+            "p95": 0.216,
+            "p99": 0.239,
+            "max": 0.261
+          },
+          "guard_hold_ms_per_transaction": {
+            "samples": 256,
+            "p50": 18.489,
+            "p95": 28.275,
+            "p99": 31.796,
+            "max": 53.44
+          }
+        }
+      }
+    },
+    {
+      "concurrency": 4,
+      "elapsed_seconds": 12.393,
+      "all": {
+        "operations": 512,
+        "throughput_per_second": 41.314,
+        "errors": {},
+        "latency_ms": {
+          "samples": 512,
+          "p50": 77.342,
+          "p95": 172.723,
+          "p99": 180.34,
+          "max": 202.882
+        },
+        "sql_statements": {
+          "total": 23424,
+          "mean": 45.75
+        },
+        "locks": {
+          "account": {
+            "acquire_ms": {
+              "samples": 256,
+              "p50": 1.25,
+              "p95": 2.332,
+              "p99": 5.808,
+              "max": 6.219
+            },
+            "hold_ms": {
+              "samples": 256,
+              "p50": 11.66,
+              "p95": 26.403,
+              "p99": 27.338,
+              "max": 71.488
+            }
+          },
+          "command_key": {
+            "acquire_ms": {
+              "samples": 128,
+              "p50": 2.496,
+              "p95": 3.352,
+              "p99": 3.989,
+              "max": 4.571
+            },
+            "hold_ms": {
+              "samples": 128,
+              "p50": 88.057,
+              "p95": 98.902,
+              "p99": 111.084,
+              "max": 140.189
+            }
+          },
+          "organization": {
+            "acquire_ms": {
+              "samples": 768,
+              "p50": 1.285,
+              "p95": 1.711,
+              "p99": 5.681,
+              "max": 8.983
+            },
+            "hold_ms": {
+              "samples": 768,
+              "p50": 24.501,
+              "p95": 95.349,
+              "p99": 101.552,
+              "max": 132.021
+            }
+          },
+          "organization_gate": {
+            "acquire_ms": {
+              "samples": 768,
+              "p50": 1.28,
+              "p95": 1.793,
+              "p99": 5.595,
+              "max": 10.332
+            },
+            "hold_ms": {
+              "samples": 768,
+              "p50": 26.268,
+              "p95": 96.734,
+              "p99": 103.304,
+              "max": 133.77
+            }
+          },
+          "principal": {
+            "acquire_ms": {
+              "samples": 768,
+              "p50": 1.276,
+              "p95": 1.763,
+              "p99": 5.255,
+              "max": 6.039
+            },
+            "hold_ms": {
+              "samples": 768,
+              "p50": 29.344,
+              "p95": 99.983,
+              "p99": 106.402,
+              "max": 136.95
+            }
+          },
+          "session": {
+            "acquire_ms": {
+              "samples": 128,
+              "p50": 1.292,
+              "p95": 1.824,
+              "p99": 5.804,
+              "max": 5.88
+            },
+            "hold_ms": {
+              "samples": 128,
+              "p50": 17.056,
+              "p95": 25.022,
+              "p99": 25.866,
+              "max": 69.542
+            }
+          },
+          "trust": {
+            "acquire_ms": {
+              "samples": 768,
+              "p50": 1.62,
+              "p95": 3.074,
+              "p99": 6.199,
+              "max": 7.954
+            },
+            "hold_ms": {
+              "samples": 768,
+              "p50": 31.157,
+              "p95": 101.508,
+              "p99": 107.993,
+              "max": 138.48
+            }
+          },
+          "work_item": {
+            "acquire_ms": {
+              "samples": 256,
+              "p50": 1.458,
+              "p95": 2.05,
+              "p99": 3.039,
+              "max": 6.008
+            },
+            "hold_ms": {
+              "samples": 256,
+              "p50": 65.983,
+              "p95": 81.665,
+              "p99": 85.447,
+              "max": 110.686
+            }
+          }
+        },
+        "organization_acquire_ms_per_operation": {
+          "samples": 512,
+          "p50": 3.716,
+          "p95": 6.633,
+          "p99": 9.309,
+          "max": 13.321
+        },
+        "guard_queries": 768,
+        "guard_transactions": 768,
+        "guard_acquire_ms_per_operation": {
+          "samples": 512,
+          "p50": 1.683,
+          "p95": 3.309,
+          "p99": 6.291,
+          "max": 8.983
+        },
+        "guard_hold_ms_per_operation": {
+          "samples": 512,
+          "p50": 56.371,
+          "p95": 121.089,
+          "p99": 128.1,
+          "max": 154.827
+        },
+        "guard_acquire_ms_per_transaction": {
+          "samples": 768,
+          "p50": 1.285,
+          "p95": 1.711,
+          "p99": 5.681,
+          "max": 8.983
+        },
+        "guard_hold_ms_per_transaction": {
+          "samples": 768,
+          "p50": 24.501,
+          "p95": 95.349,
+          "p99": 101.552,
+          "max": 132.021
+        }
+      },
+      "by_operation": {
+        "userinfo": {
+          "operations": 128,
+          "throughput_per_second": 10.329,
+          "errors": {},
+          "latency_ms": {
+            "samples": 128,
+            "p50": 24.399,
+            "p95": 27.822,
+            "p99": 30.522,
+            "max": 32.163
+          },
+          "sql_statements": {
+            "total": 1408,
+            "mean": 11.0
+          },
+          "locks": {
+            "account": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 1.199,
+                "p95": 1.718,
+                "p99": 2.595,
+                "max": 5.705
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 7.431,
+                "p95": 10.046,
+                "p99": 11.867,
+                "max": 12.81
+              }
+            },
+            "organization": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 1.155,
+                "p95": 1.558,
+                "p99": 1.691,
+                "max": 1.881
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 10.551,
+                "p95": 14.064,
+                "p99": 14.948,
+                "max": 15.832
+              }
+            },
+            "organization_gate": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 1.221,
+                "p95": 1.759,
+                "p99": 4.604,
+                "max": 5.593
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 12.146,
+                "p95": 15.55,
+                "p99": 16.366,
+                "max": 17.255
+              }
+            },
+            "principal": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 1.234,
+                "p95": 1.65,
+                "p99": 4.363,
+                "max": 5.619
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 13.852,
+                "p95": 16.995,
+                "p99": 18.121,
+                "max": 19.51
+              }
+            },
+            "trust": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 1.261,
+                "p95": 1.675,
+                "p99": 2.032,
+                "max": 5.46
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 15.362,
+                "p95": 18.675,
+                "p99": 19.746,
+                "max": 21.378
+              }
+            }
+          },
+          "organization_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 2.419,
+            "p95": 3.054,
+            "p99": 5.533,
+            "max": 6.704
+          },
+          "guard_queries": 128,
+          "guard_transactions": 128,
+          "guard_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 1.155,
+            "p95": 1.558,
+            "p99": 1.691,
+            "max": 1.881
+          },
+          "guard_hold_ms_per_operation": {
+            "samples": 128,
+            "p50": 10.551,
+            "p95": 14.064,
+            "p99": 14.948,
+            "max": 15.832
+          },
+          "guard_acquire_ms_per_transaction": {
+            "samples": 128,
+            "p50": 1.155,
+            "p95": 1.558,
+            "p99": 1.691,
+            "max": 1.881
+          },
+          "guard_hold_ms_per_transaction": {
+            "samples": 128,
+            "p50": 10.551,
+            "p95": 14.064,
+            "p99": 14.948,
+            "max": 15.832
+          }
+        },
+        "refresh": {
+          "operations": 128,
+          "throughput_per_second": 10.329,
+          "errors": {},
+          "latency_ms": {
+            "samples": 128,
+            "p50": 43.349,
+            "p95": 48.087,
+            "p99": 57.003,
+            "max": 95.708
+          },
+          "sql_statements": {
+            "total": 2176,
+            "mean": 17.0
+          },
+          "locks": {
+            "account": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 1.315,
+                "p95": 5.596,
+                "p99": 5.903,
+                "max": 6.219
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 18.786,
+                "p95": 26.895,
+                "p99": 27.7,
+                "max": 71.488
+              }
+            },
+            "organization": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 1.164,
+                "p95": 4.276,
+                "p99": 6.235,
+                "max": 8.983
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 22.941,
+                "p95": 30.355,
+                "p99": 31.038,
+                "max": 75.08
+              }
+            },
+            "organization_gate": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 1.204,
+                "p95": 5.185,
+                "p99": 5.928,
+                "max": 6.159
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 24.862,
+                "p95": 31.931,
+                "p99": 32.356,
+                "max": 76.895
+              }
+            },
+            "principal": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 1.188,
+                "p95": 2.357,
+                "p99": 5.672,
+                "max": 5.925
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 26.885,
+                "p95": 33.648,
+                "p99": 33.919,
+                "max": 78.863
+              }
+            },
+            "session": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 1.292,
+                "p95": 1.824,
+                "p99": 5.804,
+                "max": 5.88
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 17.056,
+                "p95": 25.022,
+                "p99": 25.866,
+                "max": 69.542
+              }
+            },
+            "trust": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 1.154,
+                "p95": 1.647,
+                "p99": 5.762,
+                "max": 5.904
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 28.788,
+                "p95": 35.187,
+                "p99": 35.682,
+                "max": 80.589
+              }
+            }
+          },
+          "organization_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 2.441,
+            "p95": 7.062,
+            "p99": 9.001,
+            "max": 11.976
+          },
+          "guard_queries": 128,
+          "guard_transactions": 128,
+          "guard_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 1.164,
+            "p95": 4.276,
+            "p99": 6.235,
+            "max": 8.983
+          },
+          "guard_hold_ms_per_operation": {
+            "samples": 128,
+            "p50": 22.941,
+            "p95": 30.355,
+            "p99": 31.038,
+            "max": 75.08
+          },
+          "guard_acquire_ms_per_transaction": {
+            "samples": 128,
+            "p50": 1.164,
+            "p95": 4.276,
+            "p99": 6.235,
+            "max": 8.983
+          },
+          "guard_hold_ms_per_transaction": {
+            "samples": 128,
+            "p50": 22.941,
+            "p95": 30.355,
+            "p99": 31.038,
+            "max": 75.08
+          }
+        },
+        "work_read": {
+          "operations": 128,
+          "throughput_per_second": 10.329,
+          "errors": {},
+          "latency_ms": {
+            "samples": 128,
+            "p50": 164.197,
+            "p95": 177.945,
+            "p99": 182.601,
+            "max": 191.681
+          },
+          "sql_statements": {
+            "total": 10368,
+            "mean": 81.0
+          },
+          "locks": {
+            "organization": {
+              "acquire_ms": {
+                "samples": 256,
+                "p50": 1.293,
+                "p95": 1.689,
+                "p99": 5.494,
+                "max": 5.844
+              },
+              "hold_ms": {
+                "samples": 256,
+                "p50": 35.483,
+                "p95": 98.293,
+                "p99": 102.364,
+                "max": 103.893
+              }
+            },
+            "organization_gate": {
+              "acquire_ms": {
+                "samples": 256,
+                "p50": 1.328,
+                "p95": 1.845,
+                "p99": 5.834,
+                "max": 10.332
+              },
+              "hold_ms": {
+                "samples": 256,
+                "p50": 37.186,
+                "p95": 100.166,
+                "p99": 104.071,
+                "max": 105.179
+              }
+            },
+            "principal": {
+              "acquire_ms": {
+                "samples": 256,
+                "p50": 1.235,
+                "p95": 1.663,
+                "p99": 5.42,
+                "max": 6.039
+              },
+              "hold_ms": {
+                "samples": 256,
+                "p50": 40.272,
+                "p95": 103.447,
+                "p99": 107.544,
+                "max": 107.952
+              }
+            },
+            "trust": {
+              "acquire_ms": {
+                "samples": 256,
+                "p50": 2.43,
+                "p95": 3.416,
+                "p99": 6.727,
+                "max": 7.954
+              },
+              "hold_ms": {
+                "samples": 256,
+                "p50": 41.415,
+                "p95": 104.934,
+                "p99": 109.143,
+                "max": 109.489
+              }
+            },
+            "work_item": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 1.469,
+                "p95": 2.149,
+                "p99": 2.621,
+                "max": 5.524
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 75.07,
+                "p95": 81.971,
+                "p99": 84.051,
+                "max": 86.768
+              }
+            }
+          },
+          "organization_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 5.087,
+            "p95": 8.886,
+            "p99": 9.705,
+            "max": 13.321
+          },
+          "guard_queries": 256,
+          "guard_transactions": 256,
+          "guard_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 2.511,
+            "p95": 3.717,
+            "p99": 6.875,
+            "max": 7.114
+          },
+          "guard_hold_ms_per_operation": {
+            "samples": 128,
+            "p50": 115.225,
+            "p95": 126.532,
+            "p99": 130.81,
+            "max": 131.331
+          },
+          "guard_acquire_ms_per_transaction": {
+            "samples": 256,
+            "p50": 1.293,
+            "p95": 1.689,
+            "p99": 5.494,
+            "max": 5.844
+          },
+          "guard_hold_ms_per_transaction": {
+            "samples": 256,
+            "p50": 35.483,
+            "p95": 98.293,
+            "p99": 102.364,
+            "max": 103.893
+          }
+        },
+        "work_edit": {
+          "operations": 128,
+          "throughput_per_second": 10.329,
+          "errors": {},
+          "latency_ms": {
+            "samples": 128,
+            "p50": 152.125,
+            "p95": 169.475,
+            "p99": 185.637,
+            "max": 202.882
+          },
+          "sql_statements": {
+            "total": 9472,
+            "mean": 74.0
+          },
+          "locks": {
+            "command_key": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 2.496,
+                "p95": 3.352,
+                "p99": 3.989,
+                "max": 4.571
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 88.057,
+                "p95": 98.902,
+                "p99": 111.084,
+                "max": 140.189
+              }
+            },
+            "organization": {
+              "acquire_ms": {
+                "samples": 256,
+                "p50": 1.338,
+                "p95": 1.808,
+                "p99": 2.047,
+                "max": 2.266
+              },
+              "hold_ms": {
+                "samples": 256,
+                "p50": 52.069,
+                "p95": 85.989,
+                "p99": 93.963,
+                "max": 132.021
+              }
+            },
+            "organization_gate": {
+              "acquire_ms": {
+                "samples": 256,
+                "p50": 1.309,
+                "p95": 1.713,
+                "p99": 1.888,
+                "max": 2.398
+              },
+              "hold_ms": {
+                "samples": 256,
+                "p50": 53.542,
+                "p95": 87.771,
+                "p99": 95.5,
+                "max": 133.77
+              }
+            },
+            "principal": {
+              "acquire_ms": {
+                "samples": 256,
+                "p50": 1.339,
+                "p95": 1.76,
+                "p99": 1.916,
+                "max": 2.618
+              },
+              "hold_ms": {
+                "samples": 256,
+                "p50": 56.445,
+                "p95": 90.532,
+                "p99": 98.216,
+                "max": 136.95
+              }
+            },
+            "trust": {
+              "acquire_ms": {
+                "samples": 256,
+                "p50": 1.666,
+                "p95": 3.009,
+                "p99": 3.823,
+                "max": 7.19
+              },
+              "hold_ms": {
+                "samples": 256,
+                "p50": 58.055,
+                "p95": 92.413,
+                "p99": 99.972,
+                "max": 138.48
+              }
+            },
+            "work_item": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 1.452,
+                "p95": 2.014,
+                "p99": 3.201,
+                "max": 6.008
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 61.129,
+                "p95": 67.237,
+                "p99": 85.534,
+                "max": 110.686
+              }
+            }
+          },
+          "organization_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 5.259,
+            "p95": 6.545,
+            "p99": 6.89,
+            "max": 7.026
+          },
+          "guard_queries": 256,
+          "guard_transactions": 256,
+          "guard_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 2.613,
+            "p95": 3.333,
+            "p99": 3.594,
+            "max": 3.808
+          },
+          "guard_hold_ms_per_operation": {
+            "samples": 128,
+            "p50": 101.859,
+            "p95": 116.231,
+            "p99": 125.147,
+            "max": 154.827
+          },
+          "guard_acquire_ms_per_transaction": {
+            "samples": 256,
+            "p50": 1.338,
+            "p95": 1.808,
+            "p99": 2.047,
+            "max": 2.266
+          },
+          "guard_hold_ms_per_transaction": {
+            "samples": 256,
+            "p50": 52.069,
+            "p95": 85.989,
+            "p99": 93.963,
+            "max": 132.021
+          }
+        }
+      }
+    },
+    {
+      "concurrency": 8,
+      "elapsed_seconds": 12.734,
+      "all": {
+        "operations": 512,
+        "throughput_per_second": 40.209,
+        "errors": {},
+        "latency_ms": {
+          "samples": 512,
+          "p50": 162.147,
+          "p95": 352.976,
+          "p99": 436.625,
+          "max": 545.479
+        },
+        "sql_statements": {
+          "total": 23424,
+          "mean": 45.75
+        },
+        "locks": {
+          "account": {
+            "acquire_ms": {
+              "samples": 256,
+              "p50": 2.823,
+              "p95": 3.845,
+              "p99": 6.091,
+              "max": 7.526
+            },
+            "hold_ms": {
+              "samples": 256,
+              "p50": 21.427,
+              "p95": 35.887,
+              "p99": 39.134,
+              "max": 42.979
+            }
+          },
+          "command_key": {
+            "acquire_ms": {
+              "samples": 128,
+              "p50": 5.85,
+              "p95": 9.896,
+              "p99": 10.936,
+              "max": 11.613
+            },
+            "hold_ms": {
+              "samples": 128,
+              "p50": 168.695,
+              "p95": 180.06,
+              "p99": 255.144,
+              "max": 345.863
+            }
+          },
+          "organization": {
+            "acquire_ms": {
+              "samples": 768,
+              "p50": 2.784,
+              "p95": 3.938,
+              "p99": 7.641,
+              "max": 8.636
+            },
+            "hold_ms": {
+              "samples": 768,
+              "p50": 44.553,
+              "p95": 185.343,
+              "p99": 196.242,
+              "max": 340.07
+            }
+          },
+          "organization_gate": {
+            "acquire_ms": {
+              "samples": 768,
+              "p50": 2.797,
+              "p95": 3.785,
+              "p99": 7.458,
+              "max": 8.499
+            },
+            "hold_ms": {
+              "samples": 768,
+              "p50": 47.465,
+              "p95": 188.275,
+              "p99": 198.82,
+              "max": 342.768
+            }
+          },
+          "principal": {
+            "acquire_ms": {
+              "samples": 768,
+              "p50": 2.865,
+              "p95": 3.932,
+              "p99": 7.846,
+              "max": 9.842
+            },
+            "hold_ms": {
+              "samples": 768,
+              "p50": 53.683,
+              "p95": 194.792,
+              "p99": 205.459,
+              "max": 348.746
+            }
+          },
+          "session": {
+            "acquire_ms": {
+              "samples": 128,
+              "p50": 3.047,
+              "p95": 4.047,
+              "p99": 5.433,
+              "max": 7.52
+            },
+            "hold_ms": {
+              "samples": 128,
+              "p50": 28.059,
+              "p95": 32.968,
+              "p99": 35.146,
+              "max": 38.041
+            }
+          },
+          "trust": {
+            "acquire_ms": {
+              "samples": 768,
+              "p50": 4.172,
+              "p95": 7.167,
+              "p99": 9.954,
+              "max": 13.203
+            },
+            "hold_ms": {
+              "samples": 768,
+              "p50": 57.045,
+              "p95": 198.065,
+              "p99": 209.261,
+              "max": 353.517
+            }
+          },
+          "work_item": {
+            "acquire_ms": {
+              "samples": 256,
+              "p50": 2.796,
+              "p95": 6.912,
+              "p99": 7.785,
+              "max": 126.419
+            },
+            "hold_ms": {
+              "samples": 256,
+              "p50": 132.995,
+              "p95": 157.161,
+              "p99": 163.302,
+              "max": 256.39
+            }
+          }
+        },
+        "organization_acquire_ms_per_operation": {
+          "samples": 512,
+          "p50": 9.408,
+          "p95": 13.671,
+          "p99": 16.724,
+          "max": 17.792
+        },
+        "guard_queries": 768,
+        "guard_transactions": 768,
+        "guard_acquire_ms_per_operation": {
+          "samples": 512,
+          "p50": 4.377,
+          "p95": 7.321,
+          "p99": 10.271,
+          "max": 11.46
+        },
+        "guard_hold_ms_per_operation": {
+          "samples": 512,
+          "p50": 78.395,
+          "p95": 230.202,
+          "p99": 304.28,
+          "max": 408.12
+        },
+        "guard_acquire_ms_per_transaction": {
+          "samples": 768,
+          "p50": 2.784,
+          "p95": 3.938,
+          "p99": 7.641,
+          "max": 8.636
+        },
+        "guard_hold_ms_per_transaction": {
+          "samples": 768,
+          "p50": 44.553,
+          "p95": 185.343,
+          "p99": 196.242,
+          "max": 340.07
+        }
+      },
+      "by_operation": {
+        "userinfo": {
+          "operations": 128,
+          "throughput_per_second": 10.052,
+          "errors": {},
+          "latency_ms": {
+            "samples": 128,
+            "p50": 50.897,
+            "p95": 58.97,
+            "p99": 65.257,
+            "max": 89.482
+          },
+          "sql_statements": {
+            "total": 1408,
+            "mean": 11.0
+          },
+          "locks": {
+            "account": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 2.67,
+                "p95": 3.86,
+                "p99": 6.215,
+                "max": 7.526
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 15.464,
+                "p95": 20.336,
+                "p99": 21.443,
+                "max": 23.974
+              }
+            },
+            "organization": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 2.794,
+                "p95": 6.782,
+                "p99": 8.401,
+                "max": 8.636
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 21.789,
+                "p95": 27.429,
+                "p99": 28.274,
+                "max": 33.493
+              }
+            },
+            "organization_gate": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 2.825,
+                "p95": 3.816,
+                "p99": 7.241,
+                "max": 7.685
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 24.871,
+                "p95": 30.64,
+                "p99": 31.338,
+                "max": 42.398
+              }
+            },
+            "principal": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 2.737,
+                "p95": 3.469,
+                "p99": 4.472,
+                "max": 8.744
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 28.471,
+                "p95": 33.964,
+                "p99": 37.202,
+                "max": 46.173
+              }
+            },
+            "trust": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 2.808,
+                "p95": 3.565,
+                "p99": 4.413,
+                "max": 7.575
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 31.618,
+                "p95": 37.34,
+                "p99": 40.786,
+                "max": 51.203
+              }
+            }
+          },
+          "organization_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 5.684,
+            "p95": 10.061,
+            "p99": 11.832,
+            "max": 14.963
+          },
+          "guard_queries": 128,
+          "guard_transactions": 128,
+          "guard_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 2.794,
+            "p95": 6.782,
+            "p99": 8.401,
+            "max": 8.636
+          },
+          "guard_hold_ms_per_operation": {
+            "samples": 128,
+            "p50": 21.789,
+            "p95": 27.429,
+            "p99": 28.274,
+            "max": 33.493
+          },
+          "guard_acquire_ms_per_transaction": {
+            "samples": 128,
+            "p50": 2.794,
+            "p95": 6.782,
+            "p99": 8.401,
+            "max": 8.636
+          },
+          "guard_hold_ms_per_transaction": {
+            "samples": 128,
+            "p50": 21.789,
+            "p95": 27.429,
+            "p99": 28.274,
+            "max": 33.493
+          }
+        },
+        "refresh": {
+          "operations": 128,
+          "throughput_per_second": 10.052,
+          "errors": {},
+          "latency_ms": {
+            "samples": 128,
+            "p50": 81.399,
+            "p95": 92.816,
+            "p99": 96.019,
+            "max": 113.233
+          },
+          "sql_statements": {
+            "total": 2176,
+            "mean": 17.0
+          },
+          "locks": {
+            "account": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 2.994,
+                "p95": 3.792,
+                "p99": 5.388,
+                "max": 6.026
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 31.544,
+                "p95": 36.657,
+                "p99": 40.968,
+                "max": 42.979
+              }
+            },
+            "organization": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 2.853,
+                "p95": 3.84,
+                "p99": 6.675,
+                "max": 7.614
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 38.078,
+                "p95": 43.549,
+                "p99": 49.115,
+                "max": 51.205
+              }
+            },
+            "organization_gate": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 2.834,
+                "p95": 6.914,
+                "p99": 7.642,
+                "max": 8.499
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 41.335,
+                "p95": 48.233,
+                "p99": 52.51,
+                "max": 54.415
+              }
+            },
+            "principal": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 2.987,
+                "p95": 7.122,
+                "p99": 7.965,
+                "max": 8.332
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 44.46,
+                "p95": 53.667,
+                "p99": 55.811,
+                "max": 57.528
+              }
+            },
+            "session": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 3.047,
+                "p95": 4.047,
+                "p99": 5.433,
+                "max": 7.52
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 28.059,
+                "p95": 32.968,
+                "p99": 35.146,
+                "max": 38.041
+              }
+            },
+            "trust": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 2.931,
+                "p95": 7.423,
+                "p99": 7.947,
+                "max": 9.308
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 48.276,
+                "p95": 58.172,
+                "p99": 61.409,
+                "max": 63.871
+              }
+            }
+          },
+          "organization_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 5.794,
+            "p95": 10.248,
+            "p99": 10.612,
+            "max": 11.647
+          },
+          "guard_queries": 128,
+          "guard_transactions": 128,
+          "guard_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 2.853,
+            "p95": 3.84,
+            "p99": 6.675,
+            "max": 7.614
+          },
+          "guard_hold_ms_per_operation": {
+            "samples": 128,
+            "p50": 38.078,
+            "p95": 43.549,
+            "p99": 49.115,
+            "max": 51.205
+          },
+          "guard_acquire_ms_per_transaction": {
+            "samples": 128,
+            "p50": 2.853,
+            "p95": 3.84,
+            "p99": 6.675,
+            "max": 7.614
+          },
+          "guard_hold_ms_per_transaction": {
+            "samples": 128,
+            "p50": 38.078,
+            "p95": 43.549,
+            "p99": 49.115,
+            "max": 51.205
+          }
+        },
+        "work_read": {
+          "operations": 128,
+          "throughput_per_second": 10.052,
+          "errors": {},
+          "latency_ms": {
+            "samples": 128,
+            "p50": 339.142,
+            "p95": 372.391,
+            "p99": 528.008,
+            "max": 545.479
+          },
+          "sql_statements": {
+            "total": 10368,
+            "mean": 81.0
+          },
+          "locks": {
+            "organization": {
+              "acquire_ms": {
+                "samples": 256,
+                "p50": 2.634,
+                "p95": 4.246,
+                "p99": 7.718,
+                "max": 7.954
+              },
+              "hold_ms": {
+                "samples": 256,
+                "p50": 128.685,
+                "p95": 190.372,
+                "p99": 245.88,
+                "max": 340.07
+              }
+            },
+            "organization_gate": {
+              "acquire_ms": {
+                "samples": 256,
+                "p50": 2.673,
+                "p95": 3.408,
+                "p99": 7.024,
+                "max": 7.301
+              },
+              "hold_ms": {
+                "samples": 256,
+                "p50": 130.8,
+                "p95": 193.991,
+                "p99": 248.798,
+                "max": 342.768
+              }
+            },
+            "principal": {
+              "acquire_ms": {
+                "samples": 256,
+                "p50": 2.773,
+                "p95": 3.719,
+                "p99": 7.43,
+                "max": 8.216
+              },
+              "hold_ms": {
+                "samples": 256,
+                "p50": 135.458,
+                "p95": 200.803,
+                "p99": 254.938,
+                "max": 348.746
+              }
+            },
+            "trust": {
+              "acquire_ms": {
+                "samples": 256,
+                "p50": 5.496,
+                "p95": 7.227,
+                "p99": 10.245,
+                "max": 13.203
+              },
+              "hold_ms": {
+                "samples": 256,
+                "p50": 137.946,
+                "p95": 204.114,
+                "p99": 257.964,
+                "max": 353.517
+              }
+            },
+            "work_item": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 2.711,
+                "p95": 6.831,
+                "p99": 7.77,
+                "max": 126.419
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 148.005,
+                "p95": 158.309,
+                "p99": 163.726,
+                "max": 256.39
+              }
+            }
+          },
+          "organization_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 10.777,
+            "p95": 15.678,
+            "p99": 17.244,
+            "max": 17.792
+          },
+          "guard_queries": 256,
+          "guard_transactions": 256,
+          "guard_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 5.342,
+            "p95": 9.739,
+            "p99": 11.156,
+            "max": 11.46
+          },
+          "guard_hold_ms_per_operation": {
+            "samples": 128,
+            "p50": 224.245,
+            "p95": 240.618,
+            "p99": 380.95,
+            "max": 408.12
+          },
+          "guard_acquire_ms_per_transaction": {
+            "samples": 256,
+            "p50": 2.634,
+            "p95": 4.246,
+            "p99": 7.718,
+            "max": 7.954
+          },
+          "guard_hold_ms_per_transaction": {
+            "samples": 256,
+            "p50": 128.685,
+            "p95": 190.372,
+            "p99": 245.88,
+            "max": 340.07
+          }
+        },
+        "work_edit": {
+          "operations": 128,
+          "throughput_per_second": 10.052,
+          "errors": {},
+          "latency_ms": {
+            "samples": 128,
+            "p50": 311.603,
+            "p95": 328.214,
+            "p99": 385.167,
+            "max": 537.797
+          },
+          "sql_statements": {
+            "total": 9472,
+            "mean": 74.0
+          },
+          "locks": {
+            "command_key": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 5.85,
+                "p95": 9.896,
+                "p99": 10.936,
+                "max": 11.613
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 168.695,
+                "p95": 180.06,
+                "p99": 255.144,
+                "max": 345.863
+              }
+            },
+            "organization": {
+              "acquire_ms": {
+                "samples": 256,
+                "p50": 2.867,
+                "p95": 3.803,
+                "p99": 5.273,
+                "max": 7.634
+              },
+              "hold_ms": {
+                "samples": 256,
+                "p50": 72.096,
+                "p95": 160.899,
+                "p99": 169.824,
+                "max": 330.632
+              }
+            },
+            "organization_gate": {
+              "acquire_ms": {
+                "samples": 256,
+                "p50": 2.88,
+                "p95": 3.783,
+                "p99": 6.691,
+                "max": 7.866
+              },
+              "hold_ms": {
+                "samples": 256,
+                "p50": 74.721,
+                "p95": 163.651,
+                "p99": 172.943,
+                "max": 333.758
+              }
+            },
+            "principal": {
+              "acquire_ms": {
+                "samples": 256,
+                "p50": 2.964,
+                "p95": 3.734,
+                "p99": 7.786,
+                "max": 9.842
+              },
+              "hold_ms": {
+                "samples": 256,
+                "p50": 83.009,
+                "p95": 170.174,
+                "p99": 179.262,
+                "max": 339.696
+              }
+            },
+            "trust": {
+              "acquire_ms": {
+                "samples": 256,
+                "p50": 4.142,
+                "p95": 7.283,
+                "p99": 10.092,
+                "max": 10.983
+              },
+              "hold_ms": {
+                "samples": 256,
+                "p50": 89.178,
+                "p95": 174.089,
+                "p99": 182.014,
+                "max": 342.433
+              }
+            },
+            "work_item": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 2.975,
+                "p95": 6.867,
+                "p99": 7.625,
+                "max": 8.151
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 112.42,
+                "p95": 127.382,
+                "p99": 137.573,
+                "max": 230.014
+              }
+            }
+          },
+          "organization_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 11.442,
+            "p95": 16.132,
+            "p99": 17.0,
+            "max": 17.23
+          },
+          "guard_queries": 256,
+          "guard_transactions": 256,
+          "guard_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 5.828,
+            "p95": 7.379,
+            "p99": 10.442,
+            "max": 10.663
+          },
+          "guard_hold_ms_per_operation": {
+            "samples": 128,
+            "p50": 196.352,
+            "p95": 210.247,
+            "p99": 284.797,
+            "max": 398.563
+          },
+          "guard_acquire_ms_per_transaction": {
+            "samples": 256,
+            "p50": 2.867,
+            "p95": 3.803,
+            "p99": 5.273,
+            "max": 7.634
+          },
+          "guard_hold_ms_per_transaction": {
+            "samples": 256,
+            "p50": 72.096,
+            "p95": 160.899,
+            "p99": 169.824,
+            "max": 330.632
+          }
+        }
+      }
+    },
+    {
+      "concurrency": 16,
+      "elapsed_seconds": 12.798,
+      "all": {
+        "operations": 512,
+        "throughput_per_second": 40.007,
+        "errors": {},
+        "latency_ms": {
+          "samples": 512,
+          "p50": 375.094,
+          "p95": 743.519,
+          "p99": 941.204,
+          "max": 1013.666
+        },
+        "sql_statements": {
+          "total": 23424,
+          "mean": 45.75
+        },
+        "locks": {
+          "account": {
+            "acquire_ms": {
+              "samples": 256,
+              "p50": 6.036,
+              "p95": 10.666,
+              "p99": 12.616,
+              "max": 14.771
+            },
+            "hold_ms": {
+              "samples": 256,
+              "p50": 40.971,
+              "p95": 69.81,
+              "p99": 80.485,
+              "max": 82.207
+            }
+          },
+          "command_key": {
+            "acquire_ms": {
+              "samples": 128,
+              "p50": 11.479,
+              "p95": 17.901,
+              "p99": 21.831,
+              "max": 27.587
+            },
+            "hold_ms": {
+              "samples": 128,
+              "p50": 325.412,
+              "p95": 378.69,
+              "p99": 544.417,
+              "max": 580.801
+            }
+          },
+          "organization": {
+            "acquire_ms": {
+              "samples": 768,
+              "p50": 5.788,
+              "p95": 9.727,
+              "p99": 11.92,
+              "max": 15.343
+            },
+            "hold_ms": {
+              "samples": 768,
+              "p50": 92.414,
+              "p95": 358.082,
+              "p99": 471.503,
+              "max": 588.181
+            }
+          },
+          "organization_gate": {
+            "acquire_ms": {
+              "samples": 768,
+              "p50": 5.77,
+              "p95": 8.699,
+              "p99": 11.026,
+              "max": 14.477
+            },
+            "hold_ms": {
+              "samples": 768,
+              "p50": 98.764,
+              "p95": 365.294,
+              "p99": 477.185,
+              "max": 595.416
+            }
+          },
+          "principal": {
+            "acquire_ms": {
+              "samples": 768,
+              "p50": 5.958,
+              "p95": 9.377,
+              "p99": 16.713,
+              "max": 137.695
+            },
+            "hold_ms": {
+              "samples": 768,
+              "p50": 111.15,
+              "p95": 376.979,
+              "p99": 490.639,
+              "max": 612.678
+            }
+          },
+          "session": {
+            "acquire_ms": {
+              "samples": 128,
+              "p50": 6.113,
+              "p95": 10.741,
+              "p99": 11.083,
+              "max": 12.255
+            },
+            "hold_ms": {
+              "samples": 128,
+              "p50": 51.743,
+              "p95": 65.954,
+              "p99": 70.266,
+              "max": 72.544
+            }
+          },
+          "trust": {
+            "acquire_ms": {
+              "samples": 768,
+              "p50": 8.068,
+              "p95": 14.775,
+              "p99": 20.267,
+              "max": 146.598
+            },
+            "hold_ms": {
+              "samples": 768,
+              "p50": 117.961,
+              "p95": 384.042,
+              "p99": 524.924,
+              "max": 624.175
+            }
+          },
+          "work_item": {
+            "acquire_ms": {
+              "samples": 256,
+              "p50": 5.553,
+              "p95": 11.432,
+              "p99": 13.089,
+              "max": 18.22
+            },
+            "hold_ms": {
+              "samples": 256,
+              "p50": 255.03,
+              "p95": 329.839,
+              "p99": 424.111,
+              "max": 467.241
+            }
+          }
+        },
+        "organization_acquire_ms_per_operation": {
+          "samples": 512,
+          "p50": 17.859,
+          "p95": 30.126,
+          "p99": 34.109,
+          "max": 40.071
+        },
+        "guard_queries": 768,
+        "guard_transactions": 768,
+        "guard_acquire_ms_per_operation": {
+          "samples": 512,
+          "p50": 9.208,
+          "p95": 15.867,
+          "p99": 19.786,
+          "max": 21.24
+        },
+        "guard_hold_ms_per_operation": {
+          "samples": 512,
+          "p50": 176.059,
+          "p95": 464.82,
+          "p99": 631.058,
+          "max": 722.534
+        },
+        "guard_acquire_ms_per_transaction": {
+          "samples": 768,
+          "p50": 5.788,
+          "p95": 9.727,
+          "p99": 11.92,
+          "max": 15.343
+        },
+        "guard_hold_ms_per_transaction": {
+          "samples": 768,
+          "p50": 92.414,
+          "p95": 358.082,
+          "p99": 471.503,
+          "max": 588.181
+        }
+      },
+      "by_operation": {
+        "userinfo": {
+          "operations": 128,
+          "throughput_per_second": 10.002,
+          "errors": {},
+          "latency_ms": {
+            "samples": 128,
+            "p50": 99.547,
+            "p95": 125.942,
+            "p99": 218.646,
+            "max": 244.693
+          },
+          "sql_statements": {
+            "total": 1408,
+            "mean": 11.0
+          },
+          "locks": {
+            "account": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 5.836,
+                "p95": 10.523,
+                "p99": 13.501,
+                "max": 14.771
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 30.892,
+                "p95": 39.115,
+                "p99": 40.997,
+                "max": 41.721
+              }
+            },
+            "organization": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 5.667,
+                "p95": 7.966,
+                "p99": 10.181,
+                "max": 11.028
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 44.032,
+                "p95": 52.787,
+                "p99": 62.766,
+                "max": 66.072
+              }
+            },
+            "organization_gate": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 5.612,
+                "p95": 7.724,
+                "p99": 8.573,
+                "max": 10.51
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 49.96,
+                "p95": 59.415,
+                "p99": 71.223,
+                "max": 75.374
+              }
+            },
+            "principal": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 5.846,
+                "p95": 8.156,
+                "p99": 10.699,
+                "max": 10.831
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 55.841,
+                "p95": 66.922,
+                "p99": 79.549,
+                "max": 84.095
+              }
+            },
+            "trust": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 5.76,
+                "p95": 7.712,
+                "p99": 9.743,
+                "max": 12.389
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 62.425,
+                "p95": 72.957,
+                "p99": 88.434,
+                "max": 95.142
+              }
+            }
+          },
+          "organization_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 11.32,
+            "p95": 14.961,
+            "p99": 17.226,
+            "max": 18.343
+          },
+          "guard_queries": 128,
+          "guard_transactions": 128,
+          "guard_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 5.667,
+            "p95": 7.966,
+            "p99": 10.181,
+            "max": 11.028
+          },
+          "guard_hold_ms_per_operation": {
+            "samples": 128,
+            "p50": 44.032,
+            "p95": 52.787,
+            "p99": 62.766,
+            "max": 66.072
+          },
+          "guard_acquire_ms_per_transaction": {
+            "samples": 128,
+            "p50": 5.667,
+            "p95": 7.966,
+            "p99": 10.181,
+            "max": 11.028
+          },
+          "guard_hold_ms_per_transaction": {
+            "samples": 128,
+            "p50": 44.032,
+            "p95": 52.787,
+            "p99": 62.766,
+            "max": 66.072
+          }
+        },
+        "refresh": {
+          "operations": 128,
+          "throughput_per_second": 10.002,
+          "errors": {},
+          "latency_ms": {
+            "samples": 128,
+            "p50": 152.881,
+            "p95": 191.47,
+            "p99": 270.309,
+            "max": 287.043
+          },
+          "sql_statements": {
+            "total": 2176,
+            "mean": 17.0
+          },
+          "locks": {
+            "account": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 6.115,
+                "p95": 10.805,
+                "p99": 11.542,
+                "max": 11.655
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 58.402,
+                "p95": 76.031,
+                "p99": 81.761,
+                "max": 82.207
+              }
+            },
+            "organization": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 5.76,
+                "p95": 7.785,
+                "p99": 10.904,
+                "max": 11.069
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 71.757,
+                "p95": 93.014,
+                "p99": 98.575,
+                "max": 100.003
+              }
+            },
+            "organization_gate": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 5.62,
+                "p95": 7.26,
+                "p99": 8.88,
+                "max": 9.665
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 77.906,
+                "p95": 97.969,
+                "p99": 105.749,
+                "max": 106.778
+              }
+            },
+            "principal": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 5.668,
+                "p95": 11.877,
+                "p99": 17.763,
+                "max": 18.456
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 84.472,
+                "p95": 103.909,
+                "p99": 112.566,
+                "max": 113.679
+              }
+            },
+            "session": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 6.113,
+                "p95": 10.741,
+                "p99": 11.083,
+                "max": 12.255
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 51.743,
+                "p95": 65.954,
+                "p99": 70.266,
+                "max": 72.544
+              }
+            },
+            "trust": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 5.735,
+                "p95": 7.759,
+                "p99": 10.404,
+                "max": 15.525
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 90.315,
+                "p95": 113.679,
+                "p99": 128.308,
+                "max": 131.765
+              }
+            }
+          },
+          "organization_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 11.522,
+            "p95": 15.401,
+            "p99": 16.09,
+            "max": 16.754
+          },
+          "guard_queries": 128,
+          "guard_transactions": 128,
+          "guard_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 5.76,
+            "p95": 7.785,
+            "p99": 10.904,
+            "max": 11.069
+          },
+          "guard_hold_ms_per_operation": {
+            "samples": 128,
+            "p50": 71.757,
+            "p95": 93.014,
+            "p99": 98.575,
+            "max": 100.003
+          },
+          "guard_acquire_ms_per_transaction": {
+            "samples": 128,
+            "p50": 5.76,
+            "p95": 7.785,
+            "p99": 10.904,
+            "max": 11.069
+          },
+          "guard_hold_ms_per_transaction": {
+            "samples": 128,
+            "p50": 71.757,
+            "p95": 93.014,
+            "p99": 98.575,
+            "max": 100.003
+          }
+        },
+        "work_read": {
+          "operations": 128,
+          "throughput_per_second": 10.002,
+          "errors": {},
+          "latency_ms": {
+            "samples": 128,
+            "p50": 662.364,
+            "p95": 808.647,
+            "p99": 984.791,
+            "max": 1013.666
+          },
+          "sql_statements": {
+            "total": 10368,
+            "mean": 81.0
+          },
+          "locks": {
+            "organization": {
+              "acquire_ms": {
+                "samples": 256,
+                "p50": 5.684,
+                "p95": 9.759,
+                "p99": 12.243,
+                "max": 15.343
+              },
+              "hold_ms": {
+                "samples": 256,
+                "p50": 203.862,
+                "p95": 424.856,
+                "p99": 547.64,
+                "max": 588.181
+              }
+            },
+            "organization_gate": {
+              "acquire_ms": {
+                "samples": 256,
+                "p50": 5.653,
+                "p95": 8.319,
+                "p99": 11.143,
+                "max": 13.339
+              },
+              "hold_ms": {
+                "samples": 256,
+                "p50": 208.644,
+                "p95": 431.496,
+                "p99": 553.576,
+                "max": 595.416
+              }
+            },
+            "principal": {
+              "acquire_ms": {
+                "samples": 256,
+                "p50": 6.031,
+                "p95": 10.821,
+                "p99": 20.898,
+                "max": 137.695
+              },
+              "hold_ms": {
+                "samples": 256,
+                "p50": 218.93,
+                "p95": 444.216,
+                "p99": 566.221,
+                "max": 612.678
+              }
+            },
+            "trust": {
+              "acquire_ms": {
+                "samples": 256,
+                "p50": 11.286,
+                "p95": 15.782,
+                "p99": 20.277,
+                "max": 22.577
+              },
+              "hold_ms": {
+                "samples": 256,
+                "p50": 224.216,
+                "p95": 483.782,
+                "p99": 582.233,
+                "max": 624.175
+              }
+            },
+            "work_item": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 5.426,
+                "p95": 11.224,
+                "p99": 12.872,
+                "max": 13.592
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 275.558,
+                "p95": 404.484,
+                "p99": 447.876,
+                "max": 467.241
+              }
+            }
+          },
+          "organization_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 22.695,
+            "p95": 30.246,
+            "p99": 33.726,
+            "max": 40.071
+          },
+          "guard_queries": 256,
+          "guard_transactions": 256,
+          "guard_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 11.254,
+            "p95": 16.248,
+            "p99": 20.366,
+            "max": 21.24
+          },
+          "guard_hold_ms_per_operation": {
+            "samples": 128,
+            "p50": 432.43,
+            "p95": 568.528,
+            "p99": 698.811,
+            "max": 722.534
+          },
+          "guard_acquire_ms_per_transaction": {
+            "samples": 256,
+            "p50": 5.684,
+            "p95": 9.759,
+            "p99": 12.243,
+            "max": 15.343
+          },
+          "guard_hold_ms_per_transaction": {
+            "samples": 256,
+            "p50": 203.862,
+            "p95": 424.856,
+            "p99": 547.64,
+            "max": 588.181
+          }
+        },
+        "work_edit": {
+          "operations": 128,
+          "throughput_per_second": 10.002,
+          "errors": {},
+          "latency_ms": {
+            "samples": 128,
+            "p50": 626.075,
+            "p95": 756.365,
+            "p99": 925.962,
+            "max": 991.123
+          },
+          "sql_statements": {
+            "total": 9472,
+            "mean": 74.0
+          },
+          "locks": {
+            "command_key": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 11.479,
+                "p95": 17.901,
+                "p99": 21.831,
+                "max": 27.587
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 325.412,
+                "p95": 378.69,
+                "p99": 544.417,
+                "max": 580.801
+              }
+            },
+            "organization": {
+              "acquire_ms": {
+                "samples": 256,
+                "p50": 6.021,
+                "p95": 10.578,
+                "p99": 12.286,
+                "max": 14.729
+              },
+              "hold_ms": {
+                "samples": 256,
+                "p50": 160.945,
+                "p95": 317.356,
+                "p99": 424.012,
+                "max": 547.744
+              }
+            },
+            "organization_gate": {
+              "acquire_ms": {
+                "samples": 256,
+                "p50": 6.001,
+                "p95": 10.434,
+                "p99": 11.183,
+                "max": 14.477
+              },
+              "hold_ms": {
+                "samples": 256,
+                "p50": 164.796,
+                "p95": 323.514,
+                "p99": 430.814,
+                "max": 553.837
+              }
+            },
+            "principal": {
+              "acquire_ms": {
+                "samples": 256,
+                "p50": 6.132,
+                "p95": 8.324,
+                "p99": 14.408,
+                "max": 18.781
+              },
+              "hold_ms": {
+                "samples": 256,
+                "p50": 172.453,
+                "p95": 340.205,
+                "p99": 441.711,
+                "max": 566.983
+              }
+            },
+            "trust": {
+              "acquire_ms": {
+                "samples": 256,
+                "p50": 7.947,
+                "p95": 15.521,
+                "p99": 22.54,
+                "max": 146.598
+              },
+              "hold_ms": {
+                "samples": 256,
+                "p50": 183.246,
+                "p95": 346.796,
+                "p99": 447.866,
+                "max": 574.344
+              }
+            },
+            "work_item": {
+              "acquire_ms": {
+                "samples": 128,
+                "p50": 5.611,
+                "p95": 11.611,
+                "p99": 13.099,
+                "max": 18.22
+              },
+              "hold_ms": {
+                "samples": 128,
+                "p50": 226.518,
+                "p95": 255.182,
+                "p99": 373.716,
+                "max": 416.886
+              }
+            }
+          },
+          "organization_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 24.438,
+            "p95": 32.487,
+            "p99": 34.865,
+            "max": 35.572
+          },
+          "guard_queries": 256,
+          "guard_transactions": 256,
+          "guard_acquire_ms_per_operation": {
+            "samples": 128,
+            "p50": 12.097,
+            "p95": 18.089,
+            "p99": 19.864,
+            "max": 20.052
+          },
+          "guard_hold_ms_per_operation": {
+            "samples": 128,
+            "p50": 388.777,
+            "p95": 449.609,
+            "p99": 640.851,
+            "max": 684.431
+          },
+          "guard_acquire_ms_per_transaction": {
+            "samples": 256,
+            "p50": 6.021,
+            "p95": 10.578,
+            "p99": 12.286,
+            "max": 14.729
+          },
+          "guard_hold_ms_per_transaction": {
+            "samples": 256,
+            "p50": 160.945,
+            "p95": 317.356,
+            "p99": 424.012,
+            "max": 547.744
+          }
+        }
+      }
+    }
+  ],
+  "login_burst": {
+    "operations": 16,
+    "throughput_per_second": 9.223,
+    "errors": {},
+    "latency_ms": {
+      "samples": 16,
+      "p50": 1049.801,
+      "p95": 1722.662,
+      "p99": 1729.031,
+      "max": 1730.623
+    },
+    "sql_statements": {
+      "total": 1392,
+      "mean": 87.0
+    },
+    "locks": {
+      "account": {
+        "acquire_ms": {
+          "samples": 80,
+          "p50": 0.354,
+          "p95": 0.678,
+          "p99": 0.764,
+          "max": 0.791
+        },
+        "hold_ms": {
+          "samples": 80,
+          "p50": 8.036,
+          "p95": 12.744,
+          "p99": 14.336,
+          "max": 14.924
+        }
+      },
+      "organization": {
+        "acquire_ms": {
+          "samples": 80,
+          "p50": 0.318,
+          "p95": 0.663,
+          "p99": 1.756,
+          "max": 5.026
+        },
+        "hold_ms": {
+          "samples": 80,
+          "p50": 9.522,
+          "p95": 14.477,
+          "p99": 16.223,
+          "max": 16.828
+        }
+      },
+      "organization_gate": {
+        "acquire_ms": {
+          "samples": 80,
+          "p50": 0.332,
+          "p95": 0.736,
+          "p99": 0.798,
+          "max": 0.909
+        },
+        "hold_ms": {
+          "samples": 80,
+          "p50": 10.136,
+          "p95": 16.035,
+          "p99": 17.077,
+          "max": 17.578
+        }
+      },
+      "principal": {
+        "acquire_ms": {
+          "samples": 80,
+          "p50": 0.383,
+          "p95": 0.762,
+          "p99": 0.889,
+          "max": 0.95
+        },
+        "hold_ms": {
+          "samples": 80,
+          "p50": 10.999,
+          "p95": 16.608,
+          "p99": 17.995,
+          "max": 18.439
+        }
+      },
+      "session": {
+        "acquire_ms": {
+          "samples": 16,
+          "p50": 0.335,
+          "p95": 0.597,
+          "p99": 0.614,
+          "max": 0.618
+        },
+        "hold_ms": {
+          "samples": 16,
+          "p50": 10.302,
+          "p95": 13.408,
+          "p99": 14.015,
+          "max": 14.166
+        }
+      },
+      "trust": {
+        "acquire_ms": {
+          "samples": 80,
+          "p50": 0.429,
+          "p95": 0.749,
+          "p99": 0.769,
+          "max": 0.791
+        },
+        "hold_ms": {
+          "samples": 80,
+          "p50": 11.873,
+          "p95": 17.265,
+          "p99": 18.78,
+          "max": 18.997
+        }
+      }
+    },
+    "organization_acquire_ms_per_operation": {
+      "samples": 16,
+      "p50": 3.444,
+      "p95": 6.824,
+      "p99": 9.637,
+      "max": 10.341
+    },
+    "guard_queries": 80,
+    "guard_transactions": 80,
+    "guard_acquire_ms_per_operation": {
+      "samples": 16,
+      "p50": 1.662,
+      "p95": 3.806,
+      "p99": 6.739,
+      "max": 7.472
+    },
+    "guard_hold_ms_per_operation": {
+      "samples": 16,
+      "p50": 47.668,
+      "p95": 60.369,
+      "p99": 61.832,
+      "max": 62.198
+    },
+    "guard_acquire_ms_per_transaction": {
+      "samples": 80,
+      "p50": 0.318,
+      "p95": 0.663,
+      "p99": 1.756,
+      "max": 5.026
+    },
+    "guard_hold_ms_per_transaction": {
+      "samples": 80,
+      "p50": 9.522,
+      "p95": 14.477,
+      "p99": 16.223,
+      "max": 16.828
+    },
+    "observed_factor_budget_consumed": 32,
+    "observed_authorization_budget_consumed": 16,
+    "stages_ms": {
+      "authorize": {
+        "samples": 16,
+        "p50": 76.815,
+        "p95": 126.442,
+        "p99": 130.441,
+        "max": 131.441
+      },
+      "password": {
+        "samples": 16,
+        "p50": 890.845,
+        "p95": 1519.232,
+        "p99": 1520.416,
+        "max": 1520.712
+      },
+      "totp": {
+        "samples": 16,
+        "p50": 20.56,
+        "p95": 26.504,
+        "p99": 26.617,
+        "max": 26.645
+      },
+      "finish": {
+        "samples": 16,
+        "p50": 33.594,
+        "p95": 38.928,
+        "p99": 39.8,
+        "max": 40.019
+      },
+      "token": {
+        "samples": 16,
+        "p50": 23.901,
+        "p95": 27.738,
+        "p99": 28.487,
+        "max": 28.675
+      }
+    },
+    "same_peer": true,
+    "factor_attempt_limit": 300,
+    "authorization_attempt_limit": 300,
+    "rate_window_seconds": 600,
+    "factor_attempts": 32,
+    "otp_reused": false
+  },
+  "contention": {
+    "with_policy_writers": {
+      "traffic": {
+        "operations": 256,
+        "throughput_per_second": 41.477,
+        "errors": {
+          "AuthenticationRejected": 28
+        },
+        "latency_ms": {
+          "samples": 256,
+          "p50": 335.764,
+          "p95": 757.014,
+          "p99": 786.671,
+          "max": 826.929
+        },
+        "sql_statements": {
+          "total": 11042,
+          "mean": 43.133
+        },
+        "locks": {
+          "account": {
+            "acquire_ms": {
+              "samples": 128,
+              "p50": 6.415,
+              "p95": 8.433,
+              "p99": 11.034,
+              "max": 27.47
+            },
+            "hold_ms": {
+              "samples": 128,
+              "p50": 49.409,
+              "p95": 93.19,
+              "p99": 94.737,
+              "max": 95.179
+            }
+          },
+          "command_key": {
+            "acquire_ms": {
+              "samples": 64,
+              "p50": 11.334,
+              "p95": 18.797,
+              "p99": 19.783,
+              "max": 21.101
+            },
+            "hold_ms": {
+              "samples": 64,
+              "p50": 319.844,
+              "p95": 353.814,
+              "p99": 383.421,
+              "max": 397.149
+            }
+          },
+          "organization": {
+            "acquire_ms": {
+              "samples": 384,
+              "p50": 5.825,
+              "p95": 7.719,
+              "p99": 10.04,
+              "max": 141.458
+            },
+            "hold_ms": {
+              "samples": 384,
+              "p50": 94.414,
+              "p95": 361.785,
+              "p99": 384.498,
+              "max": 385.529
+            }
+          },
+          "organization_gate": {
+            "acquire_ms": {
+              "samples": 384,
+              "p50": 6.392,
+              "p95": 131.175,
+              "p99": 183.924,
+              "max": 241.079
+            },
+            "hold_ms": {
+              "samples": 384,
+              "p50": 100.918,
+              "p95": 366.388,
+              "p99": 391.255,
+              "max": 392.555
+            }
+          },
+          "principal": {
+            "acquire_ms": {
+              "samples": 384,
+              "p50": 5.837,
+              "p95": 7.778,
+              "p99": 9.848,
+              "max": 142.089
+            },
+            "hold_ms": {
+              "samples": 384,
+              "p50": 123.152,
+              "p95": 392.322,
+              "p99": 405.103,
+              "max": 406.351
+            }
+          },
+          "session": {
+            "acquire_ms": {
+              "samples": 64,
+              "p50": 6.232,
+              "p95": 7.433,
+              "p99": 11.946,
+              "max": 15.187
+            },
+            "hold_ms": {
+              "samples": 64,
+              "p50": 62.431,
+              "p95": 86.896,
+              "p99": 87.481,
+              "max": 87.623
+            }
+          },
+          "trust": {
+            "acquire_ms": {
+              "samples": 384,
+              "p50": 6.569,
+              "p95": 14.971,
+              "p99": 146.883,
+              "max": 148.701
+            },
+            "hold_ms": {
+              "samples": 384,
+              "p50": 129.384,
+              "p95": 398.524,
+              "p99": 412.386,
+              "max": 413.499
+            }
+          },
+          "work_item": {
+            "acquire_ms": {
+              "samples": 128,
+              "p50": 5.473,
+              "p95": 7.39,
+              "p99": 8.474,
+              "max": 10.362
+            },
+            "hold_ms": {
+              "samples": 128,
+              "p50": 205.882,
+              "p95": 299.235,
+              "p99": 302.654,
+              "max": 317.275
+            }
+          }
+        },
+        "organization_acquire_ms_per_operation": {
+          "samples": 256,
+          "p50": 22.929,
+          "p95": 173.753,
+          "p99": 222.78,
+          "max": 316.725
+        },
+        "guard_queries": 384,
+        "guard_transactions": 384,
+        "guard_acquire_ms_per_operation": {
+          "samples": 256,
+          "p50": 8.379,
+          "p95": 13.353,
+          "p99": 16.853,
+          "max": 149.246
+        },
+        "guard_hold_ms_per_operation": {
+          "samples": 256,
+          "p50": 109.072,
+          "p95": 466.2,
+          "p99": 469.945,
+          "max": 536.824
+        },
+        "guard_acquire_ms_per_transaction": {
+          "samples": 384,
+          "p50": 5.825,
+          "p95": 7.719,
+          "p99": 10.04,
+          "max": 141.458
+        },
+        "guard_hold_ms_per_transaction": {
+          "samples": 384,
+          "p50": 94.414,
+          "p95": 361.785,
+          "p99": 384.498,
+          "max": 385.529
+        }
+      },
+      "writers": {
+        "operations": 8,
+        "throughput_per_second": 1.296,
+        "errors": {},
+        "latency_ms": {
+          "samples": 8,
+          "p50": 283.48,
+          "p95": 358.687,
+          "p99": 367.282,
+          "max": 369.431
+        },
+        "sql_statements": {
+          "total": 168,
+          "mean": 21.0
+        },
+        "locks": {
+          "administration": {
+            "acquire_ms": {
+              "samples": 8,
+              "p50": 11.389,
+              "p95": 18.424,
+              "p99": 18.438,
+              "max": 18.441
+            },
+            "hold_ms": {
+              "samples": 8,
+              "p50": 237.042,
+              "p95": 317.383,
+              "p99": 323.469,
+              "max": 324.99
+            }
+          },
+          "organization": {
+            "acquire_ms": {
+              "samples": 8,
+              "p50": 2.32,
+              "p95": 9.267,
+              "p99": 11.162,
+              "max": 11.635
+            },
+            "hold_ms": {
+              "samples": 8,
+              "p50": 17.865,
+              "p95": 30.054,
+              "p99": 31.706,
+              "max": 32.119
+            }
+          },
+          "organization_gate": {
+            "acquire_ms": {
+              "samples": 8,
+              "p50": 138.43,
+              "p95": 225.322,
+              "p99": 230.285,
+              "max": 231.526
+            },
+            "hold_ms": {
+              "samples": 8,
+              "p50": 21.494,
+              "p95": 39.027,
+              "p99": 43.417,
+              "max": 44.515
+            }
+          },
+          "trust": {
+            "acquire_ms": {
+              "samples": 8,
+              "p50": 7.09,
+              "p95": 18.145,
+              "p99": 21.803,
+              "max": 22.717
+            },
+            "hold_ms": {
+              "samples": 8,
+              "p50": 162.904,
+              "p95": 270.833,
+              "p99": 278.22,
+              "max": 280.067
+            }
+          }
+        },
+        "organization_acquire_ms_per_operation": {
+          "samples": 8,
+          "p50": 140.504,
+          "p95": 227.725,
+          "p99": 232.735,
+          "max": 233.987
+        },
+        "guard_queries": 8,
+        "guard_transactions": 8,
+        "guard_acquire_ms_per_operation": {
+          "samples": 8,
+          "p50": 2.32,
+          "p95": 9.267,
+          "p99": 11.162,
+          "max": 11.635
+        },
+        "guard_hold_ms_per_operation": {
+          "samples": 8,
+          "p50": 17.865,
+          "p95": 30.054,
+          "p99": 31.706,
+          "max": 32.119
+        },
+        "guard_acquire_ms_per_transaction": {
+          "samples": 8,
+          "p50": 2.32,
+          "p95": 9.267,
+          "p99": 11.162,
+          "max": 11.635
+        },
+        "guard_hold_ms_per_transaction": {
+          "samples": 8,
+          "p50": 17.865,
+          "p95": 30.054,
+          "p99": 31.706,
+          "max": 32.119
+        }
+      },
+      "expected_policy_change_rejections": 28,
+      "successful_edits": 42
+    },
+    "same_person_readers": {
+      "operations": 128,
+      "throughput_per_second": 185.778,
+      "errors": {},
+      "latency_ms": {
+        "samples": 128,
+        "p50": 85.741,
+        "p95": 87.343,
+        "p99": 87.629,
+        "max": 88.106
+      },
+      "sql_statements": {
+        "total": 1408,
+        "mean": 11.0
+      },
+      "locks": {
+        "account": {
+          "acquire_ms": {
+            "samples": 128,
+            "p50": 6.941,
+            "p95": 7.718,
+            "p99": 7.846,
+            "max": 7.905
+          },
+          "hold_ms": {
+            "samples": 128,
+            "p50": 28.172,
+            "p95": 30.454,
+            "p99": 31.285,
+            "max": 31.971
+          }
+        },
+        "organization": {
+          "acquire_ms": {
+            "samples": 128,
+            "p50": 5.295,
+            "p95": 5.592,
+            "p99": 5.906,
+            "max": 6.013
+          },
+          "hold_ms": {
+            "samples": 128,
+            "p50": 42.348,
+            "p95": 44.014,
+            "p99": 45.005,
+            "max": 45.569
+          }
+        },
+        "organization_gate": {
+          "acquire_ms": {
+            "samples": 128,
+            "p50": 5.965,
+            "p95": 6.582,
+            "p99": 6.63,
+            "max": 6.659
+          },
+          "hold_ms": {
+            "samples": 128,
+            "p50": 47.934,
+            "p95": 49.824,
+            "p99": 50.796,
+            "max": 51.777
+          }
+        },
+        "principal": {
+          "acquire_ms": {
+            "samples": 128,
+            "p50": 6.697,
+            "p95": 6.781,
+            "p99": 6.828,
+            "max": 6.895
+          },
+          "hold_ms": {
+            "samples": 128,
+            "p50": 54.1,
+            "p95": 56.503,
+            "p99": 57.417,
+            "max": 57.875
+          }
+        },
+        "trust": {
+          "acquire_ms": {
+            "samples": 128,
+            "p50": 6.669,
+            "p95": 7.004,
+            "p99": 7.213,
+            "max": 7.259
+          },
+          "hold_ms": {
+            "samples": 128,
+            "p50": 61.109,
+            "p95": 63.624,
+            "p99": 64.18,
+            "max": 65.077
+          }
+        }
+      },
+      "organization_acquire_ms_per_operation": {
+        "samples": 128,
+        "p50": 11.255,
+        "p95": 12.0,
+        "p99": 12.193,
+        "max": 12.267
+      },
+      "guard_queries": 128,
+      "guard_transactions": 128,
+      "guard_acquire_ms_per_operation": {
+        "samples": 128,
+        "p50": 5.295,
+        "p95": 5.592,
+        "p99": 5.906,
+        "max": 6.013
+      },
+      "guard_hold_ms_per_operation": {
+        "samples": 128,
+        "p50": 42.348,
+        "p95": 44.014,
+        "p99": 45.005,
+        "max": 45.569
+      },
+      "guard_acquire_ms_per_transaction": {
+        "samples": 128,
+        "p50": 5.295,
+        "p95": 5.592,
+        "p99": 5.906,
+        "max": 6.013
+      },
+      "guard_hold_ms_per_transaction": {
+        "samples": 128,
+        "p50": 42.348,
+        "p95": 44.014,
+        "p99": 45.005,
+        "max": 45.569
+      }
+    },
+    "same_key_retries": {
+      "operations": 16,
+      "throughput_per_second": 31.286,
+      "errors": {},
+      "latency_ms": {
+        "samples": 16,
+        "p50": 366.202,
+        "p95": 492.896,
+        "p99": 503.85,
+        "max": 506.588
+      },
+      "sql_statements": {
+        "total": 914,
+        "mean": 57.125
+      },
+      "locks": {
+        "command_key": {
+          "acquire_ms": {
+            "samples": 16,
+            "p50": 155.686,
+            "p95": 281.406,
+            "p99": 292.429,
+            "max": 295.185
+          },
+          "hold_ms": {
+            "samples": 16,
+            "p50": 18.879,
+            "p95": 22.114,
+            "p99": 28.234,
+            "max": 29.764
+          }
+        },
+        "organization": {
+          "acquire_ms": {
+            "samples": 32,
+            "p50": 2.64,
+            "p95": 5.523,
+            "p99": 5.581,
+            "max": 5.607
+          },
+          "hold_ms": {
+            "samples": 32,
+            "p50": 56.646,
+            "p95": 89.362,
+            "p99": 89.659,
+            "max": 89.741
+          }
+        },
+        "organization_gate": {
+          "acquire_ms": {
+            "samples": 32,
+            "p50": 2.652,
+            "p95": 5.874,
+            "p99": 5.897,
+            "max": 5.898
+          },
+          "hold_ms": {
+            "samples": 32,
+            "p50": 59.721,
+            "p95": 94.705,
+            "p99": 94.97,
+            "max": 95.056
+          }
+        },
+        "principal": {
+          "acquire_ms": {
+            "samples": 32,
+            "p50": 2.741,
+            "p95": 6.172,
+            "p99": 6.223,
+            "max": 6.225
+          },
+          "hold_ms": {
+            "samples": 32,
+            "p50": 66.095,
+            "p95": 106.571,
+            "p99": 106.842,
+            "max": 106.934
+          }
+        },
+        "trust": {
+          "acquire_ms": {
+            "samples": 32,
+            "p50": 2.486,
+            "p95": 7.44,
+            "p99": 8.299,
+            "max": 8.652
+          },
+          "hold_ms": {
+            "samples": 32,
+            "p50": 69.316,
+            "p95": 113.039,
+            "p99": 113.337,
+            "max": 113.371
+          }
+        },
+        "work_item": {
+          "acquire_ms": {
+            "samples": 16,
+            "p50": 0.202,
+            "p95": 0.248,
+            "p99": 0.252,
+            "max": 0.253
+          },
+          "hold_ms": {
+            "samples": 16,
+            "p50": 9.512,
+            "p95": 12.329,
+            "p99": 18.294,
+            "max": 19.785
+          }
+        }
+      },
+      "organization_acquire_ms_per_operation": {
+        "samples": 16,
+        "p50": 11.199,
+        "p95": 11.387,
+        "p99": 11.458,
+        "max": 11.476
+      },
+      "guard_queries": 32,
+      "guard_transactions": 32,
+      "guard_acquire_ms_per_operation": {
+        "samples": 16,
+        "p50": 5.486,
+        "p95": 5.805,
+        "p99": 5.824,
+        "max": 5.828
+      },
+      "guard_hold_ms_per_operation": {
+        "samples": 16,
+        "p50": 104.15,
+        "p95": 108.606,
+        "p99": 114.645,
+        "max": 116.154
+      },
+      "guard_acquire_ms_per_transaction": {
+        "samples": 32,
+        "p50": 2.64,
+        "p95": 5.523,
+        "p99": 5.581,
+        "max": 5.607
+      },
+      "guard_hold_ms_per_transaction": {
+        "samples": 32,
+        "p50": 56.646,
+        "p95": 89.362,
+        "p99": 89.659,
+        "max": 89.741
+      },
+      "distinct_executions": 1,
+      "replays": 15
+    },
+    "additional_commits": 43
+  },
+  "checks": {
+    "commands_audits_versions": 555,
+    "baseline_operations_and_login_succeeded": true,
+    "contention_expected_policy_rejections_reported": true,
+    "runtime_drained": true,
+    "source_stable": true
+  }
+}

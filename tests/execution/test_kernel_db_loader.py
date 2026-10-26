@@ -13,7 +13,7 @@ from app.authz.permissions import BUILTIN_POLICY_RELEASE_ID
 from app.execution.contracts import CommandEffect, CommandEnvelope, CommandSpec, ExecutionContext, Handler, OutboxIntent
 from app.execution.errors import AuthorizationDenied, ExecutionNotFound
 from app.execution.kernel import CommandKernel
-from app.execution.storage import UnitOfWork, lock_tenant
+from app.execution.storage import UnitOfWork
 from app.identity import administration
 from app.identity.administration import RevocationRequest, revoke
 from app.models.authorization import RoleVersionTable
@@ -25,6 +25,7 @@ from app.models.identity_foundation import (
     TrustStateTable,
 )
 from app.models.work import WorkItemTable
+from app.storage.coordination import LockMode, lock_organization
 from tests.support.authorization import NOW, ORG, PERSON, TARGET, execution_context
 from tests.support.database_commands import (
     counts,
@@ -134,7 +135,7 @@ async def test_real_loader_command_commit_replay_and_revoked_result_read(
     assert await audit_evidence(persistence_sessions, first.execution_id) == evidence
 
     async with persistence_sessions.begin() as session:
-        await lock_tenant(session, ORG)
+        await lock_organization(session, ORG, mode=LockMode.EXCLUSIVE)
         role = await session.get(RoleVersionTable, (ORG, "role:engineering", 1))
         assert role is not None
         role.status = "revoked"
@@ -226,7 +227,7 @@ async def _revoke(
 ) -> None:
     if kind == "role_version":
         async with sessions.begin() as session:
-            await lock_tenant(session, ORG)
+            await lock_organization(session, ORG, mode=LockMode.EXCLUSIVE)
             if pids is not None:
                 pid = await session.scalar(text("SELECT pg_backend_pid()"))
                 assert pid is not None

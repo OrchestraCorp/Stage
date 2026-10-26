@@ -9,27 +9,27 @@ policy_effect: none
 
 按当前工作区源码 AST 和实际 `create_app().openapi()` 生成索引；不执行 lifespan、不触碰业务数据库。完整性审计见[报告](reviews/stage-engineering-audit-2026-10-26.md)，全景见[架构图与目录导航](stage-architecture-panorama.md)。
 
-索引范围：`app/` **107 个 Python 文件、16,126 行、244 个类、622 个函数/方法定义**。函数计数包含私有方法、property、协议占位和嵌套闭包，绝不等同于业务能力数量；源行数包含空行/注释。HTTP 共 25 个 method+path 操作，SQLAlchemy 37 张表。`__init__.py` 与稳定 re-export 文件也在清单内。
+索引范围：`app/` **108 个 Python 文件、16,435 行、246 个类、637 个函数/方法定义**。函数计数包含私有方法、property、协议占位和嵌套闭包，绝不等同于业务能力数量；源行数包含空行/注释。HTTP 共 25 个 method+path 操作，SQLAlchemy 37 张表。`__init__.py` 与稳定 re-export 文件也在清单内。
 
 ## 1. 分层规模
 
 | 目录 | 文件 | 行 | 类 | 函数/方法 | 职责 |
 |---|---:|---:|---:|---:|---|
 | `api` | 14 | 1,901 | 21 | 72 | HTTP 协议与 DTO |
-| `authz` | 11 | 1,873 | 23 | 51 | 当前业务授权 |
+| `authz` | 11 | 1,879 | 23 | 51 | 当前业务授权 |
 | `bootstrap` | 2 | 101 | 1 | 5 | 应用装配 |
 | `control` | 3 | 209 | 4 | 10 | 共享本地受控管理协议 |
 | `core` | 12 | 477 | 13 | 24 | 框架配置/适配辅助（不是纯 Runtime Core） |
-| `delivery` | 3 | 845 | 14 | 28 | 持久投递底板 |
-| `execution` | 6 | 959 | 24 | 41 | 受控事务与命令协议 |
+| `delivery` | 3 | 846 | 14 | 28 | 持久投递底板 |
+| `execution` | 6 | 1,001 | 24 | 42 | 受控事务与命令协议 |
 | `features` | 4 | 162 | 6 | 4 | 具体领域操作 |
 | `identity` | 9 | 1,991 | 22 | 48 | 身份来源、成员与认证证据 |
 | `main` | 2 | 75 | 0 | 2 | FastAPI 入口/包 |
 | `models` | 8 | 1,191 | 43 | 2 | 数据库物理事实 |
-| `native_auth` | 16 | 3,727 | 25 | 125 | 本地凭据与 OAuth/OIDC |
-| `providers` | 8 | 708 | 11 | 43 | 生命周期＋应用编排适配器 |
+| `native_auth` | 16 | 3,747 | 25 | 126 | 本地凭据与 OAuth/OIDC |
+| `providers` | 8 | 709 | 11 | 43 | 生命周期＋应用编排适配器 |
 | `runtime` | 7 | 1,817 | 34 | 159 | 独立进程内组件 Core |
-| `storage` | 2 | 90 | 3 | 8 | 存储类型 |
+| `storage` | 3 | 329 | 5 | 21 | 存储类型 |
 
 ## 2. 源码目录树
 
@@ -95,7 +95,7 @@ app/
 │   ├── encoding.py  # 有界 JSON 规范化、复制与摘要，支撑幂等与审计
 │   ├── errors.py  # 版本冲突、授权拒绝、截止、提交未知和事务所有权异常
 │   ├── kernel.py  # 唯一命令协调者：当前授权、幂等/版本、领域 handler、结果/审计/outbox 原子提交与安全结果恢复
-│   └── storage.py  # 受管理 UoW、事务所有权保护和 PostgreSQL 组织 guard
+│   └── storage.py  # 受管理UoW、单一提交者和取消安全清理
 ├── features/  # 具体领域操作
 │   ├── work/  # 领域子包
 │   │   ├── __init__.py  # 包入口 / 稳定导出
@@ -158,6 +158,7 @@ app/
 │   └── leases.py  # CallScope 的导出入口
 ├── storage/  # 存储类型
 │   ├── __init__.py  # 包入口 / 稳定导出
+│   ├── coordination.py  # 事务绑定的组织advisory准入门与guard行S/X、短命令幂等键同步、保存点与升级防护
 │   └── types.py  # 精确标识字符串与 UTC 时间存储适配，统一数据库比较与时间语义
 ├── __init__.py  # 包入口 / 稳定导出
 └── main.py  # FastAPI 工厂、lifespan、路由与错误/安全中间件挂载
@@ -860,33 +861,33 @@ ABAC 固定谓词；按时间、分类、状态、版本等返回拒绝原因。
 
 将真实人员证据和数据库授权事实接入同一锁与提交协议。
 
-[打开源码](../app/authz/authenticated.py) · 101 行
+[打开源码](../app/authz/authenticated.py) · 103 行
 
-类：[`HumanIdentityVerifier`](../app/authz/authenticated.py#L16)；[`AuthenticatedAuthorizationLoader`](../app/authz/authenticated.py#L27)。
+类：[`HumanIdentityVerifier`](../app/authz/authenticated.py#L17)；[`AuthenticatedAuthorizationLoader`](../app/authz/authenticated.py#L28)。
 
 主要可调用定义：
 
-- [`HumanIdentityVerifier.acquire_human_locks`](../app/authz/authenticated.py#L17) — L17
+- [`HumanIdentityVerifier.acquire_human_locks`](../app/authz/authenticated.py#L18) — L18
 
   ```python
   async HumanIdentityVerifier.acquire_human_locks(self, session: AsyncSession, evidence: HumanAuthenticationEvidence) -> None
   ```
-- [`HumanIdentityVerifier.validate_human`](../app/authz/authenticated.py#L19) — L19
+- [`HumanIdentityVerifier.validate_human`](../app/authz/authenticated.py#L20) — L20
 
   ```python
   async HumanIdentityVerifier.validate_human(self, session: AsyncSession, evidence: HumanAuthenticationEvidence, now: datetime) -> None
   ```
-- [`AuthenticatedAuthorizationLoader.acquire_locks`](../app/authz/authenticated.py#L48) — L48
+- [`AuthenticatedAuthorizationLoader.acquire_locks`](../app/authz/authenticated.py#L49) — L49
 
   ```python
   async AuthenticatedAuthorizationLoader.acquire_locks(self, session: AsyncSession, context: ExecutionContext) -> None
   ```
-- [`AuthenticatedAuthorizationLoader.load`](../app/authz/authenticated.py#L65) — L65
+- [`AuthenticatedAuthorizationLoader.load`](../app/authz/authenticated.py#L66) — L66
 
   ```python
-  async AuthenticatedAuthorizationLoader.load(self, session: AsyncSession, context: ExecutionContext, *, action: str, target_ref: str, expected_version: int | None, now: datetime) -> AuthorizationContext
+  async AuthenticatedAuthorizationLoader.load(self, session: AsyncSession, context: ExecutionContext, *, action: str, target_ref: str, expected_version: int | None, now: datetime, lock_mode: LockMode=LockMode.EXCLUSIVE) -> AuthorizationContext
   ```
-- [`AuthenticatedAuthorizationLoader.validate_before_commit`](../app/authz/authenticated.py#L92) — L92
+- [`AuthenticatedAuthorizationLoader.validate_before_commit`](../app/authz/authenticated.py#L94) — L94
 
   ```python
   async AuthenticatedAuthorizationLoader.validate_before_commit(self, session: AsyncSession, context: ExecutionContext, now: datetime) -> None
@@ -895,17 +896,17 @@ ABAC 固定谓词；按时间、分类、状态、版本等返回拒绝原因。
 <details>
 <summary>内部方法、特殊方法与嵌套闭包</summary>
 
-- [`AuthenticatedAuthorizationLoader.__init__`](../app/authz/authenticated.py#L28) — L28
+- [`AuthenticatedAuthorizationLoader.__init__`](../app/authz/authenticated.py#L29) — L29
 
   ```python
   AuthenticatedAuthorizationLoader.__init__(self, identity: HumanIdentityVerifier) -> None
   ```
-- [`AuthenticatedAuthorizationLoader._evidence`](../app/authz/authenticated.py#L34) — L34
+- [`AuthenticatedAuthorizationLoader._evidence`](../app/authz/authenticated.py#L35) — L35
 
   ```python
   AuthenticatedAuthorizationLoader._evidence(context: ExecutionContext) -> HumanAuthenticationEvidence
   ```
-- [`AuthenticatedAuthorizationLoader._check_locks`](../app/authz/authenticated.py#L56) — L56
+- [`AuthenticatedAuthorizationLoader._check_locks`](../app/authz/authenticated.py#L57) — L57
 
   ```python
   AuthenticatedAuthorizationLoader._check_locks(self, session: AsyncSession, context: ExecutionContext) -> HumanAuthenticationEvidence
@@ -1031,7 +1032,7 @@ ABAC 固定谓词；按时间、分类、状态、版本等返回拒绝原因。
 
 锁定当前组织/资源事实，核验角色摘要、任职、scope 链和直接 ACL。
 
-[打开源码](../app/authz/loader.py) · 446 行
+[打开源码](../app/authz/loader.py) · 450 行
 
 类：[`ValidatedRoleVersion`](../app/authz/loader.py#L73)；[`DatabaseAuthorizationLoader`](../app/authz/loader.py#L179)。
 
@@ -1060,11 +1061,11 @@ ABAC 固定谓词；按时间、分类、状态、版本等返回拒绝原因。
   ```python
   async DatabaseAuthorizationLoader.acquire_locks(self, session: AsyncSession, context: ExecutionContext) -> None
   ```
-  Acquire global identity locks before the organization's write guard.
+  Acquire global identity locks before the caller's organization protection.
 - [`DatabaseAuthorizationLoader.load`](../app/authz/loader.py#L216) — L216
 
   ```python
-  async DatabaseAuthorizationLoader.load(self, session: AsyncSession, context: ExecutionContext, *, action: str, target_ref: str, expected_version: int | None, now: datetime) -> AuthorizationContext
+  async DatabaseAuthorizationLoader.load(self, session: AsyncSession, context: ExecutionContext, *, action: str, target_ref: str, expected_version: int | None, now: datetime, lock_mode: LockMode=LockMode.EXCLUSIVE) -> AuthorizationContext
   ```
 
 <details>
@@ -1558,61 +1559,61 @@ UTC 时钟小工具。
 
 短事务领取、事务外投递、持久租约/fencing、unknown 对账与关闭排空；不默认装配。
 
-[打开源码](../app/delivery/worker.py) · 694 行
+[打开源码](../app/delivery/worker.py) · 695 行
 
-类：[`_Claim`](../app/delivery/worker.py#L50)；[`_Selection`](../app/delivery/worker.py#L59)；[`OutboxWorker`](../app/delivery/worker.py#L64)。
+类：[`_Claim`](../app/delivery/worker.py#L51)；[`_Selection`](../app/delivery/worker.py#L60)；[`OutboxWorker`](../app/delivery/worker.py#L65)。
 
 主要可调用定义：
 
-- [`OutboxWorker.status`](../app/delivery/worker.py#L133) — L133
+- [`OutboxWorker.status`](../app/delivery/worker.py#L134) — L134
 
   ```python
   OutboxWorker.status(self) -> DeliveryWorkerStatus
   ```
   Public supervision snapshot; exception messages may contain secrets.
-- [`OutboxWorker.run_once`](../app/delivery/worker.py#L466) — L466
+- [`OutboxWorker.run_once`](../app/delivery/worker.py#L467) — L467
 
   ```python
   async OutboxWorker.run_once(self, tenant_ref: str) -> DeliveryRunSummary
   ```
   Process at most the configured number of this tenant's pending rows.
-- [`OutboxWorker.reconcile_one`](../app/delivery/worker.py#L485) — L485
+- [`OutboxWorker.reconcile_one`](../app/delivery/worker.py#L486) — L486
 
   ```python
   async OutboxWorker.reconcile_one(self, tenant_ref: str, message_id: str) -> str
   ```
   Explicitly query an unknown message; only proven safe absence requeues.
-- [`OutboxWorker.retry_blocked`](../app/delivery/worker.py#L533) — L533
+- [`OutboxWorker.retry_blocked`](../app/delivery/worker.py#L534) — L534
 
   ```python
   async OutboxWorker.retry_blocked(self, tenant_ref: str, message_id: str) -> str
   ```
   Explicitly reopen a never-dispatched block after current authorization.
-- [`OutboxWorker.start`](../app/delivery/worker.py#L576) — L576
+- [`OutboxWorker.start`](../app/delivery/worker.py#L577) — L577
 
   ```python
   OutboxWorker.start(self, tenant_refs: Sequence[str]) -> asyncio.Task[None]
   ```
   Start standalone polling and return its observable task.
-- [`OutboxWorker.run`](../app/delivery/worker.py#L592) — L592
+- [`OutboxWorker.run`](../app/delivery/worker.py#L593) — L593
 
   ```python
   async OutboxWorker.run(self, tenant_refs: Sequence[str]) -> None
   ```
   Poll until stopped; a fault stops intake and propagates to the owner.
-- [`OutboxWorker.request_stop`](../app/delivery/worker.py#L638) — L638
+- [`OutboxWorker.request_stop`](../app/delivery/worker.py#L639) — L639
 
   ```python
   OutboxWorker.request_stop(self, *, cancel_operation: bool=False) -> None
   ```
   Cooperatively stop intake and cancel only active operation tasks.
-- [`OutboxWorker.wait`](../app/delivery/worker.py#L653) — L653
+- [`OutboxWorker.wait`](../app/delivery/worker.py#L654) — L654
 
   ```python
   async OutboxWorker.wait(self) -> None
   ```
   Observe polling completion/failure without cancelling its owner task.
-- [`OutboxWorker.close`](../app/delivery/worker.py#L661) — L661
+- [`OutboxWorker.close`](../app/delivery/worker.py#L662) — L662
 
   ```python
   async OutboxWorker.close(self) -> None
@@ -1622,77 +1623,77 @@ UTC 时钟小工具。
 <details>
 <summary>内部方法、特殊方法与嵌套闭包</summary>
 
-- [`_utc_now`](../app/delivery/worker.py#L45) — L45
+- [`_utc_now`](../app/delivery/worker.py#L46) — L46
 
   ```python
   _utc_now() -> datetime
   ```
-- [`OutboxWorker.__init__`](../app/delivery/worker.py#L74) — L74
+- [`OutboxWorker.__init__`](../app/delivery/worker.py#L75) — L75
 
   ```python
   OutboxWorker.__init__(self, session_factory: async_sessionmaker[AsyncSession], *, authorizer: CurrentDeliveryAuthorizer, sinks: Mapping[str, DeliverySink], service_ref: str, worker_ref: str, clock: Callable[[], datetime]=_utc_now, lease_duration: timedelta=timedelta(seconds=30), delivery_timeout: float=10, close_timeout: float=10, poll_interval: float=1, retry_delay: timedelta=timedelta(seconds=1), per_tenant_limit: int=10, max_send_attempts: int=3) -> None
   ```
-- [`OutboxWorker._now`](../app/delivery/worker.py#L143) — L143
+- [`OutboxWorker._now`](../app/delivery/worker.py#L144) — L144
 
   ```python
   OutboxWorker._now(self) -> datetime
   ```
-- [`OutboxWorker._operation`](../app/delivery/worker.py#L150) — L150
+- [`OutboxWorker._operation`](../app/delivery/worker.py#L151) — L151
 
   ```python
   async OutboxWorker._operation(self) -> AsyncIterator[None]
   ```
-- [`OutboxWorker._envelope`](../app/delivery/worker.py#L162) — L162
+- [`OutboxWorker._envelope`](../app/delivery/worker.py#L163) — L163
 
   ```python
   OutboxWorker._envelope(row: OutboxRecordTable) -> DeliveryEnvelope
   ```
-- [`OutboxWorker._decision_matches`](../app/delivery/worker.py#L175) — L175
+- [`OutboxWorker._decision_matches`](../app/delivery/worker.py#L176) — L176
 
   ```python
   OutboxWorker._decision_matches(self, decision: AuthorizationDecision, envelope: DeliveryEnvelope, request_id: str) -> bool
   ```
-- [`OutboxWorker._authorization_error`](../app/delivery/worker.py#L185) — L185
+- [`OutboxWorker._authorization_error`](../app/delivery/worker.py#L186) — L186
 
   ```python
   async OutboxWorker._authorization_error(self, uow: UnitOfWork, envelope: DeliveryEnvelope, operation: Operation, request_id: str) -> str | None
   ```
-- [`OutboxWorker._send_count`](../app/delivery/worker.py#L206) — L206
+- [`OutboxWorker._send_count`](../app/delivery/worker.py#L207) — L207
 
   ```python
   async OutboxWorker._send_count(self, session: AsyncSession, envelope: DeliveryEnvelope) -> int
   ```
-- [`OutboxWorker._recover_expired`](../app/delivery/worker.py#L220) — L220
+- [`OutboxWorker._recover_expired`](../app/delivery/worker.py#L221) — L221
 
   ```python
   async OutboxWorker._recover_expired(self, tenant_ref: str) -> int
   ```
-- [`OutboxWorker._expire`](../app/delivery/worker.py#L245) — L245
+- [`OutboxWorker._expire`](../app/delivery/worker.py#L246) — L246
 
   ```python
   async OutboxWorker._expire(self, session: AsyncSession, row: OutboxRecordTable, now: datetime) -> None
   ```
-- [`OutboxWorker._claim`](../app/delivery/worker.py#L262) — L262
+- [`OutboxWorker._claim`](../app/delivery/worker.py#L263) — L263
 
   ```python
   async OutboxWorker._claim(self, tenant_ref: str, *, operation: Operation, message_id: str | None=None) -> _Selection | None
   ```
-- [`OutboxWorker._finish`](../app/delivery/worker.py#L336) — L336
+- [`OutboxWorker._finish`](../app/delivery/worker.py#L337) — L337
 
   ```python
   async OutboxWorker._finish(self, claim: _Claim, *, status: Literal['sent', 'unknown', 'pending'], error_code: str | None=None, receipt: DeliveryReceipt | None=None, attempt_status: str | None=None) -> bool
   ```
-- [`OutboxWorker._receipt_matches`](../app/delivery/worker.py#L413) — L413
+- [`OutboxWorker._receipt_matches`](../app/delivery/worker.py#L414) — L414
 
   ```python
   OutboxWorker._receipt_matches(receipt: object, envelope: DeliveryEnvelope) -> bool
   ```
-- [`OutboxWorker._send`](../app/delivery/worker.py#L429) — L429
+- [`OutboxWorker._send`](../app/delivery/worker.py#L430) — L430
 
   ```python
   async OutboxWorker._send(self, claim: _Claim) -> str
   ```
-- [`OutboxWorker._finish_cancelled`](../app/delivery/worker.py#L457) — L457
+- [`OutboxWorker._finish_cancelled`](../app/delivery/worker.py#L458) — L458
 
   ```python
   async OutboxWorker._finish_cancelled(self, claim: _Claim, code: str, cancelled: asyncio.CancelledError) -> None
@@ -1712,70 +1713,70 @@ UTC 时钟小工具。
 
 可信 ExecutionContext、命令/效果/结果 DTO、loader/coordinator/validator 接口。
 
-[打开源码](../app/execution/contracts.py) · 216 行
+[打开源码](../app/execution/contracts.py) · 221 行
 
-类：[`ExecutionContext`](../app/execution/contracts.py#L45)；[`CommandEnvelope`](../app/execution/contracts.py#L93)；[`OutboxIntent`](../app/execution/contracts.py#L111)；[`CommandEffect`](../app/execution/contracts.py#L131)；[`CommandResult`](../app/execution/contracts.py#L139)；[`AuthorizationLockCoordinator`](../app/execution/contracts.py#L147)；[`CommandIdentityValidator`](../app/execution/contracts.py#L157)；[`AuthorizationLoader`](../app/execution/contracts.py#L168)；[`CommandSpec`](../app/execution/contracts.py#L191)。
+类：[`ExecutionContext`](../app/execution/contracts.py#L46)；[`CommandEnvelope`](../app/execution/contracts.py#L94)；[`OutboxIntent`](../app/execution/contracts.py#L112)；[`CommandEffect`](../app/execution/contracts.py#L132)；[`CommandResult`](../app/execution/contracts.py#L140)；[`AuthorizationLockCoordinator`](../app/execution/contracts.py#L148)；[`CommandIdentityValidator`](../app/execution/contracts.py#L158)；[`AuthorizationLoader`](../app/execution/contracts.py#L169)；[`CommandSpec`](../app/execution/contracts.py#L196)。
 
 主要可调用定义：
 
-- [`utc_clock`](../app/execution/contracts.py#L24) — L24
+- [`utc_clock`](../app/execution/contracts.py#L25) — L25
 
   ```python
   utc_clock() -> datetime
   ```
-- [`require_ref`](../app/execution/contracts.py#L28) — L28
+- [`require_ref`](../app/execution/contracts.py#L29) — L29
 
   ```python
   require_ref(value: str, maximum: int) -> None
   ```
-- [`require_time`](../app/execution/contracts.py#L39) — L39
+- [`require_time`](../app/execution/contracts.py#L40) — L40
 
   ```python
   require_time(value: datetime) -> None
   ```
-- [`ExecutionContext.check_live`](../app/execution/contracts.py#L82) — L82
+- [`ExecutionContext.check_live`](../app/execution/contracts.py#L83) — L83
 
   ```python
   ExecutionContext.check_live(self, now: datetime) -> None
   ```
-- [`AuthorizationLockCoordinator.acquire_locks`](../app/execution/contracts.py#L148) — L148
+- [`AuthorizationLockCoordinator.acquire_locks`](../app/execution/contracts.py#L149) — L149
 
   ```python
   async AuthorizationLockCoordinator.acquire_locks(self, session: AsyncSession, context: ExecutionContext) -> None
   ```
   Acquire trust/global identity locks before the organization guard.
-- [`CommandIdentityValidator.validate_before_commit`](../app/execution/contracts.py#L158) — L158
+- [`CommandIdentityValidator.validate_before_commit`](../app/execution/contracts.py#L159) — L159
 
   ```python
   async CommandIdentityValidator.validate_before_commit(self, session: AsyncSession, context: ExecutionContext, now: datetime) -> None
   ```
   Revalidate server-issued authentication evidence with no network or commit.
-- [`AuthorizationLoader.load`](../app/execution/contracts.py#L169) — L169
+- [`AuthorizationLoader.load`](../app/execution/contracts.py#L170) — L170
 
   ```python
-  async AuthorizationLoader.load(self, session: AsyncSession, context: ExecutionContext, *, action: str, target_ref: str, expected_version: int | None, now: datetime) -> AuthorizationContext
+  async AuthorizationLoader.load(self, session: AsyncSession, context: ExecutionContext, *, action: str, target_ref: str, expected_version: int | None, now: datetime, lock_mode: LockMode=LockMode.EXCLUSIVE) -> AuthorizationContext
   ```
   Read authoritative tenant-scoped facts using the current transaction.
 
 <details>
 <summary>内部方法、特殊方法与嵌套闭包</summary>
 
-- [`ExecutionContext.__post_init__`](../app/execution/contracts.py#L57) — L57
+- [`ExecutionContext.__post_init__`](../app/execution/contracts.py#L58) — L58
 
   ```python
   ExecutionContext.__post_init__(self) -> None
   ```
-- [`CommandEnvelope.__post_init__`](../app/execution/contracts.py#L101) — L101
+- [`CommandEnvelope.__post_init__`](../app/execution/contracts.py#L102) — L102
 
   ```python
   CommandEnvelope.__post_init__(self) -> None
   ```
-- [`OutboxIntent.__post_init__`](../app/execution/contracts.py#L119) — L119
+- [`OutboxIntent.__post_init__`](../app/execution/contracts.py#L120) — L120
 
   ```python
   OutboxIntent.__post_init__(self) -> None
   ```
-- [`CommandSpec.__post_init__`](../app/execution/contracts.py#L200) — L200
+- [`CommandSpec.__post_init__`](../app/execution/contracts.py#L205) — L205
 
   ```python
   CommandSpec.__post_init__(self) -> None
@@ -1846,30 +1847,30 @@ UTC 时钟小工具。
 
 唯一命令协调者：当前授权、幂等/版本、领域 handler、结果/审计/outbox 原子提交与安全结果恢复。
 
-[打开源码](../app/execution/kernel.py) · 434 行
+[打开源码](../app/execution/kernel.py) · 495 行
 
-类：[`CommandKernel`](../app/execution/kernel.py#L49)。
+类：[`CommandKernel`](../app/execution/kernel.py#L73)。
 
 主要可调用定义：
 
-- [`CommandKernel.execute`](../app/execution/kernel.py#L153) — L153
+- [`CommandKernel.execute`](../app/execution/kernel.py#L185) — L185
 
   ```python
   async CommandKernel.execute(self, context: ExecutionContext, command: CommandEnvelope) -> CommandResult
   ```
-- [`CommandKernel.get_result`](../app/execution/kernel.py#L303) — L303
+- [`CommandKernel.get_result`](../app/execution/kernel.py#L348) — L348
 
   ```python
   async CommandKernel.get_result(self, context: ExecutionContext, execution_id: str) -> CommandResult
   ```
   Current authorized read for the same tenant and authenticated actor.
-- [`CommandKernel.read`](../app/execution/kernel.py#L333) — L333
+- [`CommandKernel.read`](../app/execution/kernel.py#L381) — L381
 
   ```python
   async CommandKernel.read(self, context: ExecutionContext, *, action: str, target_ref: str, reader: Callable[[AsyncSession], Awaitable[T]]) -> T
   ```
   Load a value under current authorization and recheck before disclosure.
-- [`CommandKernel.get_result_by_key`](../app/execution/kernel.py#L365) — L365
+- [`CommandKernel.get_result_by_key`](../app/execution/kernel.py#L415) — L415
 
   ```python
   async CommandKernel.get_result_by_key(self, context: ExecutionContext, *, command_name: str, command_version: str, idempotency_key: str, target_ref: str) -> CommandResult
@@ -1879,32 +1880,43 @@ UTC 时钟小工具。
 <details>
 <summary>内部方法、特殊方法与嵌套闭包</summary>
 
-- [`CommandKernel.__init__`](../app/execution/kernel.py#L50) — L50
+- [`_operation_entry`](../app/execution/kernel.py#L57) — L57
+
+  ```python
+  _operation_entry(operation: Callable[P, Awaitable[T]]) -> Callable[P, Coroutine[Any, Any, T]]
+  ```
+  Nested operations could wait on locks owned by their own caller.
+- [`_operation_entry.guarded`](../app/execution/kernel.py#L61) — L61
+
+  ```python
+  async _operation_entry.guarded(*args: P.args, **kwargs: P.kwargs) -> T
+  ```
+- [`CommandKernel.__init__`](../app/execution/kernel.py#L74) — L74
 
   ```python
   CommandKernel.__init__(self, sessions: async_sessionmaker[AsyncSession], *, loader: AuthorizationLoader, commands: Sequence[CommandSpec], clock: Clock=utc_clock, coordinator: AuthorizationLockCoordinator | None=None, identity_validator: CommandIdentityValidator | None=None) -> None
   ```
-- [`CommandKernel._spec`](../app/execution/kernel.py#L74) — L74
+- [`CommandKernel._spec`](../app/execution/kernel.py#L98) — L98
 
   ```python
   CommandKernel._spec(self, name: str, version: str) -> CommandSpec
   ```
-- [`CommandKernel._authorize`](../app/execution/kernel.py#L80) — L80
+- [`CommandKernel._authorize`](../app/execution/kernel.py#L104) — L104
 
   ```python
-  async CommandKernel._authorize(self, session: AsyncSession, context: ExecutionContext, *, action: str, target_ref: str, expected_version: int | None) -> tuple[AuthorizationDecision, AuthorizationContext]
+  async CommandKernel._authorize(self, session: AsyncSession, context: ExecutionContext, *, action: str, target_ref: str, expected_version: int | None, lock_mode: LockMode=LockMode.SHARED) -> tuple[AuthorizationDecision, AuthorizationContext]
   ```
-- [`CommandKernel._result`](../app/execution/kernel.py#L146) — L146
+- [`CommandKernel._result`](../app/execution/kernel.py#L177) — L177
 
   ```python
   CommandKernel._result(row: CommandExecutionTable, *, replayed: bool) -> CommandResult
   ```
-- [`CommandKernel._check_identity_integration`](../app/execution/kernel.py#L402) — L402
+- [`CommandKernel._check_identity_integration`](../app/execution/kernel.py#L463) — L463
 
   ```python
   CommandKernel._check_identity_integration(self, context: ExecutionContext) -> None
   ```
-- [`CommandKernel._authorization_evidence`](../app/execution/kernel.py#L407) — L407
+- [`CommandKernel._authorization_evidence`](../app/execution/kernel.py#L468) — L468
 
   ```python
   CommandKernel._authorization_evidence(facts: AuthorizationContext, decision: AuthorizationDecision, context: ExecutionContext) -> dict[str, object] | None
@@ -1914,47 +1926,41 @@ UTC 时钟小工具。
 
 ### app/execution/storage.py
 
-受管理 UoW、事务所有权保护和 PostgreSQL 组织 guard。
+受管理UoW、单一提交者和取消安全清理；协调协议位于storage/coordination。
 
-[打开源码](../app/execution/storage.py) · 173 行
+[打开源码](../app/execution/storage.py) · 149 行
 
-类：[`UnitOfWork`](../app/execution/storage.py#L102)。
+类：[`UnitOfWork`](../app/execution/storage.py#L78)。
 
 主要可调用定义：
 
-- [`managed_uow`](../app/execution/storage.py#L43) — L43
+- [`managed_uow`](../app/execution/storage.py#L42) — L42
 
   ```python
   async managed_uow(sessions: async_sessionmaker[AsyncSession]) -> AsyncIterator['UnitOfWork']
   ```
   Always attempt rollback and close, without hiding an uncertain commit.
-- [`lock_tenant`](../app/execution/storage.py#L79) — L79
-
-  ```python
-  async lock_tenant(session: AsyncSession, tenant_ref: str) -> None
-  ```
-  Lock an explicitly provisioned tenant; never create one from caller input.
-- [`UnitOfWork.assert_owned`](../app/execution/storage.py#L143) — L143
+- [`UnitOfWork.assert_owned`](../app/execution/storage.py#L119) — L119
 
   ```python
   UnitOfWork.assert_owned(self) -> None
   ```
-- [`UnitOfWork.flush`](../app/execution/storage.py#L149) — L149
+- [`UnitOfWork.flush`](../app/execution/storage.py#L125) — L125
 
   ```python
   async UnitOfWork.flush(self) -> None
   ```
-- [`UnitOfWork.commit`](../app/execution/storage.py#L153) — L153
+- [`UnitOfWork.commit`](../app/execution/storage.py#L129) — L129
 
   ```python
   async UnitOfWork.commit(self) -> None
   ```
-- [`UnitOfWork.detach`](../app/execution/storage.py#L165) — L165
+- [`UnitOfWork.detach`](../app/execution/storage.py#L141) — L141
 
   ```python
   UnitOfWork.detach(self) -> None
   ```
-- [`UnitOfWork.add`](../app/execution/storage.py#L171) — L171
+- [`UnitOfWork.add`](../app/execution/storage.py#L147) — L147
 
   ```python
   UnitOfWork.add(self, instance: Any) -> None
@@ -1963,38 +1969,38 @@ UTC 时钟小工具。
 <details>
 <summary>内部方法、特殊方法与嵌套闭包</summary>
 
-- [`_finish_cleanup`](../app/execution/storage.py#L20) — L20
+- [`_finish_cleanup`](../app/execution/storage.py#L19) — L19
 
   ```python
   async _finish_cleanup(operation: Any) -> None
   ```
   Finish session cleanup even when the owner task was cancelled.
-- [`UnitOfWork.__init__`](../app/execution/storage.py#L109) — L109
+- [`UnitOfWork.__init__`](../app/execution/storage.py#L85) — L85
 
   ```python
   UnitOfWork.__init__(self, session: AsyncSession, connection: Connection) -> None
   ```
-- [`UnitOfWork._before_commit`](../app/execution/storage.py#L124) — L124
+- [`UnitOfWork._before_commit`](../app/execution/storage.py#L100) — L100
 
   ```python
   UnitOfWork._before_commit(self, _session: Session) -> None
   ```
-- [`UnitOfWork._after_rollback`](../app/execution/storage.py#L129) — L129
+- [`UnitOfWork._after_rollback`](../app/execution/storage.py#L105) — L105
 
   ```python
   UnitOfWork._after_rollback(self, _session: Session) -> None
   ```
-- [`UnitOfWork._before_connection_commit`](../app/execution/storage.py#L132) — L132
+- [`UnitOfWork._before_connection_commit`](../app/execution/storage.py#L108) — L108
 
   ```python
   UnitOfWork._before_connection_commit(self, _connection: Connection) -> None
   ```
-- [`UnitOfWork._before_connection_rollback`](../app/execution/storage.py#L137) — L137
+- [`UnitOfWork._before_connection_rollback`](../app/execution/storage.py#L113) — L113
 
   ```python
   UnitOfWork._before_connection_rollback(self, _connection: Connection) -> None
   ```
-- [`UnitOfWork._commit_by_owner`](../app/execution/storage.py#L157) — L157
+- [`UnitOfWork._commit_by_owner`](../app/execution/storage.py#L133) — L133
 
   ```python
   async UnitOfWork._commit_by_owner(self) -> None
@@ -2753,94 +2759,100 @@ Principal 人员/服务主体表。
 
 密码/TOTP/恢复和单次重绑授权，账号失败计数、凭据版本与当前会话撤销。
 
-[打开源码](../app/native_auth/credentials.py) · 761 行
+[打开源码](../app/native_auth/credentials.py) · 774 行
 
-类：[`LoginProgress`](../app/native_auth/credentials.py#L46)；[`FactorResetResult`](../app/native_auth/credentials.py#L56)；[`AdminResetResult`](../app/native_auth/credentials.py#L62)；[`NativeCredentials`](../app/native_auth/credentials.py#L135)。
+类：[`LoginProgress`](../app/native_auth/credentials.py#L46)；[`FactorResetResult`](../app/native_auth/credentials.py#L56)；[`AdminResetResult`](../app/native_auth/credentials.py#L62)；[`NativeCredentials`](../app/native_auth/credentials.py#L137)。
 
 主要可调用定义：
 
 - [`acquire_account_lock`](../app/native_auth/credentials.py#L67) — L67
 
   ```python
-  async acquire_account_lock(session: AsyncSession, account_ref: str, *, organization_ref: str, trust_ref: str) -> NativeAccountTable
+  async acquire_account_lock(session: AsyncSession, account_ref: str, *, organization_ref: str, trust_ref: str, mode: LockMode) -> NativeAccountTable
   ```
   Same trust -> principal -> organization order as human business commands.
-- [`authentication_event`](../app/native_auth/credentials.py#L106) — L106
+- [`authentication_event`](../app/native_auth/credentials.py#L108) — L108
 
   ```python
   authentication_event(session: AsyncSession, event: str, *, account_ref: str | None=None, client_id: str | None=None, version: int | None=None, actor_ref: str | None=None) -> None
   ```
   A deliberately tiny audit whitelist excludes tokens, factors and login data.
-- [`commit_authentication`](../app/native_auth/credentials.py#L126) — L126
+- [`commit_authentication`](../app/native_auth/credentials.py#L128) — L128
 
   ```python
   async commit_authentication(session: AsyncSession) -> None
   ```
-- [`NativeCredentials.lock_account`](../app/native_auth/credentials.py#L166) — L166
+- [`NativeCredentials.lock_account`](../app/native_auth/credentials.py#L168) — L168
 
   ```python
   async NativeCredentials.lock_account(self, session: AsyncSession, account_ref: str) -> NativeAccountTable
   ```
-- [`NativeCredentials.validate_browser_request`](../app/native_auth/credentials.py#L175) — L175
+- [`NativeCredentials.read_account`](../app/native_auth/credentials.py#L177) — L177
+
+  ```python
+  async NativeCredentials.read_account(self, session: AsyncSession, account_ref: str) -> NativeAccountTable
+  ```
+  Pin current account facts without serializing pure readers.
+- [`NativeCredentials.validate_browser_request`](../app/native_auth/credentials.py#L188) — L188
 
   ```python
   async NativeCredentials.validate_browser_request(session: AsyncSession, request_ref: str, browser_secret: str, csrf_token: str | None, *, lock: bool=False) -> NativeLoginRequestTable
   ```
-- [`NativeCredentials.throttle_authorization`](../app/native_auth/credentials.py#L238) — L238
+- [`NativeCredentials.throttle_authorization`](../app/native_auth/credentials.py#L251) — L251
 
   ```python
   async NativeCredentials.throttle_authorization(self, client_address: str) -> None
   ```
   Separate bound for persistent anonymous browser authorization requests.
-- [`NativeCredentials.throttle_logout`](../app/native_auth/credentials.py#L242) — L242
+- [`NativeCredentials.throttle_logout`](../app/native_auth/credentials.py#L255) — L255
 
   ```python
   async NativeCredentials.throttle_logout(self, client_address: str) -> None
   ```
   Bound anonymous logout requests separately from login ceremonies.
-- [`NativeCredentials.progress`](../app/native_auth/credentials.py#L290) — L290
+- [`NativeCredentials.progress`](../app/native_auth/credentials.py#L303) — L303
 
   ```python
   async NativeCredentials.progress(self, request_ref: str, browser_secret: str) -> LoginProgress
   ```
-- [`NativeCredentials.password`](../app/native_auth/credentials.py#L304) — L304
+- [`NativeCredentials.password`](../app/native_auth/credentials.py#L317) — L317
 
   ```python
   async NativeCredentials.password(self, request_ref: str, browser_secret: str, csrf_token: str, username: str, password: str, *, client_address: str='local') -> LoginProgress
   ```
-- [`NativeCredentials.otp`](../app/native_auth/credentials.py#L400) — L400
+- [`NativeCredentials.otp`](../app/native_auth/credentials.py#L413) — L413
 
   ```python
   async NativeCredentials.otp(self, request_ref: str, browser_secret: str, csrf_token: str, code: str, *, client_address: str='local') -> LoginProgress
   ```
-- [`NativeCredentials.recover`](../app/native_auth/credentials.py#L456) — L456
+- [`NativeCredentials.recover`](../app/native_auth/credentials.py#L469) — L469
 
   ```python
   async NativeCredentials.recover(self, request_ref: str, browser_secret: str, csrf_token: str, recovery_code: str, *, client_address: str='local') -> LoginProgress
   ```
-- [`NativeCredentials.create_account`](../app/native_auth/credentials.py#L505) — L505
+- [`NativeCredentials.create_account`](../app/native_auth/credentials.py#L518) — L518
 
   ```python
   async NativeCredentials.create_account(self, account_ref: str, principal_ref: str, username: str, password: str) -> str
   ```
   Trusted local administration only; never creates a Principal or membership.
-- [`NativeCredentials.change_password`](../app/native_auth/credentials.py#L619) — L619
+- [`NativeCredentials.change_password`](../app/native_auth/credentials.py#L632) — L632
 
   ```python
   async NativeCredentials.change_password(self, session_ref: str, old_password: str, new_password: str, *, access_claims: dict[str, Any] | None=None) -> int
   ```
-- [`NativeCredentials.reset_totp`](../app/native_auth/credentials.py#L654) — L654
+- [`NativeCredentials.reset_totp`](../app/native_auth/credentials.py#L667) — L667
 
   ```python
   async NativeCredentials.reset_totp(self, session_ref: str, password: str, otp: str, *, access_claims: dict[str, Any] | None=None) -> FactorResetResult
   ```
-- [`NativeCredentials.disable_account`](../app/native_auth/credentials.py#L698) — L698
+- [`NativeCredentials.disable_account`](../app/native_auth/credentials.py#L711) — L711
 
   ```python
   async NativeCredentials.disable_account(self, account_ref: str, expected_version: int, *, actor_ref: str | None=None) -> int
   ```
   Explicit OS operator operation; never a caller-controlled public endpoint.
-- [`NativeCredentials.admin_reset`](../app/native_auth/credentials.py#L718) — L718
+- [`NativeCredentials.admin_reset`](../app/native_auth/credentials.py#L731) — L731
 
   ```python
   async NativeCredentials.admin_reset(self, account_ref: str, expected_version: int, *, new_password: str | None=None, reset_totp: bool=False, actor_ref: str | None=None) -> AdminResetResult
@@ -2850,63 +2862,63 @@ Principal 人员/服务主体表。
 <details>
 <summary>内部方法、特殊方法与嵌套闭包</summary>
 
-- [`NativeCredentials.__init__`](../app/native_auth/credentials.py#L136) — L136
+- [`NativeCredentials.__init__`](../app/native_auth/credentials.py#L138) — L138
 
   ```python
   NativeCredentials.__init__(self, sessions: async_sessionmaker[AsyncSession], *, fernet_key: bytes | str, organization_ref: str, trust_ref: str, issuer_label: str='OrchestraCorp', peer_attempt_limit: int=30, authorization_attempt_limit: int=30, rate_window_seconds: int=600) -> None
   ```
-- [`NativeCredentials._throttle`](../app/native_auth/credentials.py#L201) — L201
+- [`NativeCredentials._throttle`](../app/native_auth/credentials.py#L214) — L214
 
   ```python
   async NativeCredentials._throttle(self, client_address: str, *, limit: int | None=None) -> None
   ```
   Bound work before Argon2; source address is transport peer, never forwarded headers.
-- [`NativeCredentials._active`](../app/native_auth/credentials.py#L247) — L247
+- [`NativeCredentials._active`](../app/native_auth/credentials.py#L260) — L260
 
   ```python
   NativeCredentials._active(account: NativeAccountTable, now: datetime) -> bool
   ```
-- [`NativeCredentials._failed`](../app/native_auth/credentials.py#L251) — L251
+- [`NativeCredentials._failed`](../app/native_auth/credentials.py#L264) — L264
 
   ```python
   NativeCredentials._failed(session: AsyncSession, account: NativeAccountTable | None, client_id: str, now: datetime) -> None
   ```
-- [`NativeCredentials._revoke_sessions`](../app/native_auth/credentials.py#L261) — L261
+- [`NativeCredentials._revoke_sessions`](../app/native_auth/credentials.py#L274) — L274
 
   ```python
   async NativeCredentials._revoke_sessions(self, session: AsyncSession, account_ref: str, now: datetime) -> None
   ```
-- [`NativeCredentials._progress`](../app/native_auth/credentials.py#L276) — L276
+- [`NativeCredentials._progress`](../app/native_auth/credentials.py#L289) — L289
 
   ```python
   NativeCredentials._progress(self, request: NativeLoginRequestTable, account: NativeAccountTable | None=None) -> LoginProgress
   ```
-- [`NativeCredentials._factor_context`](../app/native_auth/credentials.py#L363) — L363
+- [`NativeCredentials._factor_context`](../app/native_auth/credentials.py#L376) — L376
 
   ```python
   async NativeCredentials._factor_context(self, session: AsyncSession, request_ref: str, browser_secret: str, csrf_token: str) -> tuple[NativeLoginRequestTable, NativeAccountTable]
   ```
-- [`NativeCredentials._factor_deadline`](../app/native_auth/credentials.py#L390) — L390
+- [`NativeCredentials._factor_deadline`](../app/native_auth/credentials.py#L403) — L403
 
   ```python
   NativeCredentials._factor_deadline(request: NativeLoginRequestTable) -> None
   ```
-- [`NativeCredentials._session_snapshot`](../app/native_auth/credentials.py#L552) — L552
+- [`NativeCredentials._session_snapshot`](../app/native_auth/credentials.py#L565) — L565
 
   ```python
   async NativeCredentials._session_snapshot(self, session_ref: str) -> tuple[str, str, int]
   ```
-- [`NativeCredentials._strong_session`](../app/native_auth/credentials.py#L560) — L560
+- [`NativeCredentials._strong_session`](../app/native_auth/credentials.py#L573) — L573
 
   ```python
   async NativeCredentials._strong_session(self, session: AsyncSession, session_ref: str, account: NativeAccountTable, *, version: int) -> tuple[NativeSessionTable, datetime]
   ```
-- [`NativeCredentials._access_proof`](../app/native_auth/credentials.py#L594) — L594
+- [`NativeCredentials._access_proof`](../app/native_auth/credentials.py#L607) — L607
 
   ```python
   async NativeCredentials._access_proof(self, session: AsyncSession, claims: dict[str, Any] | None, login: NativeSessionTable) -> None
   ```
-- [`NativeCredentials._final_deadline`](../app/native_auth/credentials.py#L610) — L610
+- [`NativeCredentials._final_deadline`](../app/native_auth/credentials.py#L623) — L623
 
   ```python
   NativeCredentials._final_deadline(login: NativeSessionTable, claims: dict[str, Any] | None, authentication_deadline: datetime) -> None
@@ -3190,7 +3202,7 @@ RP 退出请求/确认、Cookie/CSRF 绑定、当前浏览器相关 RP 会话撤
 
 PKCE、client auth、token/refresh/revoke/UserInfo；当前会话校验复用独立模块。
 
-[打开源码](../app/native_auth/oauth.py) · 708 行
+[打开源码](../app/native_auth/oauth.py) · 711 行
 
 类：[`NativeOAuth`](../app/native_auth/oauth.py#L75)。
 
@@ -3241,12 +3253,12 @@ PKCE、client auth、token/refresh/revoke/UserInfo；当前会话校验复用独
   ```python
   async NativeOAuth.authenticate_account(self, token: str, *, max_age_seconds: int | None=300, allow_userinfo_audience: bool=False) -> dict[str, Any]
   ```
-- [`NativeOAuth.userinfo`](../app/native_auth/oauth.py#L520) — L520
+- [`NativeOAuth.userinfo`](../app/native_auth/oauth.py#L523) — L523
 
   ```python
   async NativeOAuth.userinfo(self, token: str) -> dict[str, str]
   ```
-- [`NativeOAuth.authenticate_client`](../app/native_auth/oauth.py#L530) — L530
+- [`NativeOAuth.authenticate_client`](../app/native_auth/oauth.py#L533) — L533
 
   ```python
   async NativeOAuth.authenticate_client(self, session: AsyncSession, client_id: str, client_secret: str | None=None, client_auth_method: str='none') -> NativeClientTable
@@ -3271,37 +3283,37 @@ PKCE、client auth、token/refresh/revoke/UserInfo；当前会话校验复用独
   async NativeOAuth._authenticated_account(self, token: str, *, max_age_seconds: int | None, allow_userinfo_audience: bool) -> AsyncIterator[tuple[NativeAccountTable, dict[str, Any]]]
   ```
   Keep current account reads in the same authority transaction as verification.
-- [`NativeOAuth._lock_account`](../app/native_auth/oauth.py#L551) — L551
+- [`NativeOAuth._lock_account`](../app/native_auth/oauth.py#L554) — L554
 
   ```python
   async NativeOAuth._lock_account(self, session: AsyncSession, account_ref: str, error: str='invalid_grant', *, status_code: int=400) -> NativeAccountTable
   ```
-- [`NativeOAuth._lock_session`](../app/native_auth/oauth.py#L559) — L559
+- [`NativeOAuth._lock_session`](../app/native_auth/oauth.py#L562) — L562
 
   ```python
   async NativeOAuth._lock_session(self, session: AsyncSession, session_ref: str, *, allow_inactive: bool=False) -> NativeSessionTable
   ```
-- [`NativeOAuth._client`](../app/native_auth/oauth.py#L594) — L594
+- [`NativeOAuth._client`](../app/native_auth/oauth.py#L597) — L597
 
   ```python
   async NativeOAuth._client(self, session: AsyncSession, client_id: str, redirect_uri: str | None=None) -> NativeClientTable
   ```
-- [`NativeOAuth._live_session`](../app/native_auth/oauth.py#L610) — L610
+- [`NativeOAuth._live_session`](../app/native_auth/oauth.py#L613) — L613
 
   ```python
   NativeOAuth._live_session(login: NativeSessionTable, now: datetime) -> None
   ```
-- [`NativeOAuth._issue_tokens`](../app/native_auth/oauth.py#L620) — L620
+- [`NativeOAuth._issue_tokens`](../app/native_auth/oauth.py#L623) — L623
 
   ```python
   NativeOAuth._issue_tokens(self, session: AsyncSession, login: NativeSessionTable, now: datetime, client: NativeClientTable, *, include_nonce: bool=True, scope: str | None=None) -> dict[str, Any]
   ```
-- [`NativeOAuth._event`](../app/native_auth/oauth.py#L691) — L691
+- [`NativeOAuth._event`](../app/native_auth/oauth.py#L694) — L694
 
   ```python
   NativeOAuth._event(session: AsyncSession, event: str, login: NativeSessionTable) -> None
   ```
-- [`NativeOAuth._commit`](../app/native_auth/oauth.py#L702) — L702
+- [`NativeOAuth._commit`](../app/native_auth/oauth.py#L705) — L705
 
   ```python
   async NativeOAuth._commit(session: AsyncSession) -> None
@@ -3371,33 +3383,33 @@ OAuth 值对象、范围规范化、响应及错误合同，无数据库依赖�
 
 当前人员的会话/应用授权列表、单个撤销、全退出和同意撤销。
 
-[打开源码](../app/native_auth/sessions.py) · 322 行
+[打开源码](../app/native_auth/sessions.py) · 326 行
 
 类：[`AccountSessions`](../app/native_auth/sessions.py#L46)。
 
 主要可调用定义：
 
-- [`AccountSessions.list_sessions`](../app/native_auth/sessions.py#L112) — L112
+- [`AccountSessions.list_sessions`](../app/native_auth/sessions.py#L116) — L116
 
   ```python
   async AccountSessions.list_sessions(self, access_token: str, *, limit: int=20, after: str | None=None) -> dict[str, Any]
   ```
-- [`AccountSessions.revoke_session`](../app/native_auth/sessions.py#L169) — L169
+- [`AccountSessions.revoke_session`](../app/native_auth/sessions.py#L173) — L173
 
   ```python
   async AccountSessions.revoke_session(self, access_token: str, session_ref: str) -> None
   ```
-- [`AccountSessions.revoke_all`](../app/native_auth/sessions.py#L200) — L200
+- [`AccountSessions.revoke_all`](../app/native_auth/sessions.py#L204) — L204
 
   ```python
   async AccountSessions.revoke_all(self, access_token: str) -> dict[str, int]
   ```
-- [`AccountSessions.list_consents`](../app/native_auth/sessions.py#L230) — L230
+- [`AccountSessions.list_consents`](../app/native_auth/sessions.py#L234) — L234
 
   ```python
   async AccountSessions.list_consents(self, access_token: str, *, limit: int=20, after: str | None=None) -> dict[str, Any]
   ```
-- [`AccountSessions.revoke_consent`](../app/native_auth/sessions.py#L263) — L263
+- [`AccountSessions.revoke_consent`](../app/native_auth/sessions.py#L267) — L267
 
   ```python
   async AccountSessions.revoke_consent(self, access_token: str, client_id: str) -> None
@@ -3424,14 +3436,14 @@ OAuth 值对象、范围规范化、响应及错误合同，无数据库依赖�
 - [`AccountSessions._actor`](../app/native_auth/sessions.py#L61) — L61
 
   ```python
-  async AccountSessions._actor(self, access_token: str, *, fresh: bool) -> AsyncIterator[tuple[AsyncSession, NativeAccountTable, NativeSessionTable, dict[str, Any], datetime | None]]
+  async AccountSessions._actor(self, access_token: str, *, fresh: bool, write: bool) -> AsyncIterator[tuple[AsyncSession, NativeAccountTable, NativeSessionTable, dict[str, Any], datetime | None]]
   ```
-- [`AccountSessions._deadline`](../app/native_auth/sessions.py#L87) — L87
+- [`AccountSessions._deadline`](../app/native_auth/sessions.py#L91) — L91
 
   ```python
   AccountSessions._deadline(claims: dict[str, Any], login: NativeSessionTable, *, authentication_deadline: datetime | None) -> None
   ```
-- [`AccountSessions._event`](../app/native_auth/sessions.py#L97) — L97
+- [`AccountSessions._event`](../app/native_auth/sessions.py#L101) — L101
 
   ```python
   AccountSessions._event(session: AsyncSession, event: str, account: NativeAccountTable, *, client_id: str | None=None, target_session: str | None=None) -> None
@@ -3451,18 +3463,18 @@ OAuth 值对象、范围规范化、响应及错误合同，无数据库依赖�
 
 本人任职应用服务：生命周期租约、真实身份、当前授权读取与截止复核。
 
-[打开源码](../app/providers/assignments.py) · 58 行
+[打开源码](../app/providers/assignments.py) · 59 行
 
-类：[`AssignmentService`](../app/providers/assignments.py#L17)。
+类：[`AssignmentService`](../app/providers/assignments.py#L18)。
 
 主要可调用定义：
 
-- [`AssignmentService.list_self`](../app/providers/assignments.py#L22) — L22
+- [`AssignmentService.list_self`](../app/providers/assignments.py#L23) — L23
 
   ```python
   async AssignmentService.list_self(self, token: str, *, profile_ref: str, profile_version: int, limit: int=20, after: str | None=None) -> AssignmentList
   ```
-- [`assignments_plugin`](../app/providers/assignments.py#L54) — L54
+- [`assignments_plugin`](../app/providers/assignments.py#L55) — L55
 
   ```python
   assignments_plugin(config: Settings) -> PluginSpec
@@ -3471,12 +3483,12 @@ OAuth 值对象、范围规范化、响应及错误合同，无数据库依赖�
 <details>
 <summary>内部方法、特殊方法与嵌套闭包</summary>
 
-- [`AssignmentService.__init__`](../app/providers/assignments.py#L18) — L18
+- [`AssignmentService.__init__`](../app/providers/assignments.py#L19) — L19
 
   ```python
   AssignmentService.__init__(self, context: ComponentContext, timeout_seconds: float) -> None
   ```
-- [`assignments_plugin.setup`](../app/providers/assignments.py#L55) — L55
+- [`assignments_plugin.setup`](../app/providers/assignments.py#L56) — L56
 
   ```python
   assignments_plugin.setup(ctx: ComponentContext) -> None
@@ -4680,6 +4692,91 @@ CallScope 的导出入口；实际租约状态由 host.py 单一实现维护。
 
 无本地函数或类定义；可能是常量、导出或包占位。
 
+### app/storage/coordination.py
+
+事务绑定的组织advisory准入门与guard行S/X、短命令幂等键同步、保存点与升级防护。
+
+[打开源码](../app/storage/coordination.py) · 239 行
+
+类：[`LockMode`](../app/storage/coordination.py#L32)；[`_Protection`](../app/storage/coordination.py#L41)。
+
+主要可调用定义：
+
+- [`_Protection.reject_savepoint`](../app/storage/coordination.py#L49) — L49
+
+  ```python
+  _Protection.reject_savepoint(self, _connection: Connection, _name: str | None) -> None
+  ```
+- [`lock_organization`](../app/storage/coordination.py#L131) — L131
+
+  ```python
+  async lock_organization(session: AsyncSession, organization_ref: str, *, mode: LockMode) -> None
+  ```
+  Protect an existing organization; never upgrade SHARED within a transaction.
+- [`assert_organization_lock`](../app/storage/coordination.py#L166) — L166
+
+  ```python
+  assert_organization_lock(session: AsyncSession, organization_ref: str, *, mode: LockMode=LockMode.SHARED) -> None
+  ```
+  Require current transaction proof; an exclusive lock also permits reads.
+- [`lock_command_key`](../app/storage/coordination.py#L202) — L202
+
+  ```python
+  async lock_command_key(session: AsyncSession, *, organization_ref: str, actor_ref: str, command_name: str, command_version: str, idempotency_key: str) -> None
+  ```
+  Acquire one stable logical command key before organization protection.
+
+<details>
+<summary>内部方法、特殊方法与嵌套闭包</summary>
+
+- [`_reject_nested_transaction`](../app/storage/coordination.py#L60) — L60
+
+  ```python
+  _reject_nested_transaction(_session: Session, transaction: SessionTransaction) -> None
+  ```
+- [`_release_proof`](../app/storage/coordination.py#L73) — L73
+
+  ```python
+  _release_proof(_session: Session, transaction: SessionTransaction) -> None
+  ```
+- [`_root_transaction`](../app/storage/coordination.py#L79) — L79
+
+  ```python
+  _root_transaction(session: AsyncSession) -> SessionTransaction
+  ```
+- [`_assert_connection`](../app/storage/coordination.py#L86) — L86
+
+  ```python
+  _assert_connection(protection: _Protection) -> None
+  ```
+- [`_protection`](../app/storage/coordination.py#L96) — L96
+
+  ```python
+  async _protection(session: AsyncSession) -> _Protection
+  ```
+- [`_check_mode`](../app/storage/coordination.py#L113) — L113
+
+  ```python
+  _check_mode(mode: LockMode) -> None
+  ```
+- [`_sqlite_reservation`](../app/storage/coordination.py#L118) — L118
+
+  ```python
+  async _sqlite_reservation(session: AsyncSession, organization_ref: str) -> None
+  ```
+- [`_organization_key`](../app/storage/coordination.py#L180) — L180
+
+  ```python
+  _organization_key(organization_ref: str) -> int
+  ```
+- [`_advisory_key`](../app/storage/coordination.py#L194) — L194
+
+  ```python
+  _advisory_key(key: CommandKey) -> tuple[int, int]
+  ```
+
+</details>
+
 ### app/storage/types.py
 
 精确标识字符串与 UTC 时间存储适配，统一数据库比较与时间语义。
@@ -4821,7 +4918,7 @@ workload_registration
 |---|---|---|
 | [scripts/authorization_admin.py](../scripts/authorization_admin.py) |  | `run()`, `main()` |
 | [scripts/benchmark_human_work.py](../scripts/benchmark_human_work.py) | `BenchmarkCheckFailed`, `Sample` | `require()`, `database_url()`, `source_fingerprints()`, `observed_guard_block()`, `distribution()`, `instrument()`, `summary()`, `send()`, `batch()`, `owned_items()`, `state()`, `verify_writes()`, `harness()`, `edit_baseline()`, `cancellation_baseline()`, `revocation_baseline()`, `run()`, `main()` |
-| [scripts/benchmark_mixed_auth_work.py](../scripts/benchmark_mixed_auth_work.py) | `Sample`, `DatabaseMeasurements`, `Actor` | `database_url()`, `validate_capacity_database()`, `source_digest()`, `distribution()`, `seed()`, `harness()`, `operate()`, `summarize()`, `workload()`, `login_burst()`, `run()`, `reset()`, `main()` |
+| [scripts/benchmark_mixed_auth_work.py](../scripts/benchmark_mixed_auth_work.py) | `Sample`, `DatabaseMeasurements`, `Actor` | `database_url()`, `validate_capacity_database()`, `source_digest()`, `distribution()`, `seed()`, `harness()`, `operate()`, `summarize()`, `workload()`, `login_burst()`, `contention_workloads()`, `run()`, `reset()`, `main()` |
 | [scripts/check_authorization_migration.py](../scripts/check_authorization_migration.py) |  | `migrate()`, `append_and_check()`, `main()` |
 | [scripts/check_browser_acceptance.py](../scripts/check_browser_acceptance.py) |  | `verify_report()`, `summary_report()`, `main()` |
 | [scripts/check_contract.py](../scripts/check_contract.py) |  | `check_contract()`, `main()` |

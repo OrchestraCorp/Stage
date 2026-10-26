@@ -38,6 +38,10 @@ P1a 已按证据完成；P1b.1/.2 已有真实身份与内部人类授权，P1b.
 
 P3 的单个能力可以在其依赖满足后与 P2 局部并行；P4 不能绕过 P1 的事务和退出协议。拆微服务由隔离、容量与运维证据驱动，不按能力列表机械拆进程。
 
+2026-10-26 的[授权与业务并发改进提案](stage-concurrency-improvement-plan.md)是 P1b 已实现底座的有限整理，不新增阶段，也不代替 Maestro 联调或 P1c/P1d。先明确验证职责、短事务锁序和同键恢复，再按真实 PostgreSQL 竞争与容量证据验收；P1c 接口设计可以并行，新的事务实现采用届时已验证的协议。不得把本轮演化成无限期性能平台工程。
+
+路线兼容门槛见[阶段接缝](stage-concurrency-improvement-plan.md#route-compatibility)与[过渡项退出条件](stage-concurrency-improvement-plan.md#transition-exits)：本轮移除旧隐式锁默认兼容入口；UUID 结果恢复在新增生产消费者之前完成局部恢复协议；Outbox 在首个真实 Worker 启用前另验。P1d 已要求持久 attempt 条件终态与旧回执拒绝，P4 的跨节点租约/fencing 是后续加强，不能将所有旧执行权保护都推迟到 P4。锁键编码／协调后端的版本切换按[升级边界](stage-concurrency-improvement-plan.md#coordination-upgrade)处理，当前采用停接入、排空和确切制品切换，不宣称已支持混合版本滚动运行。
+
 P1a 按[框架实施规格](framework-foundation.md)完成资源/依赖内核、安全退出/组合、provider/应用装配。P1b.3 以人员元数据编辑闭合认证到命令；P1b.4 已实现本人任职查询和密码＋TOTP 的组织策略，接下来完成 Maestro 实际客户端与因素绑定/恢复验收，并按实际入口核对剩余证据。登录 MFA 和 P1c/P1d 中绑定具体业务意图的批准分别建设；服务端 MFA 验证不等于桌面或业务批准完成。独立 Agent 身份平台不构成门槛，完整任务领取/交付/验收不随最小编辑接口提前进入 P1，详见[P1b 入口](p1b-implementation-entry.md)。
 
 运行时演进以真实后端故障场景为验收目标，不以 Cordis API 相似度为目标。当前 `ComponentContext` 只管理后端组件激活代次、依赖、资源 owner、进程内任务和调用租约；`ExecutionContext`/`AuthorizationContext` 负责业务身份与授权，PostgreSQL 负责持久事实和结果。后续每增加一层能力，都必须先说明重启是否要保留状态、是否跨越外部副作用、未知结果如何查询、撤销/版本何时重验，以及停止时怎样停接入、排空和释放。

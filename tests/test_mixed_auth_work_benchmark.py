@@ -3,11 +3,12 @@
 import asyncio
 
 import pytest
-from sqlalchemy import text
+from sqlalchemy import select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from app.execution.storage import lock_tenant
+from app.models.execution import TenantGuardTable
 from app.native_auth.keys import KeyRing
+from app.storage.coordination import LockMode, lock_organization
 from scripts.benchmark_mixed_auth_work import (
     ACTIVE,
     DatabaseMeasurements,
@@ -48,19 +49,31 @@ async def test_measurement_excludes_queueing_from_hold_and_reentrant_guard_does_
     # First guard: begin=1, acquired=6 (5 waiting/executing).
     # Reentrant query: begin=8, returned=8.5. Root tx finishes=10.
     # The resource was held once for 10-6=4, not 10-1=9 or 10-8.5=1.5.
-    ticks = iter([1.0, 6.0, 8.0, 8.5, 10.0])
+    ticks = iter(([0.0, 0.5] if engine.dialect.name == "postgresql" else []) + [1.0, 6.0, 8.0, 8.5, 10.0])
     sample = Sample("instrument-check")
     with DatabaseMeasurements(engine, clock=lambda: next(ticks)):
         active = ACTIVE.set(sample)
         try:
             async with persistence_sessions.begin() as session:
-                await lock_tenant(session, ORG)
-                await lock_tenant(session, ORG)
+                await lock_organization(session, ORG, mode=LockMode.EXCLUSIVE)
+                # Measure an explicit repeated SQL, independent of helper deduplication.
+                if session.get_bind().dialect.name == "postgresql":
+                    await session.execute(
+                        select(TenantGuardTable).where(TenantGuardTable.tenant_ref == ORG).with_for_update()
+                    )
+                else:
+                    await session.execute(
+                        update(TenantGuardTable)
+                        .where(TenantGuardTable.tenant_ref == ORG)
+                        .values(epoch=TenantGuardTable.epoch)
+                    )
         finally:
             ACTIVE.reset(active)
+    assert sample.lock_acquire["organization"] == [5.0]
     assert sample.guard_acquire == [5.0]
     assert sample.guard_hold == [4.0]
-    assert sample.guard_queries == 2 and sample.sql == 2
+    assert sample.guard_queries == 2
+    assert sample.sql == (3 if engine.dialect.name == "postgresql" else 2)
 
 
 async def test_transaction_end_keeps_its_original_sample_across_cleanup_tasks(
@@ -71,8 +84,9 @@ async def test_transaction_end_keeps_its_original_sample_across_cleanup_tasks(
     sample = Sample("rollback")
     with DatabaseMeasurements(engine):
         session = persistence_sessions()
+        await session.begin()
         active = ACTIVE.set(sample)
-        await lock_tenant(session, ORG)
+        await lock_organization(session, ORG, mode=LockMode.EXCLUSIVE)
         ACTIVE.reset(active)
         # ContextVar is now unset, as in cancellation-safe cleanup task paths.
         await asyncio.create_task(session.close())
@@ -100,6 +114,13 @@ async def test_native_mixed_workload_checks_all_operations_and_committed_audits(
         assert operation["sql_statements"]["total"] > 0
         assert operation["guard_transactions"] == (4 if name.startswith("work") else 2)
         assert operation["guard_hold_ms_per_transaction"]["p50"] > 0
+        if engine.dialect.name == "postgresql":
+            assert "principal" in operation["locks"]
+            assert "organization_gate" in operation["locks"]
+            if name in {"userinfo", "refresh"}:
+                assert "account" in operation["locks"]
+            if name == "work_edit":
+                assert operation["locks"]["command_key"]["acquire_ms"]["samples"] == 2
     async with persistence_sessions() as session:
         assert await session.scalar(text("SELECT count(*) FROM command_execution")) == 2
         assert await session.scalar(text("SELECT count(*) FROM execution_audit")) == 2

@@ -35,7 +35,6 @@ from app.control.operations import (
     operation_transaction,
     validate_operator,
 )
-from app.execution.storage import lock_tenant
 from app.identity.service import content_digest
 from app.models.authorization import (
     AuthorizationResourceTable,
@@ -51,6 +50,7 @@ from app.models.execution import TenantGuardTable
 from app.models.identity import PrincipalTable
 from app.models.identity_foundation import BootstrapRecordTable, OrganizationMembershipTable, OrganizationRootTable
 from app.models.work import WorkItemTable
+from app.storage.coordination import LockMode, lock_organization
 
 ScopeReference = Annotated[str, Field(min_length=1, max_length=256, pattern=r"^[^\s\x00-\x1f\x7f]+$")]
 Action = Literal["task.view", "task.assign", "task.metadata.update"]
@@ -188,7 +188,7 @@ async def _root_guard(
     root = await session.scalar(select(OrganizationRootTable).where(OrganizationRootTable.deployment_slot == 1))
     if root is None or root.organization_ref != organization_ref:
         raise AdministrationError("identity_database_organization_mismatch")
-    await lock_tenant(session, organization_ref)
+    await lock_organization(session, organization_ref, mode=LockMode.EXCLUSIVE)
     await session.refresh(root)
     if root.status != "active":
         raise AdministrationError("organization_inactive")

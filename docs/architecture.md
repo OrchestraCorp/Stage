@@ -121,7 +121,7 @@ Stage 采用 provider 整体 drain 屏障及满足停止/依赖前置条件后�
 
 CommandKernel 为每个并发命令创建独立 UoW / AsyncSession。组件只发布 factory，不共享单个 AsyncSession。业务事务明确控制 commit / rollback，请求依赖不会自动提交。[S6][L1]
 
-第一期采用部署组织持久 AuthorizationGuard 协调授权/准入撤销、资格事实revision和受控结果提交。该方案主动牺牲企业内写并行度，换取可验证顺序；不是生产规模吞吐承诺。WASM计算在事务外进行，提交时检测事实行与集合变化。锁序、授权时间点和全局禁用规则见[一期事务协议](phase-1.md#transaction-protocol)；任务名额与容量竞争以后按[业务切片](business-slice-plan.md)另验收。
+第一期采用部署组织持久 AuthorizationGuard 协调授权/准入撤销、资格事实revision和受控结果提交。当前已核查普通读写使用组织S，授权写者使用X；幂等键与业务对象分别协调，不再让无关普通命令全部排队。这仍不是生产规模吞吐承诺，实际边界见[并发优化记录](reviews/concurrency-optimization-2026-10-26.md)。WASM计算在事务外进行，提交时检测事实行与集合变化。锁序、授权时间点和全局禁用规则见[一期事务协议](phase-1.md#transaction-protocol)；任务名额与容量竞争以后按[业务切片](business-slice-plan.md)另验收。
 
 ```text
 认证、输入读取授权、取得固定 handler/module/provider 绑定

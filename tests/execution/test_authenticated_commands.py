@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from app.authz.authenticated import AuthenticatedAuthorizationLoader
 from app.execution.contracts import CommandEffect, CommandEnvelope, ExecutionContext
 from app.execution.errors import CommitOutcomeUnknown, ContextExpired, RequestDeadlineExceeded
-from app.execution.storage import UnitOfWork, lock_tenant
+from app.execution.storage import UnitOfWork
 from app.features.work.details import update_work_details
 from app.identity.administration import RevocationRequest, revoke
 from app.identity.authentication import AuthenticationRejected
@@ -24,6 +24,7 @@ from app.models.identity_foundation import (
     ExternalIdentityTable,
     TrustStateTable,
 )
+from app.storage.coordination import LockMode, lock_organization
 from tests.support.authenticated_commands import (
     audit_snapshot,
     authenticated_context,
@@ -103,7 +104,7 @@ async def test_issued_identity_does_not_survive_revocation_before_command_transa
                 await session.scalar(
                     select(PrincipalTable).where(PrincipalTable.principal_ref == PERSON).with_for_update()
                 )
-                await lock_tenant(session, ORG)
+                await lock_organization(session, ORG, mode=LockMode.EXCLUSIVE)
                 if target == "trust":
                     trust.key_status_revision += 1
                     trust.version += 1

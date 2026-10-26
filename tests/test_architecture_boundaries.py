@@ -30,3 +30,20 @@ def test_features_do_not_call_private_kernel_authorization() -> None:
             if isinstance(node, ast.Attribute) and node.attr == "_authorize":
                 violations.append(f"{path.relative_to(ROOT)}:{node.lineno}")
     assert violations == []
+
+
+def test_organization_lock_calls_always_declare_mode_and_old_alias_is_gone() -> None:
+    violations: list[str] = []
+    for directory in ("app", "scripts", "tests"):
+        for path in (ROOT / directory).rglob("*.py"):
+            if "node_modules" in path.parts:
+                continue
+            for node in ast.walk(ast.parse(path.read_text())):
+                if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+                    if node.func.id == "lock_organization" and not any(k.arg == "mode" for k in node.keywords):
+                        violations.append(f"{path.relative_to(ROOT)}:{node.lineno}: implicit mode")
+                    if node.func.id == "lock_tenant":
+                        violations.append(f"{path.relative_to(ROOT)}:{node.lineno}: retired helper")
+                if isinstance(node, ast.ImportFrom) and any(item.name == "lock_tenant" for item in node.names):
+                    violations.append(f"{path.relative_to(ROOT)}:{node.lineno}: retired import")
+    assert violations == []

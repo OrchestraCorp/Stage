@@ -59,7 +59,7 @@ erDiagram
     AUTHORIZATION_SCOPE ||--o{ ROLE_ASSIGNMENT : limits
     PRINCIPAL ||--o{ WORKLOAD_REGISTRATION : service_identity
     AUTHORIZATION_RESOURCE ||--o{ RELATION_TUPLE : resource_acl
-    ORGANIZATION_ROOT ||--|| EXECUTION_TENANT_GUARD : serializes
+    ORGANIZATION_ROOT ||--|| EXECUTION_TENANT_GUARD : coordinates_authorization
 ```
 
 ## 3. 类型、状态和公共约定
@@ -237,6 +237,8 @@ tenant 自身停用同样持有 tenant guard 并推进 epoch；每条企业受�
 identity_epoch 能使旧证据/缓存失效，但不能单独废止所有尚有效的外部 JWT。主体恢复启用时，如要求重新登录，需要该 profile 支持的会话撤销或明确时间栅栏；`iat` 不等于 `auth_time`，未知认证新鲜度不能当作已满足强认证。
 
 IAM 写命令使用专门的受控协调路径：按变更前事实验证操作者→验证目标范围/expected_version→修改授权事实→推进 epoch→同事务结果/审计/outbox。现有普通 Kernel 的“handler 不修改判定所用安全事实”约束仍有效；不能直接把任职撤销塞入旧 handler，再用已撤销的自身权限去验证同一变更。Token 到期、命令 deadline 等时间约束仍须提交前检查。
+
+当前并发实现已将组织保护分成准入门＋行锁S/X，普通业务使用S；来源／人员保护与授权写者X继续保证撤销排序。短命令另有入口幂等键同步，详见[实现记录](reviews/concurrency-optimization-2026-10-26.md)。这不改变上述表与epoch的权威边界，也不以缓存取代最终身份验证。
 
 ## 7. 与 WASM 的配合
 

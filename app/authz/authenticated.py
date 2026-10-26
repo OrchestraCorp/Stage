@@ -11,6 +11,7 @@ from app.core.enums import PrincipalType
 from app.execution.contracts import ExecutionContext
 from app.execution.errors import AuthorizationDenied
 from app.identity.evidence import HumanAuthenticationEvidence
+from app.storage.coordination import LockMode
 
 
 class HumanIdentityVerifier(Protocol):
@@ -71,6 +72,7 @@ class AuthenticatedAuthorizationLoader:
         target_ref: str,
         expected_version: int | None,
         now: datetime,
+        lock_mode: LockMode = LockMode.EXCLUSIVE,
     ) -> AuthorizationContext:
         evidence = self._check_locks(session, context)
         facts = await self._authorization.load(
@@ -80,12 +82,12 @@ class AuthenticatedAuthorizationLoader:
             target_ref=target_ref,
             expected_version=expected_version,
             now=now,
+            lock_mode=lock_mode,
         )
-        await self._identity.validate_human(session, evidence, now)
         if facts.assignment is not None and facts.assignment.membership_ref != evidence.membership_ref:
             raise AuthorizationDenied()
-        # The authorization loader now holds the organization guard. Only
-        # this same transaction may invoke the final identity revalidation.
+        # This marks facts loaded, not identity approved. The kernel must validate
+        # identity before any allow decision or version-conflict disclosure.
         session.info[(self._marker, "loaded")] = (session.sync_session.get_transaction(), evidence)
         return facts
 

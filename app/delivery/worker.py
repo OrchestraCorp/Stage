@@ -35,8 +35,9 @@ from app.delivery.contracts import (
     ReconciliationResult,
     ReconciliationStatus,
 )
-from app.execution.storage import UnitOfWork, lock_tenant, managed_uow
+from app.execution.storage import UnitOfWork, managed_uow
 from app.models.execution import DeliveryAttemptTable, OutboxRecordTable
+from app.storage.coordination import LockMode, lock_organization
 
 type Operation = Literal["send", "reconcile"]
 logger = logging.getLogger(__name__)
@@ -220,7 +221,7 @@ class OutboxWorker:
     async def _recover_expired(self, tenant_ref: str) -> int:
         async with managed_uow(self._sessions) as uow:
             session = uow.session
-            await lock_tenant(session, tenant_ref)
+            await lock_organization(session, tenant_ref, mode=LockMode.EXCLUSIVE)
             now = self._now()
             rows = list(
                 (
@@ -264,7 +265,7 @@ class OutboxWorker:
     ) -> _Selection | None:
         async with managed_uow(self._sessions) as uow:
             session = uow.session
-            await lock_tenant(session, tenant_ref)
+            await lock_organization(session, tenant_ref, mode=LockMode.EXCLUSIVE)
             now = self._now()
             expected_status = "pending" if operation == "send" else "unknown"
             query = select(OutboxRecordTable).where(
@@ -344,7 +345,7 @@ class OutboxWorker:
     ) -> bool:
         async with managed_uow(self._sessions) as uow:
             session = uow.session
-            await lock_tenant(session, claim.envelope.tenant_ref)
+            await lock_organization(session, claim.envelope.tenant_ref, mode=LockMode.EXCLUSIVE)
             now = self._now()
             row = await session.scalar(
                 select(OutboxRecordTable)
@@ -539,7 +540,7 @@ class OutboxWorker:
         """
         async with self._operation(), managed_uow(self._sessions) as uow:
             session = uow.session
-            await lock_tenant(session, tenant_ref)
+            await lock_organization(session, tenant_ref, mode=LockMode.EXCLUSIVE)
             row = await session.scalar(
                 select(OutboxRecordTable)
                 .where(

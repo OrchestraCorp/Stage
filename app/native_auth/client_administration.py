@@ -19,7 +19,6 @@ from app.control.operations import (
     operation_transaction,
     validate_operator,
 )
-from app.execution.storage import lock_tenant
 from app.identity.assurance import AssuranceReference, HumanAssurancePolicy, HumanAssuranceRule
 from app.identity.native import NATIVE_ACR, NATIVE_PROFILE_SCHEMA
 from app.identity.service import AdmissionConstraints, ProfileConfiguration, content_digest, profile_content
@@ -35,6 +34,7 @@ from app.models.identity_foundation import (
 from app.models.native_auth import NativeAuthEventTable, NativeClientTable, NativeSessionTable
 from app.native_auth.administration import NAMESPACE, PROVIDER, TRUST
 from app.native_auth.redirects import validate_issuer_redirect, validate_redirect_uri
+from app.storage.coordination import LockMode, lock_organization
 
 CONFIGURE_OPERATION = "configure.native-oauth-client"
 ROTATE_OPERATION = "rotate.native-oauth-client-secret"
@@ -144,7 +144,7 @@ async def _lock_domain(session: AsyncSession, plan: ClientPlan) -> tuple[TrustSt
     roots = (await session.scalars(select(OrganizationRootTable))).all()
     if len(roots) != 1 or roots[0].organization_ref != plan.organization_ref:
         raise AdministrationError("identity_database_organization_mismatch")
-    await lock_tenant(session, plan.organization_ref)
+    await lock_organization(session, plan.organization_ref, mode=LockMode.EXCLUSIVE)
     await session.refresh(roots[0])
     if roots[0].status != "active":
         raise AdministrationError("organization_not_active")

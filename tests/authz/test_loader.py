@@ -25,6 +25,7 @@ from app.models.execution import TenantGuardTable
 from app.models.identity import PrincipalTable
 from app.models.identity_foundation import OrganizationMembershipTable, OrganizationRootTable
 from app.models.work import WorkItemTable
+from app.storage.coordination import LockMode, lock_organization
 
 NOW = datetime(2026, 10, 25, 12, 0, tzinfo=UTC)
 ORG = "org:stage"
@@ -195,6 +196,7 @@ async def test_loader_reads_bound_role_scope_relation_and_work_item(
             await seed_authorization(session)
             loader = DatabaseAuthorizationLoader()
             await loader.acquire_locks(session, execution_context())
+            await lock_organization(session, ORG, mode=LockMode.EXCLUSIVE)
             facts = await loader.load(
                 session,
                 execution_context(),
@@ -222,6 +224,7 @@ async def test_loader_fails_closed_for_stale_version_and_missing_selection(
             await seed_authorization(session)
             loader = DatabaseAuthorizationLoader()
             await loader.acquire_locks(session, execution_context())
+            await lock_organization(session, ORG, mode=LockMode.EXCLUSIVE)
             stale = await loader.load(
                 session,
                 execution_context(),
@@ -254,6 +257,7 @@ async def test_loader_does_not_turn_an_unrelated_relation_into_authority(
             await seed_authorization(session, relation="viewer_of")
             loader = DatabaseAuthorizationLoader()
             await loader.acquire_locks(session, execution_context())
+            await lock_organization(session, ORG, mode=LockMode.EXCLUSIVE)
             facts = await loader.load(
                 session,
                 execution_context(),
@@ -294,6 +298,7 @@ async def test_membership_expiry_is_preserved_for_final_transaction_check(
         await session.execute(update(OrganizationMembershipTable).values(expires_at=expires_at))
         loader = DatabaseAuthorizationLoader()
         await loader.acquire_locks(session, execution_context())
+        await lock_organization(session, ORG, mode=LockMode.EXCLUSIVE)
         facts = await loader.load(
             session,
             execution_context(),
@@ -315,6 +320,7 @@ async def test_role_action_content_must_match_its_published_digest(
         await session.execute(update(RoleVersionTable).values(content_digest="0" * 64))
         loader = DatabaseAuthorizationLoader()
         await loader.acquire_locks(session, execution_context())
+        await lock_organization(session, ORG, mode=LockMode.EXCLUSIVE)
         facts = await loader.load(
             session,
             execution_context(),
@@ -336,6 +342,7 @@ async def test_coordinator_marker_cannot_be_reused_after_transaction_end(
         async with session.begin():
             await seed_authorization(session)
             await loader.acquire_locks(session, execution_context())
+            await lock_organization(session, ORG, mode=LockMode.EXCLUSIVE)
         async with session.begin():
             with pytest.raises(AuthorizationDenied):
                 await loader.load(
@@ -374,6 +381,7 @@ async def test_published_role_rejects_unknown_extra_capability_even_with_matchin
         )
         loader = DatabaseAuthorizationLoader()
         await loader.acquire_locks(session, execution_context())
+        await lock_organization(session, ORG, mode=LockMode.EXCLUSIVE)
         facts = await loader.load(
             session,
             execution_context(),
@@ -418,6 +426,7 @@ async def test_fact_versions_capture_actual_rows_ancestors_and_set_epoch(
         loader = DatabaseAuthorizationLoader()
         context = execution_context()
         await loader.acquire_locks(session, context)
+        await lock_organization(session, context.tenant_ref, mode=LockMode.EXCLUSIVE)
         facts = await loader.load(session, context, action="task.assign", target_ref=WORK, expected_version=7, now=NOW)
         expected = {
             ("organization_root", ORG, 2),

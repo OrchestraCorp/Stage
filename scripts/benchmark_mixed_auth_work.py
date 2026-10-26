@@ -42,6 +42,7 @@ from sqlalchemy.orm import Session, SessionTransaction  # noqa: E402
 from app.core.config import Settings  # noqa: E402
 from app.core.db import create_engine, create_session_factory  # noqa: E402
 from app.features.work.details import WorkDetailsInput  # noqa: E402
+from app.identity.assurance_administration import ConfigureHumanAuthenticationRequest, configure_human_authentication  # noqa: E402
 from app.identity.native import NATIVE_PROFILE_SCHEMA  # noqa: E402
 from app.identity.service import IdentityService, content_digest, profile_content  # noqa: E402
 from app.models.authorization import AuthorizationResourceTable, RelationTupleTable, RoleAssignmentTable  # noqa: E402
@@ -90,6 +91,8 @@ class Sample:
     guard_queries: int = 0
     guard_acquire: list[float] = field(default_factory=list)
     guard_hold: list[float] = field(default_factory=list)
+    lock_acquire: dict[str, list[float]] = field(default_factory=dict)
+    lock_hold: dict[str, list[float]] = field(default_factory=dict)
 
 
 ACTIVE: ContextVar[Sample | None] = ContextVar("mixed_capacity_sample", default=None)
@@ -108,6 +111,7 @@ class DatabaseMeasurements:
         self.engine, self.clock = engine, clock
         self.connections: dict[Connection, SessionTransaction] = {}
         self.holds: dict[SessionTransaction, tuple[Sample, float]] = {}
+        self.resource_holds: dict[SessionTransaction, dict[tuple[str, str], tuple[Sample, float]]] = {}
 
     def acquired(self, transaction: SessionTransaction, sample: Sample, started: float, completed: float) -> None:
         if transaction not in self.holds:
@@ -115,6 +119,8 @@ class DatabaseMeasurements:
             self.holds[transaction] = (sample, completed)
 
     def finished(self, transaction: SessionTransaction, completed: float) -> None:
+        for (kind, _key), (owner, started) in self.resource_holds.pop(transaction, {}).items():
+            owner.lock_hold.setdefault(kind, []).append(completed - started)
         held = self.holds.pop(transaction, None)
         if held is not None:
             sample, acquired = held
@@ -137,17 +143,46 @@ class DatabaseMeasurements:
         if sample is None:
             return
         sample.sql += 1
-        if "execution_tenant_guard" in sql and (
-            "FOR UPDATE" in sql.upper() or sql.lstrip().upper().startswith("UPDATE")
+        upper = sql.upper()
+        kind = None
+        if "PG_ADVISORY_XACT_LOCK" in upper:
+            kind = (
+                "organization_gate" if "AS BIGINT" in upper else "command_key" if "CAST(" in upper else "administration"
+            )
+        elif (
+            "FOR UPDATE" in upper
+            or "FOR SHARE" in upper
+            or (self.engine.dialect.name == "sqlite" and upper.lstrip().startswith("UPDATE EXECUTION_TENANT_GUARD"))
         ):
-            sample.guard_queries += 1
-            context.capacity_started = (sample, self.clock())
+            for table, label in (
+                ("execution_tenant_guard", "organization"),
+                ("principal", "principal"),
+                ("work_item", "work_item"),
+                ("trust_state", "trust"),
+                ("native_account", "account"),
+                ("native_session", "session"),
+            ):
+                if re.search(r"\b(?:FROM|JOIN|UPDATE)\s+" + re.escape(table) + r"\b", sql, re.IGNORECASE):
+                    kind = label
+                    break
+        if kind is not None:
+            if kind == "organization":
+                sample.guard_queries += 1
+            # Values remain private, used only to deduplicate reentrant row locks.
+            context.capacity_started = (sample, self.clock(), kind, repr(params))
 
     def after_sql(self, connection: Connection, cursor: Any, sql: str, params: Any, context: Any, many: bool) -> None:
         started = context.capacity_started
         transaction = self.connections.get(connection)
         if started is not None and transaction is not None:
-            self.acquired(transaction, started[0], started[1], self.clock())
+            sample, began, kind, key = started
+            completed = self.clock()
+            if kind == "organization":
+                self.acquired(transaction, sample, began, completed)
+            held = self.resource_holds.setdefault(transaction, {})
+            if (kind, key) not in held:
+                sample.lock_acquire.setdefault(kind, []).append(completed - began)
+                held[kind, key] = (sample, completed)
 
     def __enter__(self) -> DatabaseMeasurements:
         event.listen(Session, "after_begin", self.after_begin)
@@ -161,7 +196,7 @@ class DatabaseMeasurements:
         event.remove(Session, "after_transaction_end", self.after_end)
         event.remove(self.engine.sync_engine, "before_cursor_execute", self.before_sql)
         event.remove(self.engine.sync_engine, "after_cursor_execute", self.after_sql)
-        if self.holds or self.connections:
+        if self.holds or self.connections or self.resource_holds:
             raise RuntimeError("measurement transactions did not finish")
 
 
@@ -205,7 +240,13 @@ def distribution(values: list[float]) -> dict[str, float | int]:
             1000 * (ordered[low] + (ordered[min(low + 1, len(ordered) - 1)] - ordered[low]) * (position - low)), 3
         )
 
-    return {"samples": len(values), "p50": percentile(0.5), "p95": percentile(0.95), "max": percentile(1)}
+    return {
+        "samples": len(values),
+        "p50": percentile(0.5),
+        "p95": percentile(0.95),
+        "p99": percentile(0.99),
+        "max": percentile(1),
+    }
 
 
 @dataclass
@@ -480,6 +521,16 @@ def summarize(samples: list[Sample], elapsed: float) -> dict[str, Any]:
             "total": sum(sample.sql for sample in samples),
             "mean": round(sum(sample.sql for sample in samples) / len(samples), 3),
         },
+        "locks": {
+            kind: {
+                "acquire_ms": distribution([v for sample in samples for v in sample.lock_acquire.get(kind, [])]),
+                "hold_ms": distribution([v for sample in samples for v in sample.lock_hold.get(kind, [])]),
+            }
+            for kind in sorted({kind for sample in samples for kind in sample.lock_acquire})
+        },
+        "organization_acquire_ms_per_operation": distribution(
+            [sum(sample.lock_acquire.get("organization_gate", [])) + sum(sample.guard_acquire) for sample in samples]
+        ),
         "guard_queries": sum(sample.guard_queries for sample in samples),
         "guard_transactions": sum(len(sample.guard_hold) for sample in samples),
         "guard_acquire_ms_per_operation": distribution([sum(sample.guard_acquire) for sample in samples]),
@@ -590,7 +641,127 @@ async def login_burst(oauth: NativeOAuth, actors: list[Actor]) -> dict[str, Any]
     return result
 
 
-async def run(url: str, count: int, environment_note: str) -> dict[str, Any]:
+async def contention_workloads(host: RuntimeHost, oauth: NativeOAuth, actors: list[Actor]) -> dict[str, Any]:
+    """Exercise real policy writers, same-person readers and same-key retries separately."""
+    readers: list[Sample] = []
+    writers: list[Sample] = []
+    started = time.perf_counter()
+
+    async def traffic(index: int) -> None:
+        for iteration in range(16):
+            readers.append(
+                await operate(
+                    host, oauth, actors[index], OPERATIONS[(iteration + index) % 4], f"writer-load-{index}-{iteration}"
+                )
+            )
+
+    async def policy_changes() -> None:
+        for index in range(8):
+            # This is an actual versioned MFA policy writer, not a synthetic sleep under a lock.
+            async with oauth.sessions() as session:
+                row = await session.get(OrganizationHumanAuthenticationPolicyTable, ORG)
+                assert row is not None
+                request = ConfigureHumanAuthenticationRequest.model_validate(
+                    {
+                        "environment": "test",
+                        "organization_ref": ORG,
+                        "expected_version": row.version,
+                        "policy": {"mode": row.mode, "rules": row.rules_json, "max_auth_age_seconds": 899 - index},
+                    }
+                )
+            sample = Sample("mfa_policy_write")
+            active, start = ACTIVE.set(sample), time.perf_counter()
+            try:
+                await configure_human_authentication(
+                    oauth.sessions, request, actor_ref="operator:capacity", idempotency_key=f"capacity-policy-{index}"
+                )
+            except Exception as error:
+                sample.error = type(error).__name__
+            finally:
+                sample.elapsed = time.perf_counter() - start
+                ACTIVE.reset(active)
+            writers.append(sample)
+            await asyncio.sleep(0.02)
+
+    async with asyncio.TaskGroup() as tasks:
+        for index in range(len(actors)):
+            tasks.create_task(traffic(index))
+        tasks.create_task(policy_changes())
+    elapsed = time.perf_counter() - started
+    # A policy change between initial authentication and command transaction must
+    # reject the old evidence. It is expected, and never silently retried here.
+    expected_denials = {"AuthenticationRejected", "AuthenticationAssuranceRequired"}
+    if any(s.error and s.error not in expected_denials for s in readers) or any(s.error for s in writers):
+        raise RuntimeError("policy-load unexpected error")
+    mixed: dict[str, Any] = {
+        "traffic": summarize(readers, elapsed),
+        "writers": summarize(writers, elapsed),
+        "expected_policy_change_rejections": sum(bool(s.error) for s in readers),
+        "successful_edits": sum(s.operation == "work_edit" and not s.error for s in readers),
+    }
+
+    samples: list[Sample] = []
+    started = time.perf_counter()
+
+    async def same_person() -> None:
+        for index in range(8):
+            samples.append(await operate(host, oauth, actors[0], "userinfo", f"same-reader-{index}"))
+
+    async with asyncio.TaskGroup() as tasks:
+        for _ in range(16):
+            tasks.create_task(same_person())
+    same_read = summarize(samples, time.perf_counter() - started)
+    if same_read["errors"]:
+        raise RuntimeError("same-person reads failed")
+
+    samples = []
+    result_ids: list[str] = []
+    replayed: list[bool] = []
+    actor, expected_version = actors[0], actors[0].version
+    started = time.perf_counter()
+
+    async def repeat_key(index: int) -> None:
+        sample = Sample("same_key_edit")
+        active, start = ACTIVE.set(sample), time.perf_counter()
+        try:
+            async with host.call(WORK) as call:
+                result = await call.require(WORK).update_details(
+                    actor.tokens["access_token"],
+                    work_item_id=actor.item,
+                    profile_ref="local-human",
+                    profile_version=1,
+                    assignment_ref=actor.assignment,
+                    request_id=f"retry-{index}",
+                    idempotency_key="capacity-same-key",
+                    expected_version=expected_version,
+                    details=WorkDetailsInput(title="Same key", description=None),
+                )
+                result_ids.append(result.execution_id)
+                replayed.append(result.replayed)
+        except Exception as error:
+            sample.error = type(error).__name__
+        finally:
+            sample.elapsed = time.perf_counter() - start
+            ACTIVE.reset(active)
+        samples.append(sample)
+
+    async with asyncio.TaskGroup() as tasks:
+        for index in range(16):
+            tasks.create_task(repeat_key(index))
+    same_key = summarize(samples, time.perf_counter() - started)
+    if same_key["errors"] or len(set(result_ids)) != 1 or sum(replayed) != 15:
+        raise RuntimeError("same-key exactly-one commit failed")
+    actor.version += 1
+    same_key.update({"distinct_executions": 1, "replays": 15})
+    return {
+        "with_policy_writers": mixed,
+        "same_person_readers": same_read,
+        "same_key_retries": same_key,
+        "additional_commits": mixed["successful_edits"] + 1,
+    }
+
+
+async def run(url: str, count: int, environment_note: str, with_contention: bool = False) -> dict[str, Any]:
     engine = create_engine(url, pool_size=16, max_overflow=0, pool_timeout=15)
     sessions = create_session_factory(engine)
     key = rsa.generate_private_key(public_exponent=65537, key_size=3072)
@@ -626,11 +797,12 @@ async def run(url: str, count: int, environment_note: str) -> dict[str, Any]:
                         flush=True,
                     )
                 login_result = await login_burst(oauth, actors)
+                contention = await contention_workloads(host, oauth, actors) if with_contention else None
         async with sessions() as session:
             commands = await session.scalar(select(func.count()).select_from(CommandExecutionTable))
             audits = await session.scalar(select(func.count()).select_from(AuditRecordTable))
             versions = await session.scalar(select(func.sum(WorkItemTable.version - 1)))
-        expected = count * len(LEVELS) // len(OPERATIONS)
+        expected = count * len(LEVELS) // len(OPERATIONS) + (contention["additional_commits"] if contention else 0)
         if (
             login_result["errors"]
             or (commands, audits, versions) != (expected, expected, expected)
@@ -679,9 +851,11 @@ async def run(url: str, count: int, environment_note: str) -> dict[str, Any]:
             ],
             "results": results,
             "login_burst": login_result,
+            "contention": contention,
             "checks": {
                 "commands_audits_versions": expected,
-                "all_operations_succeeded": True,
+                "baseline_operations_and_login_succeeded": True,
+                "contention_expected_policy_rejections_reported": with_contention,
                 "runtime_drained": True,
                 "source_stable": True,
             },
@@ -703,6 +877,7 @@ async def reset(url: str) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--with-contention", action="store_true")
     parser.add_argument("--count", type=int, default=256)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--environment-note", default="Developer machine; background load not controlled.")
@@ -717,7 +892,7 @@ def main() -> None:
     )
     if result.returncode:
         raise RuntimeError("isolated capacity migration failed")
-    report = asyncio.run(run(url, args.count, args.environment_note))
+    report = asyncio.run(run(url, args.count, args.environment_note, args.with_contention))
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 

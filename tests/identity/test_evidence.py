@@ -11,7 +11,6 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from app.execution.storage import lock_tenant
 from app.identity.authentication import AuthenticationRejected
 from app.identity.evidence import HumanAuthenticationEvidence
 from app.identity.service import IdentityDenied, IdentityService
@@ -25,6 +24,7 @@ from app.models.identity_foundation import (
     OrganizationRootTable,
     TrustStateTable,
 )
+from app.storage.coordination import LockMode, lock_organization
 from tests.support.identity_service import seed
 from tests.support.identity_tokens import jwks, token
 
@@ -45,7 +45,7 @@ async def validate(
 ) -> None:
     async with sessions() as session, session.begin():
         await service.acquire_human_locks(session, evidence)
-        await lock_tenant(session, evidence.organization_ref)
+        await lock_organization(session, evidence.organization_ref, mode=LockMode.EXCLUSIVE)
         await service.validate_human(session, evidence, datetime.now(UTC))
 
 
@@ -222,6 +222,6 @@ async def test_revalidation_refreshes_previously_loaded_identity_map(
                 await writer.execute(update(PrincipalTable).values(identity_epoch=1))
             assert stale.identity_epoch == 0
             await service.acquire_human_locks(session, evidence)
-            await lock_tenant(session, evidence.organization_ref)
+            await lock_organization(session, evidence.organization_ref, mode=LockMode.EXCLUSIVE)
             with pytest.raises(IdentityDenied):
                 await service.validate_human(session, evidence, datetime.now(UTC))

@@ -11,9 +11,9 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from app.authz.authenticated import AuthenticatedAuthorizationLoader
 from app.execution.contracts import ExecutionContext
 from app.execution.errors import AuthorizationDenied, ExecutionNotFound, IdempotencyConflict
-from app.execution.storage import lock_tenant
 from app.models.authorization import RelationTupleTable, RoleAssignmentTable
 from app.models.work import WorkItemTable
+from app.storage.coordination import LockMode, lock_organization
 from tests.support.authenticated_commands import (
     authenticated_context,
     authenticated_kernel,
@@ -46,7 +46,7 @@ async def test_current_read_assignment_can_recover_after_write_assignment_revoca
         engine = authenticated_kernel(persistence_sessions, identity)
         completed = await engine.execute(context, command())
         async with persistence_sessions.begin() as session:
-            await lock_tenant(session, ORG)
+            await lock_organization(session, ORG, mode=LockMode.EXCLUSIVE)
             assignment = await session.scalar(
                 select(RoleAssignmentTable).where(RoleAssignmentTable.assignment_ref == context.assignment_ref)
             )
@@ -108,7 +108,7 @@ async def test_stale_object_version_does_not_disclose_conflict_without_current_a
     await seed_authenticated_command(persistence_sessions)
     await _install_reader(persistence_sessions)
     async with persistence_sessions.begin() as session:
-        await lock_tenant(session, ORG)
+        await lock_organization(session, ORG, mode=LockMode.EXCLUSIVE)
         if missing == "relation":
             relation = await session.scalar(select(RelationTupleTable))
             assert relation is not None

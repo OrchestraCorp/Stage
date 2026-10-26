@@ -100,7 +100,7 @@ P1 的可靠能力执行路径是：
 |---|---|---|
 | 服务组件装配 | `PluginSpec.requires/provides`、ServiceKey、owner/generation、调用租约与清理 | 受信任 Python 显式装配；配置内容仍由组合入口/组件校验 |
 | 领域命令 | 构造 CommandKernel 时传入固定 CommandSpec 集合 | 没有独立命令登记句柄、通用 CapabilityBinding 或动态命令贡献目录 |
-| 人员业务入口 | HumanWorkService 组合认证、loader、coordinator、identity_validator | 通用 command_plugin 仍是可信内部适配器，不能只安装它就声称接通了公开人员鉴权 |
+| 人员业务入口 | HumanOperations 统一认证、截止、identity/storage 租约及完整 kernel 装配，HumanWorkService 提供领域映射 | 通用 command_plugin 仍是可信内部适配器，外部注入身份服务不自动获得生命周期保护 |
 | HTTP 与就绪 | FastAPI 静态注册路由，identity/human-work 当前均为默认必需组件 | 关闭 human-work 后 URL 不会消失、整体 ready 会失败；尚无配置化“任意关闭业务而其余产品正常”的交付合同 |
 | restart/replace | 默认停止旧接入、排空和清理，再启动新代次 | 独立实例受控挂载可保留旧调用 pin，但不等于默认支持双代并行或零停机热更新 |
 
@@ -121,6 +121,8 @@ P1 已可用可信 Python 组件组织业务模块。P2 在实际业务切片证
 未来的 `CapabilityBinding` 连接应用注册和 Component Runtime 的 generation/registration；它只表示当前 handler/provider 可以被租用。当前固定命令集合由外围服务组件和调用租约保护，没有独立能力登记句柄。能力组合和运行时装配是两个动作：前者生成确定计划，后者在受信任 composition root 中按计划装配组件。
 
 组合计划可以引用固定的 WASM manifest、可信 Python handler 或受控连接器 adapter，但每种 effect 都必须声明外部副作用、幂等和恢复语义。计划不能改变 Stage 的信任根、认证规则、授权判断或数据库锁协议。
+
+[并发改进提案](stage-concurrency-improvement-plan.md)属于 Execution/Storage 的事务协议演进，不进入纯 Runtime Core，也不成为可由业务蓝图选择的锁插件。未来动态命令注册必须固定命令 ID/version、实际 handler 代次与依赖租约，并提供当前授权下的历史结果读取／原键恢复；仅保留 URL 或把身份对象传给只声明 STORAGE 的通用 provider 不足以满足该合同。事务级锁和持锁证明不能跨 provider 换代、人工等待或持久 checkpoint 保存。
 
 ### 5.1 新增与停用功能的开发协议
 

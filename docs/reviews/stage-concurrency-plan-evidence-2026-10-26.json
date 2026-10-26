@@ -1,0 +1,328 @@
+{
+  "schema": "stage.concurrency-plan-evidence.v1",
+  "reviewed_at": "2026-10-26T13:14:51.470872+08:00",
+  "code_revision": "0560abef3872ad40d406ad4e8a54b3ad35f800e5",
+  "status": "proposal; no implementation or new performance measurement",
+  "production_and_test_code_unchanged": true,
+  "source_sha256": {
+    "app/api/work.py": "b3585e785516c3a5951c3d0a2a67887cf34f4770d67f9b448256a83ee49b2a87",
+    "app/authz/administration.py": "6fa851d6dc9223914f19a3b29bd986f190be4c02c9136b9ab365730702361b79",
+    "app/authz/authenticated.py": "ca678857ff8a5804608fe7131142933db162065908656b320f8aac391d00f020",
+    "app/authz/loader.py": "283715c156ae42f045ca14425f8384a13a3d6524135cf35010bdcf1656d36f42",
+    "app/control/operations.py": "f2772f4f72218af3ca9472a9565fd4ae084ea29265a799268594358df251e175",
+    "app/core/db.py": "705dc4adcd18ef40638bf2e98927cc717c898775c3e20482b13af3854e85bb53",
+    "app/delivery/worker.py": "d713c06930f1ecebd29808c34c37e39b1e7753bc51e5b4b56011f88a4fbdfb02",
+    "app/execution/contracts.py": "141ee9a689a46f5b629ac746788bf72715d76b590fa4c2dbcb816e0e9f07c24c",
+    "app/execution/kernel.py": "348151725ab25422bdb997795754070cdacb18e0b32af422985ebb7e91a6d79a",
+    "app/features/work/details.py": "cd1cb9b839fef2bc6eabe911897bd225d2aaad390ec4d834943eaa36bda6614e",
+    "app/identity/administration.py": "9872dbaadfd986ef57c2e8869b0ce179749285b1c5e4bedb570d737b8cbf7284",
+    "app/identity/assurance_administration.py": "f256b626441c9375a889d2112727f2463701d638abab03cc39088024035f5f19",
+    "app/models/execution.py": "6e64757578e950d543078a8c07f5d9a2ab4f97da6158400fa0074f14553f9633",
+    "app/native_auth/browser.py": "6b23db05d8628b2a5de1b69f9bc2a425cd38ea65e5c33fbedd24ca2c13640305",
+    "app/native_auth/client_administration.py": "95745f57b586e58b3340136c577da94fdc3d25732ef1f2d3e83e8c8e9956103c",
+    "app/native_auth/credentials.py": "05ea7355f51314010261cc8c61e5f50b7a7b608ef9c5654da18d2bad6d4fbde3",
+    "app/native_auth/current_session.py": "71a2b169f911ce495a856b3ade984fc5a86c1170e9a7bff71e1ad0663e390b87",
+    "app/native_auth/logout.py": "74503d2f9fc4ac08a4fa066fd26ddf427e2b6af74cfad1253d84754353283786",
+    "app/native_auth/sessions.py": "522534ac2b49443554feb3ff95c78d5de9332d844e196f2346a129945d55278c",
+    "app/providers/assignments.py": "c809135e55f48df91a37cf3f18e8cc3b48ae483abc349059330213d26745fc7c",
+    "app/providers/human.py": "7df48a724d139e4ae992d8c6895cbe35ff4264a01ae76290ceabf7c8da54ebdf",
+    "app/providers/work.py": "bae25d82f41a8b58e28566a82b7227e5bf2f732e21368b543745c81ab1a40972",
+    "scripts/benchmark_mixed_auth_work.py": "7aa2e1fcbf26db7263565bb4bda9539ed677a022ff17de5c086951ab26b1590e",
+    "tests/execution/test_authenticated_commands.py": "6a67f890a98a6bc2920c361379512cf00d483126c0ad3f7292e9f262f85e6108",
+    "tests/execution/test_protected_reads.py": "460f986d7ccc13c61016d7b4610bca831b5ee6eb5b3b07ce329a224df6773b7c",
+    "tests/identity/test_assurance_concurrency.py": "3614044ad20f405d396ee73c7cd92e2c626ebb62c1285aaa0d7828d584223200",
+    "tests/native_auth/test_audit_identity.py": "5bcc5862600b2966766bc1927f43957068be520162b0d6ced8811b80e8ab10b9",
+    "tests/native_auth/test_command_concurrency.py": "9752c1b8d13dd2eb98dc64bcf9aff915e5af9bef9204859c763464ceb3fa77ca",
+    "tests/support/postgres.py": "f35f5340136769daed9ac33753a0d097906576d5bd680e568d282644c97f40af"
+  },
+  "source_links_checked": [
+    {
+      "file": "app/providers/human.py",
+      "line": 70
+    },
+    {
+      "file": "app/execution/kernel.py",
+      "line": 333
+    },
+    {
+      "file": "app/authz/authenticated.py",
+      "line": 65
+    },
+    {
+      "file": "app/authz/authenticated.py",
+      "line": null
+    },
+    {
+      "file": "app/execution/kernel.py",
+      "line": null
+    },
+    {
+      "file": "app/providers/human.py",
+      "line": 41
+    },
+    {
+      "file": "tests/execution/test_authenticated_commands.py",
+      "line": 193
+    },
+    {
+      "file": "app/authz/loader.py",
+      "line": 244
+    },
+    {
+      "file": "app/native_auth/credentials.py",
+      "line": 67
+    },
+    {
+      "file": "app/native_auth/logout.py",
+      "line": 152
+    },
+    {
+      "file": "app/native_auth/client_administration.py",
+      "line": 138
+    },
+    {
+      "file": "app/native_auth/current_session.py",
+      "line": 39
+    },
+    {
+      "file": "app/authz/loader.py",
+      "line": 402
+    },
+    {
+      "file": "app/models/execution.py",
+      "line": 26
+    },
+    {
+      "file": "app/api/work.py",
+      "line": 135
+    },
+    {
+      "file": "app/authz/loader.py",
+      "line": 345
+    },
+    {
+      "file": "app/features/work/details.py",
+      "line": 80
+    },
+    {
+      "file": "app/native_auth/sessions.py",
+      "line": 61
+    },
+    {
+      "file": "tests/execution/test_authenticated_commands.py",
+      "line": null
+    },
+    {
+      "file": "tests/execution/test_protected_reads.py",
+      "line": null
+    },
+    {
+      "file": "tests/native_auth/test_audit_identity.py",
+      "line": null
+    },
+    {
+      "file": "tests/identity/test_assurance_concurrency.py",
+      "line": null
+    },
+    {
+      "file": "tests/native_auth/test_command_concurrency.py",
+      "line": null
+    },
+    {
+      "file": "tests/support/postgres.py",
+      "line": null
+    },
+    {
+      "file": "scripts/benchmark_mixed_auth_work.py",
+      "line": 90
+    }
+  ],
+  "relevant_call_sites": [
+    {
+      "file": "app/authz/administration.py",
+      "line": 191,
+      "call": "lock_tenant"
+    },
+    {
+      "file": "app/authz/authenticated.py",
+      "line": 84,
+      "call": "validate_human"
+    },
+    {
+      "file": "app/authz/authenticated.py",
+      "line": 101,
+      "call": "validate_human"
+    },
+    {
+      "file": "app/authz/loader.py",
+      "line": 244,
+      "call": "lock_tenant"
+    },
+    {
+      "file": "app/delivery/worker.py",
+      "line": 223,
+      "call": "lock_tenant"
+    },
+    {
+      "file": "app/delivery/worker.py",
+      "line": 267,
+      "call": "lock_tenant"
+    },
+    {
+      "file": "app/delivery/worker.py",
+      "line": 347,
+      "call": "lock_tenant"
+    },
+    {
+      "file": "app/delivery/worker.py",
+      "line": 542,
+      "call": "lock_tenant"
+    },
+    {
+      "file": "app/execution/kernel.py",
+      "line": 137,
+      "call": "validate_before_commit"
+    },
+    {
+      "file": "app/execution/kernel.py",
+      "line": 185,
+      "call": "lock_tenant"
+    },
+    {
+      "file": "app/execution/kernel.py",
+      "line": 316,
+      "call": "lock_tenant"
+    },
+    {
+      "file": "app/execution/kernel.py",
+      "line": 354,
+      "call": "lock_tenant"
+    },
+    {
+      "file": "app/execution/kernel.py",
+      "line": 383,
+      "call": "lock_tenant"
+    },
+    {
+      "file": "app/execution/kernel.py",
+      "line": 287,
+      "call": "validate_before_commit"
+    },
+    {
+      "file": "app/identity/administration.py",
+      "line": 566,
+      "call": "lock_tenant"
+    },
+    {
+      "file": "app/identity/assurance_administration.py",
+      "line": 175,
+      "call": "lock_tenant"
+    },
+    {
+      "file": "app/identity/service.py",
+      "line": 307,
+      "call": "lock_tenant"
+    },
+    {
+      "file": "app/native_auth/administration.py",
+      "line": 160,
+      "call": "lock_tenant"
+    },
+    {
+      "file": "app/native_auth/client_administration.py",
+      "line": 147,
+      "call": "lock_tenant"
+    },
+    {
+      "file": "app/native_auth/credentials.py",
+      "line": 87,
+      "call": "lock_tenant"
+    },
+    {
+      "file": "app/native_auth/credentials.py",
+      "line": 533,
+      "call": "lock_tenant"
+    },
+    {
+      "file": "app/native_auth/logout.py",
+      "line": 167,
+      "call": "lock_tenant"
+    },
+    {
+      "file": "app/providers/assignments.py",
+      "line": 40,
+      "call": "lock_tenant"
+    },
+    {
+      "file": "app/providers/assignments.py",
+      "line": 41,
+      "call": "validate_human"
+    },
+    {
+      "file": "app/providers/assignments.py",
+      "line": 45,
+      "call": "validate_human"
+    },
+    {
+      "file": "app/providers/human.py",
+      "line": 47,
+      "call": "AuthenticatedAuthorizationLoader"
+    },
+    {
+      "file": "app/providers/identity.py",
+      "line": 53,
+      "call": "validate_human"
+    }
+  ],
+  "baseline": {
+    "report": "docs/reviews/p2p3-capacity-2026-10-26.json",
+    "work_read_sql": 107,
+    "work_edit_sql": 85,
+    "conditions": "one scope; no browser_session link; service-level migrated PostgreSQL capacity fixture"
+  },
+  "phase_a_static_estimate": {
+    "work_read_sql": 81,
+    "work_edit_sql": 72,
+    "measured": false,
+    "change": "one full identity validation per authorization checkpoint; final reader/handler identity revalidation retained; existing locks unchanged"
+  },
+  "critical_existing_regression": "tests/execution/test_authenticated_commands.py::test_identity_change_inside_handler_cannot_commit_even_after_initial_authorization",
+  "first_implementation_schema_changes": 0,
+  "first_implementation_new_http_operations": 0,
+  "independent_reviews": [
+    "lock writers and trust/principal/organization order",
+    "SQL call-count attribution and idempotent result recovery",
+    "proposal review: early idempotency mutex ordering; query stays read-only after preceding rollback"
+  ],
+  "roadmap_alignment": {
+    "reviewed_at": "2026-10-26T13:25:17.179264+08:00",
+    "implementation_changed": false,
+    "documents_sha256": {
+      "docs/stage-concurrency-improvement-plan.md": "7e57e99c97c6e7c6ab69a52c3109c28a89c04cb6df768e71daf88508259f3108",
+      "docs/phase-1.md": "f4ed8fa44a962c06ddb7144af389b94afd08a8df008f4af03789051891d09e22",
+      "docs/wasm-host-design.md": "1d8fcf6ae5d5b162955f727f70b7f1dad03a9a2916b3ae520fdd82d4874dc15f",
+      "docs/core-object-contracts.md": "caf9b518f60c394b25df08b35e51fd336a03b9982a72eabf63e4081f8e4234a6",
+      "docs/business-slice-plan.md": "dfdb26072bf82b42bdf262d4a0b4e6ba5ba2ceb2a357bae0075a038ee0f40ec5",
+      "docs/roadmap.md": "5213ba3daef2544fb1173b13b2c5fbce652660f4afc33eb5f180b72a5c31cbc9",
+      "docs/runtime-evolution-and-composition.md": "039bd2f3d9cf0dbe5ccd46117e18788ebdfadfe0809426e3aee5a8970f5838b8"
+    },
+    "issues_addressed": [
+      "Short transaction key mutex distinguished from persistent execution/attempt ownership; no lock across WASM/network/human wait.",
+      "Canonical authority lock order in phase-1 separates early logical mutex from later execution row locks.",
+      "ApprovalIntent/Activation/FactSet writers must declare coverage; shared mode does not generalize to new business writers.",
+      "Task creation and future ReBAC mutations reviewed as writers; capacity accounts retain independent conflict protection.",
+      "P1d requires durable attempt identity and conditional terminal transitions; P4 adds cross-node leases/fencing.",
+      "Coordination key/backend changes require compatible protocols or stop/drain; uniqueness alone does not preserve waiting semantics.",
+      "Legacy implicit helper removed before this improvement closes; UUID/Outbox/provider compatibility has module owners and entry gates.",
+      "Result recovery waits on logical command key; organization SHARE alone does not prove the preceding transaction ended."
+    ],
+    "entry_gates": {
+      "legacy_lock_tenant_alias": "removed before phase E closes",
+      "execution_id_waiting": "redesign before default HTTP, staged execution recovery, or new production consumer",
+      "outbox_exclusive": "review and mixed workload verification before first real worker deployment",
+      "injected_identity_lifecycle": "verify dependencies before generic command provider production use",
+      "multi_phase_state_machine": "versioned migration and restart/late-result tests before first EvaluateQualification release"
+    },
+    "tests_run": "Documentation/source alignment only; no new code, DB, or capacity execution."
+  }
+}

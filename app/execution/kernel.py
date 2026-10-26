@@ -6,9 +6,12 @@ Handlers must not do external I/O, commit, or change the security facts they use
 """
 
 import logging
-from collections.abc import Awaitable, Callable, Sequence
+from collections.abc import Awaitable, Callable, Coroutine, Sequence
+from contextvars import ContextVar
 from dataclasses import replace
+from functools import wraps
 from types import MappingProxyType
+from typing import Any
 from uuid import uuid4
 
 from pydantic import ValidationError
@@ -38,12 +41,33 @@ from app.execution.errors import (
     IdempotencyConflict,
     InvalidCommand,
     ObjectVersionConflict,
+    TransactionOwnershipError,
     UnknownCommand,
 )
-from app.execution.storage import lock_tenant, managed_uow
+from app.execution.storage import managed_uow
 from app.models.execution import AuditRecordTable, CommandExecutionTable, OutboxRecordTable
+from app.storage.coordination import LockMode, assert_organization_lock, lock_command_key, lock_organization
 
 logger = logging.getLogger(__name__)
+
+
+_inside_operation: ContextVar[bool] = ContextVar("stage_inside_kernel_operation", default=False)
+
+
+def _operation_entry[**P, T](operation: Callable[P, Awaitable[T]]) -> Callable[P, Coroutine[Any, Any, T]]:
+    """Nested operations could wait on locks owned by their own caller."""
+
+    @wraps(operation)
+    async def guarded(*args: P.args, **kwargs: P.kwargs) -> T:
+        if _inside_operation.get():
+            raise TransactionOwnershipError()
+        token = _inside_operation.set(True)
+        try:
+            return await operation(*args, **kwargs)
+        finally:
+            _inside_operation.reset(token)
+
+    return guarded
 
 
 class CommandKernel:
@@ -85,12 +109,27 @@ class CommandKernel:
         action: str,
         target_ref: str,
         expected_version: int | None,
+        lock_mode: LockMode = LockMode.SHARED,
     ) -> tuple[AuthorizationDecision, AuthorizationContext]:
+        assert_organization_lock(session, context.tenant_ref)
         now = self._clock()
         context.check_live(now)
         facts = await self._loader.load(
-            session, context, action=action, target_ref=target_ref, expected_version=expected_version, now=now
+            session,
+            context,
+            action=action,
+            target_ref=target_ref,
+            expected_version=expected_version,
+            now=now,
+            lock_mode=lock_mode,
         )
+        # Identity is a mandatory part of every checkpoint, including before
+        # deciding whether a version conflict may be disclosed. The final
+        # post-handler checkpoint still reloads identity to catch local changes.
+        if context.authentication is not None:
+            if self._identity_validator is None:
+                raise AuthorizationDenied()
+            await self._identity_validator.validate_before_commit(session, context, self._clock())
         # Fail closed on a loader that accidentally returns facts for a different
         # request, tenant, target or selected authority. Frozen data alone is not trust.
         assignment_ref = facts.assignment.assignment_ref if facts.assignment is not None else None
@@ -111,7 +150,7 @@ class CommandKernel:
             raise AuthorizationDenied()
         if expected_version is not None and facts.attributes.expected_object_version != expected_version:
             raise AuthorizationDenied()
-        # Authorization time is host-owned and sampled after loading any locked facts.
+        # Authorization time is host-owned and sampled after all database waits.
         now = self._clock()
         context.check_live(now)
         decision = self._authorization.decide(replace(facts, now=now))
@@ -131,15 +170,7 @@ class CommandKernel:
                 if self._authorization.decide(current_version_facts).outcome == DecisionOutcome.ALLOWED:
                     raise ObjectVersionConflict()
             raise AuthorizationDenied()
-        if context.authentication is not None:
-            if self._identity_validator is None:
-                raise AuthorizationDenied()
-            await self._identity_validator.validate_before_commit(session, context, self._clock())
-            now = self._clock()
-            context.check_live(now)
-            decision = self._authorization.decide(replace(facts, now=now))
-            if decision.outcome != DecisionOutcome.ALLOWED:
-                raise AuthorizationDenied()
+        assert_organization_lock(session, context.tenant_ref)
         return decision, facts
 
     @staticmethod
@@ -150,6 +181,7 @@ class CommandKernel:
             raise CommitOutcomeUnknown(row.execution_id)
         return CommandResult(row.execution_id, copied_object(row.result_json), replayed, row.completed_at)
 
+    @_operation_entry
     async def execute(self, context: ExecutionContext, command: CommandEnvelope) -> CommandResult:
         self._check_identity_integration(context)
         spec = self._spec(command.name, command.version)
@@ -179,10 +211,20 @@ class CommandKernel:
         )
         async with managed_uow(self._sessions) as uow:
             session = uow.session
+            await lock_command_key(
+                session,
+                organization_ref=context.tenant_ref,
+                actor_ref=context.actor_ref,
+                command_name=command.name,
+                command_version=command.version,
+                idempotency_key=command.idempotency_key,
+            )
+            context.check_live(self._clock())
             if self._coordinator is not None:
                 await self._coordinator.acquire_locks(session, context)
                 uow.assert_owned()
-            await lock_tenant(session, context.tenant_ref)
+            await lock_organization(session, context.tenant_ref, mode=LockMode.SHARED)
+            context.check_live(self._clock())
             row = await session.scalar(
                 select(CommandExecutionTable).where(
                     CommandExecutionTable.tenant_ref == context.tenant_ref,
@@ -207,6 +249,7 @@ class CommandKernel:
                 action=spec.execute_action,
                 target_ref=command.target_ref,
                 expected_version=command.expected_version,
+                lock_mode=LockMode.EXCLUSIVE,
             )
             uow.assert_owned()
             row = CommandExecutionTable(
@@ -285,6 +328,7 @@ class CommandKernel:
             if context.authentication is not None:
                 assert self._identity_validator is not None
                 await self._identity_validator.validate_before_commit(session, context, self._clock())
+            assert_organization_lock(session, context.tenant_ref)
             now = self._clock()
             context.check_live(now)
             # Guarded authorization inputs remain stable under the writer
@@ -300,6 +344,7 @@ class CommandKernel:
                 raise CommitOutcomeUnknown(completed.execution_id) from exc
             return completed
 
+    @_operation_entry
     async def get_result(self, context: ExecutionContext, execution_id: str) -> CommandResult:
         """Current authorized read for the same tenant and authenticated actor.
 
@@ -313,7 +358,8 @@ class CommandKernel:
             if self._coordinator is not None:
                 await self._coordinator.acquire_locks(session, context)
                 uow.assert_owned()
-            await lock_tenant(session, context.tenant_ref)
+            await lock_organization(session, context.tenant_ref, mode=LockMode.EXCLUSIVE)
+            context.check_live(self._clock())
             row = await session.scalar(
                 select(CommandExecutionTable).where(
                     CommandExecutionTable.tenant_ref == context.tenant_ref,
@@ -321,6 +367,7 @@ class CommandKernel:
                     CommandExecutionTable.execution_id == execution_id,
                 )
             )
+            context.check_live(self._clock())
             if row is None:
                 raise ExecutionNotFound()
             spec = self._spec(row.command_name, row.command_version)
@@ -330,6 +377,7 @@ class CommandKernel:
             uow.assert_owned()
             return self._result(row, replayed=True)
 
+    @_operation_entry
     async def read[T](
         self,
         context: ExecutionContext,
@@ -351,7 +399,8 @@ class CommandKernel:
             if self._coordinator is not None:
                 await self._coordinator.acquire_locks(uow.session, context)
                 uow.assert_owned()
-            await lock_tenant(uow.session, context.tenant_ref)
+            await lock_organization(uow.session, context.tenant_ref, mode=LockMode.SHARED)
+            context.check_live(self._clock())
             await self._authorize(uow.session, context, action=action, target_ref=target_ref, expected_version=None)
             uow.assert_owned()
             result = await reader(uow.session)
@@ -362,6 +411,7 @@ class CommandKernel:
             uow.assert_owned()
             return result
 
+    @_operation_entry
     async def get_result_by_key(
         self,
         context: ExecutionContext,
@@ -377,10 +427,20 @@ class CommandKernel:
         spec = self._spec(command_name, command_version)
         async with managed_uow(self._sessions) as uow:
             session = uow.session
+            await lock_command_key(
+                session,
+                organization_ref=context.tenant_ref,
+                actor_ref=context.actor_ref,
+                command_name=command_name,
+                command_version=command_version,
+                idempotency_key=idempotency_key,
+            )
+            context.check_live(self._clock())
             if self._coordinator is not None:
                 await self._coordinator.acquire_locks(session, context)
                 uow.assert_owned()
-            await lock_tenant(session, context.tenant_ref)
+            await lock_organization(session, context.tenant_ref, mode=LockMode.SHARED)
+            context.check_live(self._clock())
             row = await session.scalar(
                 select(CommandExecutionTable).where(
                     CommandExecutionTable.tenant_ref == context.tenant_ref,
@@ -391,6 +451,7 @@ class CommandKernel:
                     CommandExecutionTable.target_ref == target_ref,
                 )
             )
+            context.check_live(self._clock())
             if row is None:
                 raise ExecutionNotFound()
             await self._authorize(

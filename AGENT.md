@@ -29,7 +29,9 @@
 
 ## 当前状态
 
-2026-10-26 用户批准落实整体审计的全部五项 P2 与三项 P3（这是发现优先级，不是产品阶段）。[整改记录](docs/reviews/p2p3-architecture-closeout-2026-10-26.md)为后续入口：人员业务复用 `HumanOperations` / `CommandKernel.read`；管理公共协议用 `app.control`；当前原生会话事实用 `native_auth.current_session`。禁止重新跨域导入旧管理私有助手、跨测试模块共享 fixture 或绕开真实浏览器门禁。Runtime 成功历史有界，失败所有权不淘汰；组织 guard 保留一致性协议，容量以独立真实 PG 基线说明。交付用[冻结流程](deployment/dev/release-freeze.md)绑定精确提交、锁和迁移。
+2026-10-26 用户已批准实施[并发优化计划](docs/stage-concurrency-improvement-plan.md)。当前 `app.storage.coordination` 明确组织 S/X 和单事务命令键互斥；旧 `lock_tenant` 已移除。普通人员查询/元数据命令使用组织 S，管理授权变更和保留兼容的内部 UUID 恢复/Outbox 使用显式 X。幂等键在 trust/principal/组织之前取得，普通 handler 禁止嵌套 kernel 操作、保存点或安全事实修改；完整的读取后/提交前身份验证仍保留。锁键、原键恢复、当前任职和 HTTP 合同不得由业务插件重定义；未来 WASM 的跨阶段持久状态另行实现，不能长期持有本轮事务锁。验收证据见[实现复查](docs/reviews/concurrency-optimization-2026-10-26.md)。
+
+2026-10-26 用户批准落实整体审计的全部五项 P2 与三项 P3（这是发现优先级，不是产品阶段）。[整改记录](docs/reviews/p2p3-architecture-closeout-2026-10-26.md)为后续入口：人员业务复用 `HumanOperations` / `CommandKernel.read`；管理公共协议用 `app.control`；当前原生会话事实用 `native_auth.current_session`。禁止重新跨域导入旧管理私有助手、跨测试模块共享 fixture 或绕开真实浏览器门禁。Runtime 成功历史有界，失败所有权不淘汰；组织 guard 的原排他基线保留为历史证据，当前协调演进见下文。交付用[冻结流程](deployment/dev/release-freeze.md)绑定精确提交、锁和迁移。
 
 
 本轮用户已确认完成企业受控多应用 OAuth/OIDC，范围及合同见[功能矩阵](docs/oauth-functional-coverage.md)与[管理手册](deployment/identity/oauth-clients.md)。新应用默认 stage-userinfo audience，Stage 业务访问须显式 stage-api 配置和独立 profile/binding/MFA 准入。客户端注册、SSO/同意、RP 退出、本人会话与应用授权撤销不替代业务权限；Passkey/联邦/公开自动注册不在本轮。
@@ -38,7 +40,7 @@
 
 2026-10-26 代码复查与优先级见[本轮记录](docs/reviews/code-state-and-next-steps-2026-10-26.md)。Runtime/投递边界修复不改变阶段范围；随后 [P1b.4](docs/reviews/p1b4-assignments-mfa-2026-10-26.md)已实现受保护的本人任职发现、组织统一登录 MFA 策略和受控配置。用户选定密码＋TOTP；后续原生服务端因素绑定/恢复已交付；实际 Maestro 桌面客户端、生产认证部署与恢复流程另验。新 profile 不能给弱认证保留绕过强制 MFA 的准入路径；不得把未实现的管理 API 或通用注册平台当现有依赖。
 
-P1b 当前进入 Stage 侧收尾与客户端联调准备：[复查记录](docs/reviews/p1b-closeout-2026-10-25.md)、[逐项 I1 证据](docs/reviews/p1b-identity-coverage-2026-10-25.md)、[Maestro 合同](docs/maestro-stage-p1b-handoff.md)。未启用和部分覆盖的 I1 项不能计为通过；桌面客户端与生产接入另验。组织 guard 保留当前串行策略，先依据独立 PG 并发基线和真实负载目标再评估细化锁。JWT 的内部 evidence TTL 不能当成远端 IdP 撤销可见上界。
+P1b 当前进入 Stage 侧收尾与客户端联调准备：[复查记录](docs/reviews/p1b-closeout-2026-10-25.md)、[逐项 I1 证据](docs/reviews/p1b-identity-coverage-2026-10-25.md)、[Maestro 合同](docs/maestro-stage-p1b-handoff.md)。未启用和部分覆盖的 I1 项不能计为通过；桌面客户端与生产接入另验。组织保护现已区分读者 S 与写者 X；旧串行基线和新容量证据分别记录，生产吞吐按真实需求另验。JWT 的内部 evidence TTL 不能当成远端 IdP 撤销可见上界。
 
 “Stage 侧收尾”不等于完整客户端或生产验收。本人任职发现只返回当前人员和固定成员经历下的有效选择，不是权限票据；业务操作仍明确选一个任职。组织登录策略覆盖所有 human 身份/任职/工作项入口，校验精确 profile/version、ACR、AMR 和 auth_time 年龄，证据固定策略版本/摘要并在提交前重验；不得通过旧弱 profile 绕过。密码＋TOTP 已有隔离真实 IdP 和 Stage 链路证据，随后原生模块提供服务端 TOTP 绑定与恢复；实际 Maestro 交互与生产恢复流程仍未验收。P1c/P1d 的具体业务意图批准另行选择 WebAuthn/IdP step-up；登录 MFA 不构成业务批准。
 

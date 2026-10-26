@@ -1,0 +1,126 @@
+{
+  "schema": "stage.research-sources.v1",
+  "retrieved_at": "2026-10-26T04:38:10.943916+00:00",
+  "code_baseline": "0560abef3872ad40d406ad4e8a54b3ad35f800e5",
+  "implementation_changes": false,
+  "scope": "Official primary sources; research only; online product documentation is a retrieval snapshot, not a fixed release promise.",
+  "sources": [
+    {
+      "id": "P1",
+      "title": "PostgreSQL 17 Transaction Isolation",
+      "url": "https://www.postgresql.org/docs/17/transaction-iso.html",
+      "read_scope": "sections 13.2.1 and 13.2.3",
+      "sha256": "1f9df49541d23251b022c7a199586b98bcf67f1b4be96b6f6420d1a8d2a2b5b7",
+      "digest_scope": "HTML text extraction with script/style excluded and whitespace normalized; not raw HTML",
+      "bytes": 24322
+    },
+    {
+      "id": "P2",
+      "title": "PostgreSQL 17 Application-Level Consistency",
+      "url": "https://www.postgresql.org/docs/17/applevel-consistency.html",
+      "read_scope": "sections 13.4, 13.4.2",
+      "sha256": "54cd3b002fdd988dba74bb8130c8db6fef9efa9d5c3b63c3b05f9eb468859f05",
+      "digest_scope": "HTML text extraction with script/style excluded and whitespace normalized; not raw HTML",
+      "bytes": 7263
+    },
+    {
+      "id": "P3",
+      "title": "PostgreSQL 17 Row Security Policies",
+      "url": "https://www.postgresql.org/docs/17/ddl-rowsecurity.html",
+      "read_scope": "cross-table permission race example",
+      "sha256": "9b2a91ef1dda73c605e567112dee00c2d562fa3764ecf6250e426354524f31b9",
+      "digest_scope": "HTML text extraction with script/style excluded and whitespace normalized; not raw HTML",
+      "bytes": 16376
+    },
+    {
+      "id": "P4",
+      "title": "PostgreSQL 17 Explicit Locking",
+      "url": "https://www.postgresql.org/docs/17/explicit-locking.html",
+      "read_scope": "sections 13.3.2, 13.3.4, 13.3.5",
+      "sha256": "bb395fe35d3b59af66d28bfcb32835cc70422d29433912ebefe72abb3f60e14f",
+      "digest_scope": "HTML text extraction with script/style excluded and whitespace normalized; not raw HTML",
+      "bytes": 17365
+    },
+    {
+      "id": "P5",
+      "title": "PostgreSQL 17 Advisory Lock Functions",
+      "url": "https://www.postgresql.org/docs/17/functions-admin.html#FUNCTIONS-ADVISORY-LOCKS",
+      "read_scope": "transaction and session lock functions",
+      "sha256": "9a4c0ed32a54e81da0184d8dc440fbae26adce81f2f5c9eb09bf05d090c1793f",
+      "digest_scope": "HTML text extraction with script/style excluded and whitespace normalized; not raw HTML",
+      "bytes": 53819
+    },
+    {
+      "id": "P6",
+      "title": "PostgreSQL 17 Routine Vacuuming",
+      "url": "https://www.postgresql.org/docs/17/routine-vacuuming.html#VACUUM-FOR-MULTIXACT-WRAPAROUND",
+      "read_scope": "MultiXact section",
+      "sha256": "64e8f22b0391ac81d35c861ec19dd80cb975b1cbdd0f7690e8a475f76037283b",
+      "digest_scope": "HTML text extraction with script/style excluded and whitespace normalized; not raw HTML",
+      "bytes": 36386
+    },
+    {
+      "id": "Z1",
+      "title": "Zanzibar: Google’s Consistent, Global Authorization System",
+      "url": "https://storage.googleapis.com/gweb-research2023-media/pubtools/5068.pdf",
+      "read_scope": "2019 paper sections 2.2, 2.4.4 and 3.2.5",
+      "sha256": "cd514fbdf07b1f96f9b32304c4bff62e9c1f048626439c9dd2c881bc09549801",
+      "digest_scope": "original PDF bytes",
+      "bytes": 337342
+    },
+    {
+      "id": "S1",
+      "title": "SpiceDB Consistency",
+      "url": "https://authzed.com/docs/spicedb/concepts/consistency",
+      "read_scope": "consistency levels and ZedTokens",
+      "sha256": "f3596bedbe12c104ae8d194704c01d857875d18779ff516ca94e2162b182fbad",
+      "digest_scope": "HTML text extraction with script/style excluded and whitespace normalized; not raw HTML",
+      "bytes": 12045
+    },
+    {
+      "id": "S2",
+      "title": "SpiceDB Read-After-Write Consistency",
+      "url": "https://authzed.com/docs/spicedb/concepts/read-after-write",
+      "read_scope": "read-after-write integration",
+      "sha256": "436760e0491c394f9a4d7629875f783dab5b4d08a1ddccc0a1455fe9b4a88001",
+      "digest_scope": "HTML text extraction with script/style excluded and whitespace normalized; not raw HTML",
+      "bytes": 10238
+    },
+    {
+      "id": "S3",
+      "title": "SpiceDB Relationships",
+      "url": "https://authzed.com/docs/spicedb/concepts/relationships",
+      "read_scope": "application data synchronization and two writes & commit",
+      "sha256": "989341d416298e7146d9c9c59ad95a974ebdbf03e1059fe3ad2d02463d7fa243",
+      "digest_scope": "HTML text extraction with script/style excluded and whitespace normalized; not raw HTML",
+      "bytes": 12308
+    },
+    {
+      "id": "F1",
+      "title": "OpenFGA Query Consistency Modes",
+      "url": "https://openfga.dev/docs/interacting/consistency",
+      "read_scope": "query modes and caching disabled default",
+      "sha256": "cbdc2df619136425fbd25cc584019c2bbb18464adff0d28c42562b3c1a6ccf4e",
+      "digest_scope": "HTML text extraction with script/style excluded and whitespace normalized; not raw HTML",
+      "bytes": 7630
+    },
+    {
+      "id": "O1",
+      "title": "OPA External Data",
+      "url": "https://www.openpolicyagent.org/docs/external-data",
+      "read_scope": "input/bundles/push/pull tradeoffs",
+      "sha256": "4618cad359e940d6451ae639e6fe943fc4e74d2fc0213837aa75c55147093c07",
+      "digest_scope": "HTML text extraction with script/style excluded and whitespace normalized; not raw HTML",
+      "bytes": 15394
+    },
+    {
+      "id": "Q1",
+      "title": "SQLAlchemy 2.0 Configuring a Version Counter",
+      "url": "https://docs.sqlalchemy.org/en/20/orm/versioning.html",
+      "read_scope": "Simple Version Counting and version predicate",
+      "sha256": "6c01536fd5530be4d0840d2dd91d9ecad03c9e245e7d4ded9f79abc9cc62ab15",
+      "digest_scope": "HTML text extraction with script/style excluded and whitespace normalized; not raw HTML",
+      "bytes": 12086
+    }
+  ]
+}

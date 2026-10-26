@@ -59,7 +59,7 @@ class AccountSessions:
 
     @asynccontextmanager
     async def _actor(
-        self, access_token: str, *, fresh: bool
+        self, access_token: str, *, fresh: bool, write: bool
     ) -> AsyncIterator[tuple[AsyncSession, NativeAccountTable, NativeSessionTable, dict[str, Any], datetime | None]]:
         try:
             claims = self.oauth.keyring.verify_access(access_token, self.config.issuer, self.config.audience)
@@ -69,7 +69,11 @@ class AccountSessions:
             raise OAuthError("invalid_token", 401)
         async with asyncio.timeout(self.config.request_timeout_seconds), self.sessions() as session:
             try:
-                account = await self.credentials.lock_account(session, claims["sub"])
+                account = (
+                    await self.credentials.lock_account(session, claims["sub"])
+                    if write
+                    else await self.credentials.read_account(session, claims["sub"])
+                )
             except NativeCredentialError:
                 raise OAuthError("invalid_token", 401) from None
             _, login = await validate_native_session(session, claims, now=datetime.now(UTC))
@@ -111,7 +115,7 @@ class AccountSessions:
 
     async def list_sessions(self, access_token: str, *, limit: int = 20, after: str | None = None) -> dict[str, Any]:
         _page(limit, after)
-        async with self._actor(access_token, fresh=False) as (
+        async with self._actor(access_token, fresh=False, write=False) as (
             session,
             account,
             actor_login,
@@ -169,7 +173,7 @@ class AccountSessions:
     async def revoke_session(self, access_token: str, session_ref: str) -> None:
         if not _reference(session_ref):
             raise OAuthError("invalid_request")
-        async with self._actor(access_token, fresh=True) as (
+        async with self._actor(access_token, fresh=True, write=True) as (
             session,
             account,
             actor_login,
@@ -198,7 +202,7 @@ class AccountSessions:
                 self._deadline(claims, actor_login, authentication_deadline=authentication_deadline)
 
     async def revoke_all(self, access_token: str) -> dict[str, int]:
-        async with self._actor(access_token, fresh=True) as (
+        async with self._actor(access_token, fresh=True, write=True) as (
             session,
             account,
             actor_login,
@@ -229,7 +233,7 @@ class AccountSessions:
 
     async def list_consents(self, access_token: str, *, limit: int = 20, after: str | None = None) -> dict[str, Any]:
         _page(limit, after)
-        async with self._actor(access_token, fresh=False) as (
+        async with self._actor(access_token, fresh=False, write=False) as (
             session,
             account,
             actor_login,
@@ -263,7 +267,7 @@ class AccountSessions:
     async def revoke_consent(self, access_token: str, client_id: str) -> None:
         if not _reference(client_id):
             raise OAuthError("invalid_request")
-        async with self._actor(access_token, fresh=True) as (
+        async with self._actor(access_token, fresh=True, write=True) as (
             session,
             account,
             actor_login,

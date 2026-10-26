@@ -16,6 +16,7 @@ from app.authz.context import AuthorizationContext
 from app.core.enums import PrincipalType
 from app.execution.errors import ContextExpired, InvalidCommand, RequestDeadlineExceeded
 from app.identity.evidence import HumanAuthenticationEvidence
+from app.storage.coordination import LockMode
 
 JsonObject = dict[str, Any]
 Clock = Callable[[], datetime]
@@ -175,11 +176,15 @@ class AuthorizationLoader(Protocol):
         target_ref: str,
         expected_version: int | None,
         now: datetime,
+        lock_mode: LockMode = LockMode.EXCLUSIVE,
     ) -> AuthorizationContext:
         """Read authoritative tenant-scoped facts using the current transaction.
 
-        Authorization changes must acquire the same tenant guard. This loader
-        must not perform network I/O or return a cached AuthorizationDecision.
+        The caller already holds explicit organization protection; lock_mode
+        declares the resource row mode, not the organization mode. Loaders must
+        not implicitly upgrade the organization guard. Authorization writers
+        acquire its EXCLUSIVE mode. No network I/O or cached allow decisions.
+        Identity is validated by the kernel separately before decision/disclosure.
         """
         ...
 

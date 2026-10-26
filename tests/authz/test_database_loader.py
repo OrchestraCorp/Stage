@@ -11,7 +11,6 @@ from app.authz.loader import DatabaseAuthorizationLoader, role_permissions_diges
 from app.authz.permissions import BUILTIN_POLICY_RELEASE_ID
 from app.core.enums import DecisionOutcome
 from app.execution.contracts import ExecutionContext
-from app.execution.storage import lock_tenant
 from app.models.authorization import (
     PermissionActionTable,
     RoleAssignmentTable,
@@ -19,6 +18,7 @@ from app.models.authorization import (
 )
 from app.models.identity_foundation import OrganizationMembershipTable
 from app.models.work import WorkItemTable
+from app.storage.coordination import LockMode, lock_organization
 from tests.support.authorization import (
     NOW,
     ORG,
@@ -40,7 +40,7 @@ async def load_context(
     loader = DatabaseAuthorizationLoader()
     async with sessions.begin() as session:
         await loader.acquire_locks(session, context)
-        await lock_tenant(session, context.tenant_ref)
+        await lock_organization(session, context.tenant_ref, mode=LockMode.EXCLUSIVE)
         return await loader.load(
             session,
             context,

@@ -501,7 +501,10 @@ class NativeOAuth:
         if not _text(claims.get("sub"), 128):
             raise OAuthError("invalid_token", 401)
         async with asyncio.timeout(self.config.request_timeout_seconds), self.sessions() as session:
-            await self._lock_account(session, claims["sub"], "invalid_token", status_code=401)
+            try:
+                await self.credentials.read_account(session, claims["sub"])
+            except NativeCredentialError:
+                raise OAuthError("invalid_token", 401) from None
             now = datetime.now(UTC)
             account, login = await validate_native_session(session, claims, now=now)
             if max_age_seconds is not None:

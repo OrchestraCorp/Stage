@@ -185,6 +185,10 @@ provider 换代遵循 [Core 的整体 drain 屏障](runtime-conformance.md)：�
 
 ## 9. P1d：`EvaluateQualification` 的真实垂直验证
 
+2026-10-26 并发提案对接约束：当前短命令的事务级幂等锁不能包住 runner 调用。评估按“短事务受理并形成受权快照 → 释放数据库事务／锁 → 受控计算 → 新短事务重验并条件提交”实现；每个数据库阶段遵守[一期锁序](phase-1.md#transaction-protocol)，入口逻辑键锁与持久 execution 行锁分开。
+
+ApprovalIntent 一次性消费、Activation revision/撤销、QualificationFactSet 全部 writer 与空集合 revision，必须在本阶段接入前声明并验收保护模式；不能自动继承普通标题编辑的组织 S。P1d 本身就要通过持久 execution/attempt 身份、当前尝试条件和不可重复终态拒绝迟到／重启前回执，P4 再增加跨节点 lease/fencing 验收。事务 advisory 锁既不证明 runner 已停止，也不表示结果获准提交；runner 不接收数据库 Session、锁句柄或完整认证上下文。路线映射及退出门槛见[并发提案](stage-concurrency-improvement-plan.md#route-compatibility)。
+
 演示使用实际认证协议确认的人员，通过当前组织成员经历、选定任职和能力判定调用固定的资格评估能力。工具辅助不会改变该人员的业务责任身份；runner 和 guest 不另持协作角色。输入是 Stage 有权读取的最小事实投影，例如资格标识集合与规则参数；模块返回结构化的匹配结果和允许的原因码。它不能签发任职、授予权限、自动领取任务或把自身输出作为授权事实源。
 
 ```text

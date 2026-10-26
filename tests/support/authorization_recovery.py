@@ -6,16 +6,16 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.authz.loader import role_permissions_digest
 from app.authz.permissions import BUILTIN_POLICY_RELEASE_ID
-from app.execution.storage import lock_tenant
 from app.models.authorization import RelationTupleTable, RoleAssignmentTable, RoleVersionActionTable, RoleVersionTable
 from app.models.identity import PrincipalTable
 from app.models.identity_foundation import ExternalIdentityTable, OrganizationMembershipTable
+from app.storage.coordination import LockMode, lock_organization
 from tests.support.authorization import ORG, PERSON, TARGET
 
 
 async def _install_reader(sessions: async_sessionmaker[AsyncSession], *, another_person: bool = False) -> None:
     async with sessions.begin() as session:
-        await lock_tenant(session, ORG)
+        await lock_organization(session, ORG, mode=LockMode.EXCLUSIVE)
         principal = "person:bob" if another_person else PERSON
         membership = "membership:bob" if another_person else "membership:alice"
         valid_from = datetime.now(UTC) - timedelta(days=1)

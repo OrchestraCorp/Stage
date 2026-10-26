@@ -1,4 +1,4 @@
-"""Short command transactions with one commit owner and tenant serialization."""
+"""Short command transactions with one commit owner and cancellation-safe cleanup."""
 
 import asyncio
 import logging
@@ -6,13 +6,12 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Any
 
-from sqlalchemy import event, select, update
+from sqlalchemy import event
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import Session
 
-from app.execution.errors import ExecutionCleanupFailed, TenantNotProvisioned, TransactionOwnershipError
-from app.models.execution import TenantGuardTable
+from app.execution.errors import ExecutionCleanupFailed, TransactionOwnershipError
 
 logger = logging.getLogger(__name__)
 
@@ -74,29 +73,6 @@ async def managed_uow(sessions: async_sessionmaker[AsyncSession]) -> AsyncIterat
             logger.warning("execution session close failed type=%s", type(exc).__name__)
         if cleanup_failed and not primary_failed:
             raise ExecutionCleanupFailed()
-
-
-async def lock_tenant(session: AsyncSession, tenant_ref: str) -> None:
-    """Lock an explicitly provisioned tenant; never create one from caller input.
-
-    SQLite needs a write reservation because SELECT FOR UPDATE is ignored.
-    PostgreSQL uses row locking. All relevant trusted writers must use this
-    same guard; this helper cannot protect against arbitrary out-of-band SQL.
-    """
-    if session.get_bind().dialect.name == "sqlite":
-        result = await session.execute(
-            update(TenantGuardTable)
-            .where(TenantGuardTable.tenant_ref == tenant_ref)
-            .values(epoch=TenantGuardTable.epoch)
-        )
-        if result.rowcount != 1:  # type: ignore[attr-defined]
-            raise TenantNotProvisioned()
-    else:
-        row = await session.scalar(
-            select(TenantGuardTable).where(TenantGuardTable.tenant_ref == tenant_ref).with_for_update()
-        )
-        if row is None:
-            raise TenantNotProvisioned()
 
 
 class UnitOfWork:

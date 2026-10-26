@@ -21,6 +21,7 @@ from app.execution.storage import UnitOfWork
 from app.models.execution import AuditRecordTable, CommandExecutionTable, OutboxRecordTable, TenantGuardTable
 from app.models.identity import PrincipalTable
 from app.models.work import WorkItemTable
+from app.storage.coordination import LockMode
 
 
 class ClaimInput(BaseModel):
@@ -45,11 +46,16 @@ class TestFactsLoader:
         target_ref: str,
         expected_version: int | None,
         now: datetime,
+        lock_mode: LockMode = LockMode.EXCLUSIVE,
     ) -> AuthorizationContext:
         principal = await session.scalar(
             select(PrincipalTable).where(PrincipalTable.principal_ref == context.actor_ref)
         )
-        item = await session.scalar(select(WorkItemTable).where(WorkItemTable.id == int(target_ref)).with_for_update())
+        item = await session.scalar(
+            select(WorkItemTable)
+            .where(WorkItemTable.id == int(target_ref))
+            .with_for_update(read=lock_mode is LockMode.SHARED)
+        )
         return AuthorizationContext(
             request_id=context.request_id,
             subject_ref=context.actor_ref,
