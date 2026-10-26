@@ -7,6 +7,8 @@ policy_effect: none
 
 # Stage 当前代码地图与完整符号索引
 
+本文是首个人员管理切片之前的固定代码快照，以下规模与行号不包含后续新增管理代码。新增模块为 `app/administration/{bootstrap,contracts,errors,journal,service}.py`、`app/authz/management.py`、`app/models/administration.py`、`app/providers/administration.py` 与 `app/api/administration.py`，其职责和接口以[管理切片合同](human-administration-first-slice.md)及源码为准。当前共34个HTTP操作、38张表；以下25/37保留快照原值。
+
 按当前工作区源码 AST 和实际 `create_app().openapi()` 生成索引；不执行 lifespan、不触碰业务数据库。完整性审计见[报告](reviews/stage-engineering-audit-2026-10-26.md)，全景见[架构图与目录导航](stage-architecture-panorama.md)。
 
 索引范围：`app/` **108 个 Python 文件、16,435 行、246 个类、637 个函数/方法定义**。函数计数包含私有方法、property、协议占位和嵌套闭包，绝不等同于业务能力数量；源行数包含空行/注释。HTTP 共 25 个 method+path 操作，SQLAlchemy 37 张表。`__init__.py` 与稳定 re-export 文件也在清单内。

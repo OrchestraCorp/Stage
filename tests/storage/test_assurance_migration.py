@@ -20,7 +20,7 @@ def test_policy_migration_backfills_disabled_without_claiming_mfa(tmp_path: Path
     migrate(database, "upgrade", "head")
     migrate(database, "check")
     with sqlite3.connect(database) as connection:
-        assert connection.execute("SELECT version_num FROM alembic_version").fetchone() == ("c6f3a19d820b",)
+        assert connection.execute("SELECT version_num FROM alembic_version").fetchone() == ("a7d4e2c9f501",)
         row = connection.execute(
             "SELECT organization_ref, mode, version, rules_json, max_auth_age_seconds "
             "FROM organization_human_authentication_policy"

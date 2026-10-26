@@ -1,0 +1,262 @@
+{
+  "schema": "stage.enterprise-identity-completeness.v1",
+  "assessed_at": "2026-10-26T15:05:21.400313+08:00",
+  "revision": "5df49e15f7c9c55b9aebc90cfdb0612a0fc38715",
+  "scope": "Source and current-design completeness review; no new production mutation, full test run or penetration test.",
+  "source_sha256": {
+    "app/api/native/account.py": "b70750308c99cddd43c4a4256d65b9dfd1d8d2142b6fca1d808f8cbbb6a94113",
+    "app/authz/administration.py": "d81e3a4b695d71c31eafbe1d2e9ce4a2f1b98c09cf91ad03bc8b6f7af0768e23",
+    "app/authz/assignments.py": "ffc8f099dd2dbb892cbb0f29a71de08b1325bc395949ce18075969d597681a86",
+    "app/authz/attributes.py": "8f2be693777f1c75096f31f1b20bcef2dc32fc40d470041496743780e695af49",
+    "app/authz/loader.py": "d40e5343207ae9c882ab4ea61a5ce133d87e971b0039baa6a74f82c6f1e46fd1",
+    "app/authz/permissions.py": "9d6e012daf765f07657eadbe80d4e8d116be396f286d67f5663aa6dd16917ff4",
+    "app/control/contracts.py": "b401c83f24c4de8db896ea01f17e593ba89cc374aa4c9e697b5ea6ae2c096385",
+    "app/control/operations.py": "f2772f4f72218af3ca9472a9565fd4ae084ea29265a799268594358df251e175",
+    "app/identity/administration.py": "55171bd516d479134db22691e4a6915ce4079d4156b7d72775ff5099c70c257d",
+    "app/identity/service.py": "d563c452d9216763bb28ffc0df0d904bd68d5978034e42f696b53438ccf4c7fd",
+    "app/models/identity_foundation.py": "d83802ba7923f63836d877c6bb6d3512c8e72237cf9b14b48b4e6de6fba9e44b",
+    "app/models/native_auth.py": "899aa73948c7d8bef40299d7843a5933cfd5294ab6b9ab2f9e86542c426e3147",
+    "app/native_auth/administration.py": "ef17a63922ffb6f25582ae7d36301ad090949b16bf2d1fddc55cb0563935c5be",
+    "app/native_auth/client_administration.py": "387079554ceb0d358b3742ae4fdacb60d4339433b4920b39bfb1c53979a4b55a",
+    "app/native_auth/config.py": "8f898d19d5d2cb3b02f61d29ae74879f38a700a999182b8596a18386586923ad",
+    "app/native_auth/credentials.py": "96afda3d80f63ab79785786e4ce516adf42fb542489b5faba4345120edb28506",
+    "app/native_auth/crypto.py": "fafe594e9b44de49ac2ac4455c2bba6dda9659d03c8f822de4180b5698fc773b",
+    "app/native_auth/current_session.py": "71a2b169f911ce495a856b3ade984fc5a86c1170e9a7bff71e1ad0663e390b87",
+    "app/native_auth/keys.py": "73d37d202988d2148618300db3c8f7d5848844795946860e6dc8aad0f956f344",
+    "app/native_auth/sessions.py": "40aacbb57bf7e244b8470f9baa7977e87796b5e8cb98ecf3b93115be638aadfe",
+    "scripts/identity_admin.py": "4cc9bac607053c645cba2b71ac334cc91dfdd45def3135dbd27b3389226b4048",
+    "scripts/native_auth_admin.py": "753798989643ef1037b00ef13f39f0476be2f247d00f7459da851f9dd437b551"
+  },
+  "source_links": [
+    {
+      "path": "app/authz/permissions.py",
+      "line": null
+    },
+    {
+      "path": "app/authz/loader.py",
+      "line": null
+    },
+    {
+      "path": "app/identity/service.py",
+      "line": null
+    },
+    {
+      "path": "app/models/identity_foundation.py",
+      "line": null
+    },
+    {
+      "path": "app/models/native_auth.py",
+      "line": null
+    },
+    {
+      "path": "app/control/contracts.py",
+      "line": 8
+    },
+    {
+      "path": "scripts/identity_admin.py",
+      "line": 27
+    },
+    {
+      "path": "scripts/native_auth_admin.py",
+      "line": 125
+    },
+    {
+      "path": "app/control/operations.py",
+      "line": 113
+    },
+    {
+      "path": "app/authz/permissions.py",
+      "line": 13
+    },
+    {
+      "path": "app/native_auth/administration.py",
+      "line": null
+    },
+    {
+      "path": "app/models/native_auth.py",
+      "line": 14
+    },
+    {
+      "path": "app/native_auth/credentials.py",
+      "line": 67
+    },
+    {
+      "path": "app/native_auth/current_session.py",
+      "line": 39
+    },
+    {
+      "path": "app/authz/loader.py",
+      "line": null
+    },
+    {
+      "path": "app/authz/attributes.py",
+      "line": null
+    },
+    {
+      "path": "app/models/native_auth.py",
+      "line": 194
+    },
+    {
+      "path": "scripts/native_auth_admin.py",
+      "line": 156
+    }
+  ],
+  "http_operations": [
+    {
+      "method": "GET",
+      "path": "/health",
+      "operation_id": "health_liveness"
+    },
+    {
+      "method": "GET",
+      "path": "/ready",
+      "operation_id": "runtime_readiness"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/identity/me",
+      "operation_id": "identity_get_self"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/identity/assignments",
+      "operation_id": "identity_list_self_assignments"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/work-items/{work_item_id}",
+      "operation_id": "work_get_item"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/work-items/{work_item_id}/details",
+      "operation_id": "work_update_details"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/work-items/{work_item_id}/operations/{idempotency_key}",
+      "operation_id": "work_get_operation"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/account/sessions",
+      "operation_id": "account_list_sessions"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/account/sessions/{session_ref}",
+      "operation_id": "account_revoke_session"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/account/sessions/revoke-all",
+      "operation_id": "account_revoke_all_sessions"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/account/consents",
+      "operation_id": "account_list_consents"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/account/consents/{client_id}",
+      "operation_id": "account_revoke_consent"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/account/password",
+      "operation_id": "account_change_password"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/account/totp/reset",
+      "operation_id": "account_reset_totp"
+    },
+    {
+      "method": "GET",
+      "path": "/.well-known/openid-configuration",
+      "operation_id": "native_oidc_discovery"
+    },
+    {
+      "method": "GET",
+      "path": "/.well-known/oauth-authorization-server",
+      "operation_id": "native_oauth_metadata"
+    },
+    {
+      "method": "GET",
+      "path": "/oauth/jwks",
+      "operation_id": "native_jwks"
+    },
+    {
+      "method": "POST",
+      "path": "/oauth/token",
+      "operation_id": "native_token"
+    },
+    {
+      "method": "POST",
+      "path": "/oauth/revoke",
+      "operation_id": "native_revoke"
+    },
+    {
+      "method": "GET",
+      "path": "/oauth/userinfo",
+      "operation_id": "native_userinfo"
+    },
+    {
+      "method": "POST",
+      "path": "/oauth/userinfo",
+      "operation_id": "native_userinfo_post"
+    },
+    {
+      "method": "GET",
+      "path": "/oauth/authorize",
+      "operation_id": "native_authorize"
+    },
+    {
+      "method": "POST",
+      "path": "/oauth/login",
+      "operation_id": "native_browser_login"
+    },
+    {
+      "method": "GET",
+      "path": "/oauth/logout",
+      "operation_id": "native_logout_confirmation"
+    },
+    {
+      "method": "POST",
+      "path": "/oauth/logout",
+      "operation_id": "native_logout"
+    }
+  ],
+  "registered_code_actions": [
+    "task.view",
+    "task.metadata.update",
+    "task.commit.create",
+    "task.delivery.submit",
+    "task.acceptance.review",
+    "task.assign",
+    "knowledge.candidate.propose",
+    "repository.mr.propose"
+  ],
+  "control_environment": "dev/test",
+  "control_actor": "local_os_operator/bootstrap_operator",
+  "native_account_to_principal": "Explicit HUMAN mapping; no implicit email/username grants",
+  "critical_separation": "Business membership revocation is not automatically native account/SSO/RP-local logout",
+  "latest_test_evidence": {
+    "path": "docs/reviews/concurrency-validation-2026-10-26.json",
+    "sha256": "ab9d52abcdc35694e7657323a8be81bbfff379ca287c7fb1e8a2237865c2ad04",
+    "current_code_and_gate_hashes_match": true
+  },
+  "assessment": {
+    "authentication": "Implemented controlled scope; enterprise activation/recovery operations incomplete",
+    "human_administration": "No production human management API/action flow; existing OS tools are development/test",
+    "identity_authorization_partition": "Reasonable; current single-assignment/direct-ACL slice implemented",
+    "enterprise_lifecycle": "Separate primitives exist; formal lifecycle orchestration and policies incomplete",
+    "security_operations": "Events persisted; governed operator queries/retention/notification/recovery acceptance incomplete"
+  },
+  "doc_corrections": [
+    "private-deployment-api-v1: credential ownership and native MFA state",
+    "identity-schema-design: obsolete no-password/OTP-table statement",
+    "oauth-clients runbook: current shared/exclusive coordination"
+  ]
+}

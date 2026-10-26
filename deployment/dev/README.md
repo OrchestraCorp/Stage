@@ -1,5 +1,7 @@
 # 当前云开发设备
 
+最新开发服务已备份并迁移至 `a7d4e2c9f501`（38张应用表），运行首个人员管理切片；`/health`、`/ready`及原生认证在线冒烟通过，见[本轮验收](../../docs/reviews/human-administration-first-slice-2026-10-26.md)。新增管理表为空，管理员须按[首管手册](../identity/human-administration.md)明确提名并本人接受。以下较早版本、Keycloak fixture和P1b.3/.4计数保留对应轮次部署记录，不能覆盖本段当前状态。
+
 2026-10-26 已完成本人任职发现及密码＋TOTP 登录 MFA。常驻 `stage-development` 的 human policy 为 required/version 2，最大认证年龄 900 秒；原 issuer/client/人员 subject 保留，原 service client 仍独立。Stage schema head 为 `9c2e7a4b6d10`（26 张应用表）。本次已经显式启用，其他部署升级迁移默认 disabled，不会自动开启。实施与回退材料见[P1b.4 记录](../../docs/reviews/p1b4-assignments-mfa-2026-10-26.md)。
 
 运行模型为企业私有化部署：**一套 Stage、一个组织授权根、一套数据库、一个环境**；授权根是信任与治理边界，不等同于一个法人公司。客户端不选择组织，部门/项目以后按需用组织单元和 scope 管理。当前公开身份 API 为 v1，见[组织授权根语义](../../docs/organization-root-semantics.md)和[部署与 API 合同](../../docs/private-deployment-api-v1.md)。

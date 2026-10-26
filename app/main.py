@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from app.api.administration import AdministrationSecurityMiddleware
 from app.api.health import router as health_router
 from app.api.identity import IdentityCacheControlMiddleware
 from app.api.native_auth import NativeAuthSecurityMiddleware
@@ -61,6 +62,7 @@ def create_app(config: Settings | None = None) -> FastAPI:
     app.add_middleware(RequestIdMiddleware)
     # Added last to wrap the request/error boundary as well as FastAPI validation.
     app.add_middleware(IdentityCacheControlMiddleware)
+    app.add_middleware(AdministrationSecurityMiddleware)
     app.add_middleware(NativeAuthSecurityMiddleware)
     register_exception_handlers(app)
     app.include_router(health_router)

@@ -8,6 +8,8 @@ research_date: 2026-10-23
 
 # Stage 设计与实施入口
 
+当前新增[首个人员管理切片](human-administration-first-slice.md)：首管提名接受、已有人员目录、有限普通任职授撤、原键恢复及管理审计；对应 Maestro 体验与后续员工生命周期仍待交付。统一产品归属见[管理中心边界](maestro-stage-administration.md)。
+
 当前代码的[架构全景与目录导航](stage-architecture-panorama.md)、[完整类/函数地图](stage-code-map.md)及[整体工程审计](reviews/stage-engineering-audit-2026-10-26.md)按工作区源码核对，区分已实现、内部底板和未来目标。
 
 企业受控多应用 OAuth/OIDC 的当前完成范围见[功能矩阵](oauth-functional-coverage.md)，客户端登记/准入见[管理手册](../deployment/identity/oauth-clients.md)。
@@ -38,6 +40,8 @@ OrchestraCorp 的长期愿景是 **AI 驱动、安全可靠的分布式工作协
 
 | 文档 | 回答的问题 |
 |---|---|
+| [Maestro 管理中心与 Stage 边界](maestro-stage-administration.md) | 用户确认的完整管理体验归属、页面范围、管理API准备和两端共同验收 |
+| [企业身份与管理完备性评估](reviews/enterprise-identity-completeness-2026-10-26.md) | 已实现认证／权限底座与管理员产品、人员生命周期、恢复运营缺口的区分 |
 | [并发优化实现与复查](reviews/concurrency-optimization-2026-10-26.md) | 显式协调协议、真实 PG 竞争、浏览器回归和容量对比 |
 | [Stage 授权与业务并发改进提案](stage-concurrency-improvement-plan.md) | 验证去重、组织读写保护、幂等同步及后续路线约束；已实现，验收另见记录 |
 | [成熟 OA 的身份、权限与并发调研](reviews/oa-identity-permission-concurrency-research-2026-10-26.md) | O2OA、Frappe/ERPNext/HR、Flowable、RuoYi 固定源码对照；研究候选，不是新增业务承诺 |

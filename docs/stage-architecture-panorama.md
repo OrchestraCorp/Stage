@@ -7,6 +7,8 @@ policy_effect: none
 
 # Stage 架构全景、目录导航与函数职责
 
+**快照边界补充**：本文的大图、函数规模与机器清单保留首个管理切片之前的审计基线（25个HTTP操作、37张表）。随后新增的人员管理组件、9个HTTP操作及management_authority表见[首个管理切片](human-administration-first-slice.md)，当前运行连线见[代码架构图](current-code-architecture.md)。旧机器清单不改写成新一轮验收。
+
 当前 Stage 是一个 **稳定基础协议之上的组件化模块单体**：FastAPI 提供静态 HTTP 接入，provider 管理应用服务和依赖租约，独立 Runtime Core 管理生命周期，身份/授权/命令协议约束业务，PostgreSQL 保存权威事实。它没有拆成微服务，也不是每个函数都做成插件。
 
 本轮详细代码审计范围是这台云设备负责的 **Stage**。OrchestraCorp 四产品的角色也在下图列出，但没有把本地 Maestro 的研发或其他仓库做成已通过的代码审计。跨产品连线表示权威边界和预期接入，真实产品联调仍单独验收。

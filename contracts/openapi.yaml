@@ -112,6 +112,141 @@ components:
       - next_after
       title: AccountSessionPage
       type: object
+    ActivationRequest:
+      additionalProperties: false
+      properties:
+        expected_authority_version:
+          maximum: 2147483647.0
+          minimum: 1.0
+          title: Expected Authority Version
+          type: integer
+      required:
+      - expected_authority_version
+      title: ActivationRequest
+      type: object
+    AdminAssignmentList:
+      additionalProperties: false
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/AdminAssignmentView'
+          title: Items
+          type: array
+        next_after:
+          anyOf:
+          - maxLength: 128
+            minLength: 1
+            pattern: ^[^\s\x00-\x1f\x7f]+$
+            type: string
+          - type: 'null'
+          title: Next After
+      required:
+      - items
+      - next_after
+      title: AdminAssignmentList
+      type: object
+    AdminAssignmentView:
+      additionalProperties: false
+      properties:
+        assignment_ref:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Assignment Ref
+          type: string
+        expires_at:
+          anyOf:
+          - format: date-time
+            type: string
+          - type: 'null'
+          title: Expires At
+        membership_ref:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Membership Ref
+          type: string
+        principal_ref:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Principal Ref
+          type: string
+        role_code:
+          title: Role Code
+          type: string
+        role_display_name:
+          title: Role Display Name
+          type: string
+        role_ref:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Role Ref
+          type: string
+        role_revision:
+          maximum: 2147483647.0
+          minimum: 1.0
+          title: Role Revision
+          type: integer
+        scope_ref:
+          maxLength: 256
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Scope Ref
+          type: string
+        status:
+          title: Status
+          type: string
+        valid_from:
+          format: date-time
+          title: Valid From
+          type: string
+        version:
+          maximum: 2147483647.0
+          minimum: 1.0
+          title: Version
+          type: integer
+      required:
+      - principal_ref
+      - membership_ref
+      - assignment_ref
+      - role_ref
+      - role_revision
+      - role_code
+      - role_display_name
+      - scope_ref
+      - valid_from
+      - expires_at
+      - status
+      - version
+      title: AdminAssignmentView
+      type: object
+    AdministrationMe:
+      additionalProperties: false
+      properties:
+        authority:
+          anyOf:
+          - $ref: '#/components/schemas/AuthorityView'
+          - type: 'null'
+        membership_ref:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Membership Ref
+          type: string
+        principal_ref:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Principal Ref
+          type: string
+      required:
+      - principal_ref
+      - membership_ref
+      - authority
+      title: AdministrationMe
+      type: object
     AssignmentList:
       additionalProperties: false
       properties:
@@ -181,6 +316,141 @@ components:
       - version
       title: AssignmentView
       type: object
+    AuditList:
+      additionalProperties: false
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/AuditView'
+          title: Items
+          type: array
+        next_after:
+          anyOf:
+          - maxLength: 128
+            minLength: 1
+            pattern: ^[^\s\x00-\x1f\x7f]+$
+            type: string
+          - type: 'null'
+          title: Next After
+      required:
+      - items
+      - next_after
+      title: AuditList
+      type: object
+    AuditView:
+      additionalProperties: false
+      properties:
+        actor_ref:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Actor Ref
+          type: string
+        assignment_ref:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Assignment Ref
+          type: string
+        completed_at:
+          format: date-time
+          title: Completed At
+          type: string
+        operation_ref:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Operation Ref
+          type: string
+        operation_type:
+          enum:
+          - activation
+          - assignment.grant
+          - assignment.revoke
+          title: Operation Type
+          type: string
+        reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Reason
+        request_id:
+          title: Request Id
+          type: string
+        result:
+          $ref: '#/components/schemas/AdminAssignmentView'
+        target_ref:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Target Ref
+          type: string
+      required:
+      - operation_ref
+      - operation_type
+      - actor_ref
+      - assignment_ref
+      - request_id
+      - target_ref
+      - reason
+      - completed_at
+      - result
+      title: AuditView
+      type: object
+    AuthorityView:
+      additionalProperties: false
+      properties:
+        accepted_at:
+          anyOf:
+          - format: date-time
+            type: string
+          - type: 'null'
+          title: Accepted At
+        assignment_ref:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Assignment Ref
+          type: string
+        authority_ref:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Authority Ref
+          type: string
+        grant_rules:
+          items:
+            $ref: '#/components/schemas/GrantRule'
+          title: Grant Rules
+          type: array
+        nomination_expires_at:
+          anyOf:
+          - format: date-time
+            type: string
+          - type: 'null'
+          title: Nomination Expires At
+        status:
+          enum:
+          - pending
+          - active
+          - revoked
+          title: Status
+          type: string
+        version:
+          maximum: 2147483647.0
+          minimum: 1.0
+          title: Version
+          type: integer
+      required:
+      - authority_ref
+      - status
+      - version
+      - assignment_ref
+      - nomination_expires_at
+      - accepted_at
+      - grant_rules
+      title: AuthorityView
+      type: object
     CredentialVersionResponse:
       additionalProperties: false
       properties:
@@ -236,6 +506,99 @@ components:
       - enrollment_code
       title: FactorResetResponse
       type: object
+    GrantRequest:
+      additionalProperties: false
+      properties:
+        expected_authority_version:
+          maximum: 2147483647.0
+          minimum: 1.0
+          title: Expected Authority Version
+          type: integer
+        expected_membership_version:
+          maximum: 2147483647.0
+          minimum: 1.0
+          title: Expected Membership Version
+          type: integer
+        expires_at:
+          format: date-time
+          title: Expires At
+          type: string
+        membership_ref:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Membership Ref
+          type: string
+        reason:
+          maxLength: 500
+          minLength: 1
+          title: Reason
+          type: string
+        role_ref:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Role Ref
+          type: string
+        role_revision:
+          maximum: 2147483647.0
+          minimum: 1.0
+          title: Role Revision
+          type: integer
+        scope_ref:
+          maxLength: 256
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Scope Ref
+          type: string
+      required:
+      - membership_ref
+      - expected_membership_version
+      - expected_authority_version
+      - role_ref
+      - role_revision
+      - scope_ref
+      - expires_at
+      - reason
+      title: GrantRequest
+      type: object
+    GrantRule:
+      additionalProperties: false
+      properties:
+        content_digest:
+          pattern: ^[a-f0-9]{64}$
+          title: Content Digest
+          type: string
+        max_duration_seconds:
+          maximum: 31536000.0
+          minimum: 1.0
+          title: Max Duration Seconds
+          type: integer
+        role_ref:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Role Ref
+          type: string
+        role_revision:
+          maximum: 2147483647.0
+          minimum: 1.0
+          title: Role Revision
+          type: integer
+        scope_ref:
+          maxLength: 256
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Scope Ref
+          type: string
+      required:
+      - role_ref
+      - role_revision
+      - content_digest
+      - scope_ref
+      - max_duration_seconds
+      title: GrantRule
+      type: object
     HealthResponse:
       description: Stable response contract for the process liveness probe.
       properties:
@@ -258,6 +621,117 @@ components:
       - env
       title: HealthResponse
       type: object
+    OperationResult:
+      additionalProperties: false
+      properties:
+        completed_at:
+          format: date-time
+          title: Completed At
+          type: string
+        operation_ref:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Operation Ref
+          type: string
+        operation_type:
+          enum:
+          - activation
+          - assignment.grant
+          - assignment.revoke
+          title: Operation Type
+          type: string
+        replayed:
+          title: Replayed
+          type: boolean
+        result:
+          $ref: '#/components/schemas/AdminAssignmentView'
+        status:
+          const: succeeded
+          title: Status
+          type: string
+      required:
+      - operation_ref
+      - status
+      - operation_type
+      - result
+      - replayed
+      - completed_at
+      title: OperationResult
+      type: object
+    PeopleList:
+      additionalProperties: false
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/PersonView'
+          title: Items
+          type: array
+        next_after:
+          anyOf:
+          - maxLength: 128
+            minLength: 1
+            pattern: ^[^\s\x00-\x1f\x7f]+$
+            type: string
+          - type: 'null'
+          title: Next After
+      required:
+      - items
+      - next_after
+      title: PeopleList
+      type: object
+    PersonView:
+      additionalProperties: false
+      properties:
+        expires_at:
+          anyOf:
+          - format: date-time
+            type: string
+          - type: 'null'
+          title: Expires At
+        membership_ref:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Membership Ref
+          type: string
+        membership_status:
+          title: Membership Status
+          type: string
+        membership_version:
+          maximum: 2147483647.0
+          minimum: 1.0
+          title: Membership Version
+          type: integer
+        principal_ref:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Principal Ref
+          type: string
+        principal_status:
+          title: Principal Status
+          type: string
+        principal_version:
+          maximum: 2147483647.0
+          minimum: 1.0
+          title: Principal Version
+          type: integer
+        valid_from:
+          format: date-time
+          title: Valid From
+          type: string
+      required:
+      - principal_ref
+      - principal_status
+      - principal_version
+      - membership_ref
+      - membership_status
+      - membership_version
+      - valid_from
+      - expires_at
+      title: PersonView
+      type: object
     ReadyResponse:
       properties:
         components:
@@ -279,6 +753,30 @@ components:
       - status
       - components
       title: ReadyResponse
+      type: object
+    RevokeRequest:
+      additionalProperties: false
+      properties:
+        expected_assignment_version:
+          maximum: 2147483647.0
+          minimum: 1.0
+          title: Expected Assignment Version
+          type: integer
+        expected_authority_version:
+          maximum: 2147483647.0
+          minimum: 1.0
+          title: Expected Authority Version
+          type: integer
+        reason:
+          maxLength: 500
+          minLength: 1
+          title: Reason
+          type: string
+      required:
+      - expected_assignment_version
+      - expected_authority_version
+      - reason
+      title: RevokeRequest
       type: object
     SelfIdentity:
       properties:
@@ -1339,6 +1837,1069 @@ paths:
       summary: Reset Totp
       tags:
       - Account security
+  /api/v1/administration/activation:
+    post:
+      operationId: administration_activate
+      parameters:
+      - in: query
+        name: profile_ref
+        required: true
+        schema:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Profile Ref
+          type: string
+      - in: query
+        name: profile_version
+        required: true
+        schema:
+          maximum: 9223372036854775807
+          minimum: 1
+          title: Profile Version
+          type: integer
+      - in: header
+        name: Idempotency-Key
+        required: true
+        schema:
+          maxLength: 128
+          pattern: ^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$
+          title: Idempotency-Key
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivationRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationResult'
+          description: Successful Response
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: A current human token and fresh MFA are required
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The selected current administration assignment is not permitted
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The requested managed object or operation is unavailable
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Current versions, nomination state or original input conflict
+        '413':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The request exceeds the bounded JSON body size
+        '415':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: A JSON request body is required
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Request validation failed
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unexpected server error
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unavailable or commit outcome unknown; preserve the original
+            key
+          headers:
+            Location:
+              description: Recover with current credentials and the original idempotency
+                key
+              schema:
+                type: string
+      security:
+      - HTTPBearer: []
+      summary: Activate
+      tags:
+      - Administration
+  /api/v1/administration/audit:
+    get:
+      operationId: administration_list_audit
+      parameters:
+      - in: query
+        name: profile_ref
+        required: true
+        schema:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Profile Ref
+          type: string
+      - in: query
+        name: profile_version
+        required: true
+        schema:
+          maximum: 9223372036854775807
+          minimum: 1
+          title: Profile Version
+          type: integer
+      - in: query
+        name: assignment_ref
+        required: true
+        schema:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Assignment Ref
+          type: string
+      - in: query
+        name: limit
+        required: false
+        schema:
+          default: 20
+          maximum: 50
+          minimum: 1
+          title: Limit
+          type: integer
+      - in: query
+        name: after
+        required: false
+        schema:
+          anyOf:
+          - maxLength: 128
+            minLength: 1
+            pattern: ^[^\s\x00-\x1f\x7f]+$
+            type: string
+          - type: 'null'
+          title: After
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditList'
+          description: Successful Response
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: A current human token and fresh MFA are required
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The selected current administration assignment is not permitted
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The requested managed object or operation is unavailable
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Current versions, nomination state or original input conflict
+        '413':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The request exceeds the bounded JSON body size
+        '415':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: A JSON request body is required
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Request validation failed
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unexpected server error
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unavailable or commit outcome unknown; preserve the original
+            key
+          headers:
+            Location:
+              description: Recover with current credentials and the original idempotency
+                key
+              schema:
+                type: string
+      security:
+      - HTTPBearer: []
+      summary: Audit
+      tags:
+      - Administration
+  /api/v1/administration/me:
+    get:
+      operationId: administration_get_self
+      parameters:
+      - in: query
+        name: profile_ref
+        required: true
+        schema:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Profile Ref
+          type: string
+      - in: query
+        name: profile_version
+        required: true
+        schema:
+          maximum: 9223372036854775807
+          minimum: 1
+          title: Profile Version
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdministrationMe'
+          description: Successful Response
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: A current human token and fresh MFA are required
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The selected current administration assignment is not permitted
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The requested managed object or operation is unavailable
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Current versions, nomination state or original input conflict
+        '413':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The request exceeds the bounded JSON body size
+        '415':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: A JSON request body is required
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Request validation failed
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unexpected server error
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unavailable or commit outcome unknown; preserve the original
+            key
+          headers:
+            Location:
+              description: Recover with current credentials and the original idempotency
+                key
+              schema:
+                type: string
+      security:
+      - HTTPBearer: []
+      summary: Me
+      tags:
+      - Administration
+  /api/v1/administration/operations/{idempotency_key}:
+    get:
+      operationId: administration_get_operation
+      parameters:
+      - in: path
+        name: idempotency_key
+        required: true
+        schema:
+          maxLength: 128
+          pattern: ^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$
+          title: Idempotency Key
+          type: string
+      - in: query
+        name: profile_ref
+        required: true
+        schema:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Profile Ref
+          type: string
+      - in: query
+        name: profile_version
+        required: true
+        schema:
+          maximum: 9223372036854775807
+          minimum: 1
+          title: Profile Version
+          type: integer
+      - in: query
+        name: assignment_ref
+        required: true
+        schema:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Assignment Ref
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationResult'
+          description: Successful Response
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: A current human token and fresh MFA are required
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The selected current administration assignment is not permitted
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The requested managed object or operation is unavailable
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Current versions, nomination state or original input conflict
+        '413':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The request exceeds the bounded JSON body size
+        '415':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: A JSON request body is required
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Request validation failed
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unexpected server error
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unavailable or commit outcome unknown; preserve the original
+            key
+          headers:
+            Location:
+              description: Recover with current credentials and the original idempotency
+                key
+              schema:
+                type: string
+      security:
+      - HTTPBearer: []
+      summary: Operation
+      tags:
+      - Administration
+  /api/v1/administration/people:
+    get:
+      operationId: administration_list_people
+      parameters:
+      - in: query
+        name: profile_ref
+        required: true
+        schema:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Profile Ref
+          type: string
+      - in: query
+        name: profile_version
+        required: true
+        schema:
+          maximum: 9223372036854775807
+          minimum: 1
+          title: Profile Version
+          type: integer
+      - in: query
+        name: assignment_ref
+        required: true
+        schema:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Assignment Ref
+          type: string
+      - in: query
+        name: limit
+        required: false
+        schema:
+          default: 20
+          maximum: 50
+          minimum: 1
+          title: Limit
+          type: integer
+      - in: query
+        name: after
+        required: false
+        schema:
+          anyOf:
+          - maxLength: 128
+            minLength: 1
+            pattern: ^[^\s\x00-\x1f\x7f]+$
+            type: string
+          - type: 'null'
+          title: After
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PeopleList'
+          description: Successful Response
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: A current human token and fresh MFA are required
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The selected current administration assignment is not permitted
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The requested managed object or operation is unavailable
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Current versions, nomination state or original input conflict
+        '413':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The request exceeds the bounded JSON body size
+        '415':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: A JSON request body is required
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Request validation failed
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unexpected server error
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unavailable or commit outcome unknown; preserve the original
+            key
+          headers:
+            Location:
+              description: Recover with current credentials and the original idempotency
+                key
+              schema:
+                type: string
+      security:
+      - HTTPBearer: []
+      summary: People
+      tags:
+      - Administration
+  /api/v1/administration/people/{principal_ref}:
+    get:
+      operationId: administration_get_person
+      parameters:
+      - in: path
+        name: principal_ref
+        required: true
+        schema:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Principal Ref
+          type: string
+      - in: query
+        name: profile_ref
+        required: true
+        schema:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Profile Ref
+          type: string
+      - in: query
+        name: profile_version
+        required: true
+        schema:
+          maximum: 9223372036854775807
+          minimum: 1
+          title: Profile Version
+          type: integer
+      - in: query
+        name: assignment_ref
+        required: true
+        schema:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Assignment Ref
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonView'
+          description: Successful Response
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: A current human token and fresh MFA are required
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The selected current administration assignment is not permitted
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The requested managed object or operation is unavailable
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Current versions, nomination state or original input conflict
+        '413':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The request exceeds the bounded JSON body size
+        '415':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: A JSON request body is required
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Request validation failed
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unexpected server error
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unavailable or commit outcome unknown; preserve the original
+            key
+          headers:
+            Location:
+              description: Recover with current credentials and the original idempotency
+                key
+              schema:
+                type: string
+      security:
+      - HTTPBearer: []
+      summary: Person
+      tags:
+      - Administration
+  /api/v1/administration/people/{principal_ref}/assignments:
+    get:
+      operationId: administration_list_assignments
+      parameters:
+      - in: path
+        name: principal_ref
+        required: true
+        schema:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Principal Ref
+          type: string
+      - in: query
+        name: profile_ref
+        required: true
+        schema:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Profile Ref
+          type: string
+      - in: query
+        name: profile_version
+        required: true
+        schema:
+          maximum: 9223372036854775807
+          minimum: 1
+          title: Profile Version
+          type: integer
+      - in: query
+        name: assignment_ref
+        required: true
+        schema:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Assignment Ref
+          type: string
+      - in: query
+        name: limit
+        required: false
+        schema:
+          default: 20
+          maximum: 50
+          minimum: 1
+          title: Limit
+          type: integer
+      - in: query
+        name: after
+        required: false
+        schema:
+          anyOf:
+          - maxLength: 128
+            minLength: 1
+            pattern: ^[^\s\x00-\x1f\x7f]+$
+            type: string
+          - type: 'null'
+          title: After
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminAssignmentList'
+          description: Successful Response
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: A current human token and fresh MFA are required
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The selected current administration assignment is not permitted
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The requested managed object or operation is unavailable
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Current versions, nomination state or original input conflict
+        '413':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The request exceeds the bounded JSON body size
+        '415':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: A JSON request body is required
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Request validation failed
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unexpected server error
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unavailable or commit outcome unknown; preserve the original
+            key
+          headers:
+            Location:
+              description: Recover with current credentials and the original idempotency
+                key
+              schema:
+                type: string
+      security:
+      - HTTPBearer: []
+      summary: Assignments
+      tags:
+      - Administration
+    post:
+      operationId: administration_grant_assignment
+      parameters:
+      - in: path
+        name: principal_ref
+        required: true
+        schema:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Principal Ref
+          type: string
+      - in: query
+        name: profile_ref
+        required: true
+        schema:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Profile Ref
+          type: string
+      - in: query
+        name: profile_version
+        required: true
+        schema:
+          maximum: 9223372036854775807
+          minimum: 1
+          title: Profile Version
+          type: integer
+      - in: query
+        name: assignment_ref
+        required: true
+        schema:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Assignment Ref
+          type: string
+      - in: header
+        name: Idempotency-Key
+        required: true
+        schema:
+          maxLength: 128
+          pattern: ^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$
+          title: Idempotency-Key
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GrantRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationResult'
+          description: Successful Response
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: A current human token and fresh MFA are required
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The selected current administration assignment is not permitted
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The requested managed object or operation is unavailable
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Current versions, nomination state or original input conflict
+        '413':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The request exceeds the bounded JSON body size
+        '415':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: A JSON request body is required
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Request validation failed
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unexpected server error
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unavailable or commit outcome unknown; preserve the original
+            key
+          headers:
+            Location:
+              description: Recover with current credentials and the original idempotency
+                key
+              schema:
+                type: string
+      security:
+      - HTTPBearer: []
+      summary: Grant
+      tags:
+      - Administration
+  /api/v1/administration/people/{principal_ref}/assignments/{target_assignment_ref}/revoke:
+    post:
+      operationId: administration_revoke_assignment
+      parameters:
+      - in: path
+        name: principal_ref
+        required: true
+        schema:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Principal Ref
+          type: string
+      - in: path
+        name: target_assignment_ref
+        required: true
+        schema:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Target Assignment Ref
+          type: string
+      - in: query
+        name: profile_ref
+        required: true
+        schema:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Profile Ref
+          type: string
+      - in: query
+        name: profile_version
+        required: true
+        schema:
+          maximum: 9223372036854775807
+          minimum: 1
+          title: Profile Version
+          type: integer
+      - in: query
+        name: assignment_ref
+        required: true
+        schema:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Assignment Ref
+          type: string
+      - in: header
+        name: Idempotency-Key
+        required: true
+        schema:
+          maxLength: 128
+          pattern: ^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$
+          title: Idempotency-Key
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RevokeRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationResult'
+          description: Successful Response
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: A current human token and fresh MFA are required
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The selected current administration assignment is not permitted
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The requested managed object or operation is unavailable
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Current versions, nomination state or original input conflict
+        '413':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The request exceeds the bounded JSON body size
+        '415':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: A JSON request body is required
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Request validation failed
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unexpected server error
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unavailable or commit outcome unknown; preserve the original
+            key
+          headers:
+            Location:
+              description: Recover with current credentials and the original idempotency
+                key
+              schema:
+                type: string
+      security:
+      - HTTPBearer: []
+      summary: Revoke
+      tags:
+      - Administration
   /api/v1/identity/assignments:
     get:
       description: 'Lists the current human''s assignment choices. Each business operation

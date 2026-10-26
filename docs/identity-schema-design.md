@@ -14,7 +14,7 @@ policy_effect: none
 
 本文区分一期现行目标与后置候选。P1b.1/.2 已有认证、组织成员和人类/WorkItem 授权；P1b.3 接通真实人员证据到元数据命令提交前重验，见[本轮记录](reviews/p1b3-human-work-2026-10-25.md)。P1b.4 已增加组织统一人员认证策略与本人任职查询，见[本轮记录](reviews/p1b4-assignments-mfa-2026-10-26.md)。ServiceGrant、AgentRegistration、AgentWorkloadBinding、Delegation 及 terms 不是一期表或 loader 前置条件，未来有真实需求时另行评审。既有枚举、历史数据和测试保留；专项边界继续由[身份规范](identity-and-authorization.md)、[P1b 入口](p1b-implementation-entry.md)和[WASM 规格](wasm-host-design.md)约束。
 
-**当前物理 schema 与目标的区别**：迁移 `f4c7b2a1e903` 从 `d6a3c5f8e902` 新增 `permission_action`、`role_definition`、`role_version`、`role_version_action`、`authorization_scope`、`authorization_resource` 六张表；后续 `9c2e7a4b6d10` 新增 `organization_human_authentication_policy`，随后 `e8a1c6d9f240` 新增八张本地认证/会话/协议/安全事件表，安全审计迁移 `b7f0d3a9216c` 再增加首次因素绑定授权标志，多应用 OAuth 迁移 `c6f3a19d820b` 再增浏览器会话、同意与退出请求三张表，当前应用表共 37 张（明细见[原生认证设计](native-authentication-design.md#6-已落地的实现边界)）。新授权表和旧任职/关系新增的根引用物理名均为 `organization_ref`；旧身份子表的物理 `tenant_ref` 继续兼容。下文保留的 tenant 字段表示逻辑组织根外键，不能作为要求新表继续使用 tenant 命名的依据。旧任职/关系保留未映射行，loader 只采用完整的新引用。`execution_audit.authorization_json` 保存有 schema 的当前授权事实版本摘要；它不包含 token，也不是可重用权限票据。
+**当前物理 schema 与目标的区别**：迁移 `f4c7b2a1e903` 从 `d6a3c5f8e902` 新增 `permission_action`、`role_definition`、`role_version`、`role_version_action`、`authorization_scope`、`authorization_resource` 六张表；后续 `9c2e7a4b6d10` 新增 `organization_human_authentication_policy`，随后 `e8a1c6d9f240` 新增八张本地认证/会话/协议/安全事件表，安全审计迁移 `b7f0d3a9216c` 再增加首次因素绑定授权标志，多应用 OAuth 迁移 `c6f3a19d820b` 再增浏览器会话、同意与退出请求三张表，随后首管管理切片 `a7d4e2c9f501` 新增 management_authority，保存精确首管提名、永久接受标记与有限可授清单，当前应用表共 38 张（认证部分明细见[原生认证设计](native-authentication-design.md#6-已落地的实现边界)）。新授权表和旧任职/关系新增的根引用物理名均为 `organization_ref`；旧身份子表的物理 `tenant_ref` 继续兼容。下文保留的 tenant 字段表示逻辑组织根外键，不能作为要求新表继续使用 tenant 命名的依据。旧任职/关系保留未映射行，loader 只采用完整的新引用。`execution_audit.authorization_json` 保存有 schema 的当前授权事实版本摘要；它不包含 token，也不是可重用权限票据。
 
 当前 loader 只装载一个明确 HUMAN 任职、固定角色版本、最多 64 层 scope 祖先和 WorkItem 的直接 `viewer_of/owner_of` ACL；分类上限固定 `internal`。WorkItem 的兼容 `scope_ref` 必须与资源登记一致，分类、状态和对象版本仍来自 WorkItem。该模型已接入公开 WorkItem 读取/元数据编辑和结果恢复，但不代表任务、承诺或验收领域已实现。角色版本内容不可变由可信注册器和加载摘要校验保证，当前没有数据库 immutability trigger；有数据库写权限的可信宿主仍属于信任边界。
 
@@ -172,7 +172,7 @@ P1b 不建立无边界关系图推理；按已登记 relation type 和有界 sco
 
 每个 Stage 数据库只承载一个部署组织根和一个环境。开发工具在管理事务锁内核验 identity-foundation 初始化记录：环境不匹配或存在多环境历史时拒绝 bootstrap/revoke/install，包括重放请求。独立部署各自保存主体，不建立跨实例共享 Principal。既有结果可由原操作者按原环境和操作键只读恢复，不能用修改环境参数重新解释目标归属。
 
-跨账号自然人关联、完整组织岗位管理、登录密码/会话管理、多方批准记录不在 P1b 一次建全。P1b.4 已按用户选择接入密码＋TOTP 的隔离真实流程：IdP 持有凭据并执行因素验证，Stage 的组织策略统一检查强度、新鲜度及提交前版本。Stage 不新建密码/OTP 表，也不增加 Stage RP Passkey 表。服务端验证不替代 Maestro 桌面、用户因素绑定/恢复与生产接入验收。岗位来源先保留明确版本引用；HumanIdentityLink 与批准事实在独立性场景实际实施时另建，不能凭 email 或两条 principal 证明两个自然人。
+跨账号自然人关联、完整组织岗位管理、多方批准记录仍未一次建全。P1b.4先验证外部IdP的密码＋TOTP；后续用户明确选择自研最小认证，当前native_account等原生表已承载密码摘要、加密TOTP、恢复和会话，见[现行原生设计](native-authentication-design.md)。Stage组织策略继续统一检查强度、新鲜度及提交前版本；Passkey尚未实施。服务端因素绑定／恢复已验证，Maestro桌面、生产开户／恢复和管理登录仍需独立交付，见[企业完备性评估](reviews/enterprise-identity-completeness-2026-10-26.md)。岗位来源保留明确版本引用；HumanIdentityLink与批准事实在独立性场景实际实施时另建，不能凭email或两条principal证明两个自然人。
 
 ## 5. 关键外键和索引示例
 

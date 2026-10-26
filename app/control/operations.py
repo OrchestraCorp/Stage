@@ -21,7 +21,6 @@ from app.control.contracts import (
     BOOTSTRAP_TYPE,
     AdministrationError,
     AdministrationResult,
-    Environment,
     OperationUnknown,
 )
 from app.models.identity_foundation import BootstrapRecordTable, IdentityControlOperationTable
@@ -53,7 +52,7 @@ async def acquire_admin_lock(session: AsyncSession) -> None:
         await session.execute(text("BEGIN IMMEDIATE"))
 
 
-async def check_database_environment(session: AsyncSession, environment: Environment) -> None:
+async def check_database_environment(session: AsyncSession, environment: str) -> None:
     # A Stage database belongs to one deployment environment. Check under the
     # installation mutex, before replay as well as before changing identity facts.
     environments = set(
@@ -147,7 +146,7 @@ def append_journal(
 async def operation_result(
     sessions: async_sessionmaker[AsyncSession],
     *,
-    environment: Environment,
+    environment: str,
     actor_ref: str,
     operation_type: str,
     idempotency_key: str,

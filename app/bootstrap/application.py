@@ -6,6 +6,7 @@ import asyncio
 from typing import Any
 
 from app.core.config import Settings
+from app.providers.administration import administration_plugin
 from app.providers.assignments import assignments_plugin
 from app.providers.identity import identity_plugin
 from app.providers.native_auth import native_auth_plugin
@@ -49,6 +50,7 @@ class ApplicationRuntime:
                     self._required.append(self.host.load(native_auth_plugin(self.config)))
                 self._required.append(self.host.load(assignments_plugin(self.config)))
                 self._required.append(self.host.load(human_work_plugin(self.config)))
+                self._required.append(self.host.load(administration_plugin(self.config)))
                 for plugin in self._plugins:
                     self._required.append(self.host.load(plugin))
                 for plugin in self._optional_plugins:

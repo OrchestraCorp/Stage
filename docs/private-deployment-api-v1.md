@@ -56,11 +56,13 @@ P1b.3 在同一 v1 下增加人员工作项接口，完整合同见[OpenAPI](../
 
 ## 登录 MFA 与批准的边界
 
-普通登录 MFA 属一期身份/P1b，本轮已选密码＋TOTP，由 IdP 执行因素验证。Stage 已实现组织统一策略，启用后所有 human 入口必须满足精确 profile/version、ACR、AMR 与 auth_time 年龄，不能选择旧弱 profile 绕过；不满足时返回 401 / `MFA_REQUIRED` 和 `Bearer error="insufficient_user_authentication"` challenge。身份短期证据固定策略版本/摘要和最短有效期，提交前重验。受控 CLI 显式配置，迁移不会自动启用，见[MFA 管理](login-mfa-development.md)。真实隔离 IdP 与 Stage 链路已有证据；Maestro 桌面、因素绑定/恢复与生产接入仍分别验收。
+普通登录 MFA 属一期身份/P1b，当前原生认证模块已执行密码＋TOTP因素验证；明确登记的外部IdP仍可按组织策略准入。Stage 已实现组织统一策略，启用后所有 human 入口必须满足精确 profile/version、ACR、AMR 与 auth_time 年龄，不能选择旧弱 profile 绕过；不满足时返回 401 / `MFA_REQUIRED` 和 `Bearer error="insufficient_user_authentication"` challenge。身份短期证据固定策略版本/摘要和最短有效期，提交前重验。受控 CLI 显式配置，迁移不会自动启用，见[MFA 管理](login-mfa-development.md)。真实隔离IdP、原生因素绑定／恢复及Stage链路已有服务端证据；Maestro桌面交互与生产接入仍分别验收。
 
 制品批准的 Stage RP WebAuthn / IdP step-up 是 P1c/P1d 的独立待选方案，另需冻结意图和一次性证据。它不作为登录 MFA 的实现前提；MFA 登录成功也不会自动生成业务批准。
 
 ## 个人管理的数据职责
+
+管理员操作他人的人员／权限／账户管理体验，以及用户可用的本人安全中心，统一融入Maestro。Stage保留数据库事实、当前授权与事务执行职责；认证issuer托管页继续承担登录／因素／同意／退出交互。产品与API边界见[管理中心合同](maestro-stage-administration.md)，具体管理端点仍待实现与OpenAPI冻结。
 
 本轮固定个人管理的设计边界，尚未增加资料表或 CRUD 接口。当前已实现的是安全身份及企业成员经历，不等于个人中心完成。
 
@@ -70,15 +72,17 @@ P1b.3 在同一 v1 下增加人员工作项接口，完整合同见[OpenAPI](../
 | 人类展示资料 | 规划 `human_profile`，与 human Principal 一对一 | 显示名、受控头像资源引用、locale、IANA timezone、version；未来只允许本人或明确获权管理员修改，不以邮箱/昵称授予身份 |
 | 组织根内成员经历 | 已有 `tenant_membership`；未来按需增加成员档案 | 成员资格、生效/终结时间与来源；工号、组织单元归属和企业内称谓等由对应业务模型管理，不能写回全局个人资料以改变资格 |
 | 任职和资源范围 | 已有内部人员角色版本/任职及 scope 授权切片 | 部门/项目岗位、能力与资源范围；不通过个人资料接口编辑 |
-| 凭据与登录会话 | 企业选定 IdP | 密码、MFA、凭据恢复与会话由 IdP 管理；Stage 不在个人资料中保存密码或 token |
+| 凭据与登录会话 | 已有原生 native_account／session／browser session 等；外部IdP按明确准入保留 | 原生模块管理密码摘要、加密TOTP、恢复与会话；这些安全事实不放入个人展示资料。外部来源的凭据仍由该IdP管理 |
 
 后续个人资料写接口应在具备“只写自身”、expected_version、幂等、受控审计的事务闭环后公开；读取按实际需要投影。人员认证与任职授权按 [P1b 实施顺序](p1b-implementation-entry.md)对齐；独立 Agent/委托链已从一期后置，见[一期协作模式](people-company-collaboration.md)。本轮不提前公开人员列表、邀请、账号关联或任职管理接口。
+
+企业管理完备性另见[本轮评估](reviews/enterprise-identity-completeness-2026-10-26.md)：当前账户安全API面向本人；人员管理员控制面、生产首管交接、正式入离职与权限管理尚未闭环，不能把dev/test本机管理工具当成已完成的管理员登录产品。
 
 ## 验证与本轮范围
 
 以下表格保留 API v1 首次切换时的验证记录。组织授权根语义、`d6a3c5f8e902` 无损重命名及最新完整验收见[组织根落实记录](reviews/organization-root-semantics-2026-10-25.md)。
 
-当前实现需覆盖 v1 合同、额外组织参数拒绝、旧路由与未支持版本拒绝、组织根单例及无损迁移、离线初始化幂等和单环境、身份撤销/到期以及真实 IdP 链路。部门/项目 scope 与当前 WorkItem 授权已由后续 loader/人员命令切片验证；本人任职发现和登录 MFA 策略已由 P1b.4 实现；原生认证另已交付服务端因素绑定/恢复；组织单元模型、正式人员/权限管理接口、Maestro 桌面及生产恢复仍未交付或验收，不以服务端脚本代替。最新状态见[P1b 入口](p1b-implementation-entry.md)。
+当前实现需覆盖 v1 合同、额外组织参数拒绝、旧路由与未支持版本拒绝、组织根单例及无损迁移、离线初始化幂等和单环境、身份撤销/到期以及真实 IdP 链路。部门/项目 scope 与当前 WorkItem 授权已由后续 loader/人员命令切片验证；本人任职发现和登录 MFA 策略已由 P1b.4 实现；原生认证另已交付服务端因素绑定/恢复；首个管理切片已开放现有人员目录与有限任职授撤；组织单元模型、正式入离职、Maestro 桌面及生产恢复仍未交付或验收，不以服务端脚本代替。最新状态见[P1b 入口](p1b-implementation-entry.md)。
 
 更新后的真实 IdP 冒烟使用 `--organization-ref stage-development` 核对预期响应；这个 CLI 参数只用于断言，不加入 HTTP 请求。执行命令见[云设备运行说明](../deployment/dev/README.md)和[IdP 说明](../deployment/identity/README.md)。
 

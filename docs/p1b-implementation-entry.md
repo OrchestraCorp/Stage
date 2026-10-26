@@ -8,7 +8,7 @@ policy_effect: none
 
 # P1b 身份管理、认证与授权实施入口
 
-本轮在联调前完成 Stage 身份/权限代码复查、输入边界修复、结果恢复与并行人员隔离回归，并建立 PostgreSQL 组织 guard 基线。详见[收尾记录](reviews/p1b-closeout-2026-10-25.md)和[逐项 I1 覆盖](reviews/p1b-identity-coverage-2026-10-25.md)。[Maestro 合同](maestro-stage-p1b-handoff.md)已经固定，实际桌面登录/回调/凭据保管和联调仍未验收，不能将 Stage 最小路径收尾写成整个 P1b 或 P1 已通过。P1b.4 已交付本人任职发现、组织统一 MFA 强度/新鲜度和显式配置，用户选定密码＋TOTP，隔离真实 IdP 与 Stage 链路已有证据，见[本轮记录](reviews/p1b4-assignments-mfa-2026-10-26.md)。随后[原生认证](native-authentication-design.md)已实现并验证服务端因素绑定/恢复与最小 OAuth/OIDC；Maestro 的真实因素交互、任职选择 UI、恢复交互仍待验收；正式入离职与人员/权限管理接口也未交付，开发 CLI 不计为产品管理能力。
+本轮在联调前完成 Stage 身份/权限代码复查、输入边界修复、结果恢复与并行人员隔离回归，并建立 PostgreSQL 组织 guard 基线。详见[收尾记录](reviews/p1b-closeout-2026-10-25.md)和[逐项 I1 覆盖](reviews/p1b-identity-coverage-2026-10-25.md)。[Maestro 合同](maestro-stage-p1b-handoff.md)已经固定，实际桌面登录/回调/凭据保管和联调仍未验收，不能将 Stage 最小路径收尾写成整个 P1b 或 P1 已通过。P1b.4 已交付本人任职发现、组织统一 MFA 强度/新鲜度和显式配置，用户选定密码＋TOTP，隔离真实 IdP 与 Stage 链路已有证据，见[本轮记录](reviews/p1b4-assignments-mfa-2026-10-26.md)。随后[原生认证](native-authentication-design.md)已实现并验证服务端因素绑定/恢复与最小 OAuth/OIDC；Maestro 的真实因素交互、任职选择 UI、恢复交互仍待验收；随后首个管理切片已提供现有人员目录和有限任职授撤；正式入离职仍未交付，开发 CLI 不计为产品管理能力。
 
 产品按企业私有化部署实施，不建设 SaaS 多租户选择和管理。`tenant_*` 是当前兼容存储名；一个数据库只有一个组织授权根和环境，根不等同于法人公司，集团/子公司等组织单元以后按需建模，部门/项目使用 scope。身份自身读取 query 仅接受 `profile_ref/profile_version`，本人任职发现另外接受 `limit/after`，响应使用 `organization_ref`；旧未分版本路由移除。详见[组织授权根语义](organization-root-semantics.md)和[部署/API 边界](private-deployment-api-v1.md)。
 
@@ -19,6 +19,8 @@ P1a 提供组件运行、PG/Redis 资源、短事务命令与可靠投递基础�
 一期固定为**人员—公司—人员**模式：人员承担业务责任，Agent 是受监督的工具，当前 HUMAN loader 与人类任职约束保持。独立 Agent 成员、角色、业务接口、binding、Delegation 与通用 ServiceGrant 不进入当前切片；技术服务认证不授予人员协作权限。用户已明确恢复开发，并批准元数据编辑这一最小操作，范围见[人员协作边界](people-company-collaboration.md)。
 
 ## 1. 三层责任
+
+管理产品归属已由用户明确：完整管理体验融入Maestro，Stage交付正式管理后端。页面、查询投影、受控写入、错误恢复与审计须共同验收，见[管理中心合同边界](maestro-stage-administration.md)。当前本人接口与开发CLI不是完整管理员产品，具体管理规则和API按垂直切片冻结。
 
 | 层 | 回答的问题 | 交付 |
 |---|---|---|
@@ -36,7 +38,7 @@ IdP 管登录凭据和会话；Stage 管组织事实与业务许可。Maestro �
 - 默认装配的 `HumanWorkService` 每次调用取得身份与存储 lease，认证后构造执行上下文。Core 管依赖存活，用户 token 和角色不进入 Core 状态。
 - 公开人员命令使用同一个 `AuthenticatedAuthorizationLoader` 作为 loader、coordinator 和 `identity_validator`。协调顺序为 TrustState SHARE→Principal SHARE→组织 guard；内部数据库 loader 保留当前事务锁标记，认证证据在锁后及提交前重验。无真实认证的旧 fixture 路径不公开；IdP 网络调用不得占用数据库锁。
 - 授权开发 CLI 由本机 OS 操作者在 dev/test 安装有限角色版本/任职/ACL，并撤销五类授权事实；幂等 journal、授权 epoch 和变更同事务。它不是 HTTP 管理后门或企业人员管理系统，使用范围见[开发操作说明](authorization-development.md)。
-- `/api/v1/identity/me` 返回最小身份/成员投影；`GET /api/v1/identity/assignments` 返回当前人员/成员经历下的有效任职选择，按有界候选分页、不返回合并权限；三条 WorkItem 读、元数据写与原 key 结果读接口，始终使用真实人员凭据和当前单任职，API 与 OpenAPI 同步。没有公开创建工作项或授予权限端点；fixture 不作为协议失败兜底。
+- `/api/v1/identity/me` 返回最小身份/成员投影；`GET /api/v1/identity/assignments` 返回当前人员/成员经历下的有效任职选择，按有界候选分页、不返回合并权限；三条 WorkItem 读、元数据写与原 key 结果读接口，始终使用真实人员凭据和当前单任职，API 与 OpenAPI 同步。没有公开创建工作项；有限任职授撤使用独立管理接口与安全写者事务，fixture 不作为协议失败兜底。
 
 - `OrganizationHumanAuthenticationPolicyTable` 保存全组织 human 认证要求。启用后精确匹配 profile/version 和 ACR、要求 AMR 子集、按 auth_time 限制认证年龄；所有人员读取与命令共用强制入口，短期证据固定策略版本/摘要和期限。受控配置在组织 guard 内原子更新版本、epoch 与操作审计；详见[登录 MFA 操作](login-mfa-development.md)。
 
@@ -51,7 +53,7 @@ IdP 管登录凭据和会话；Stage 管组织事实与业务许可。Maestro �
 
 第一条身份读取切片只返回当前调用者及其部署企业中的成员投影，不提前返回尚无当前角色 loader 保证的任职能力。它用于证明认证→映射→企业来源准入→成员核验→最小投影贯通；真实签名凭据的单元/集成测试与成熟 IdP 授权码＋PKCE 联调分别留证，前者不替代后者。
 
-迁移采用增量扩展，保留旧主键与历史记录。P1b.3 未增加表；P1b.4 增加 `organization_human_authentication_policy`，该轮为 26 张应用表；原生认证迁移 `e8a1c6d9f240` 再新增八张，后续多应用 OAuth 再增加三张表，当前 head `c6f3a19d820b`、37 张。已有组织迁移为 disabled/v1，新 bootstrap 无策略行等价 disabled/v0；必须显式配置后才强制 MFA。旧任职/关系归属不从 scope 字符串猜测；未映射行保持可空且被 loader 排除。人员 HTTP 由认证适配器构造可信上下文，身份读取仍只返回已建立的当前身份/成员事实，不承担权限票据职责。
+迁移采用增量扩展，保留旧主键与历史记录。P1b.3 未增加表；P1b.4 增加 `organization_human_authentication_policy`，该轮为 26 张应用表；原生认证迁移 `e8a1c6d9f240` 再新增八张，后续多应用 OAuth 再增加三张表，首管切片再新增 management_authority 一张，当前 head `a7d4e2c9f501`、38 张。已有组织迁移为 disabled/v1，新 bootstrap 无策略行等价 disabled/v0；必须显式配置后才强制 MFA。旧任职/关系归属不从 scope 字符串猜测；未映射行保持可空且被 loader 排除。人员 HTTP 由认证适配器构造可信上下文，身份读取仍只返回已建立的当前身份/成员事实，不承担权限票据职责。
 
 ## 4. 已固定的开发 profile 与客户端接缝
 
@@ -71,6 +73,6 @@ IdP 管登录凭据和会话；Stage 管组织事实与业务许可。Maestro �
 
 后续若增加人员发起的队列动作，须保存原人员、成员经历、选定任职、动作/目标与原命令因果链，并在执行和提交时重新授权；实际确认记录与工具辅助来源分别保存。没有经过验证的延迟身份/恢复协议时，该执行方式保持关闭，不由 Worker 或 Agent 名称推导权限。
 
-正式人员入离职、角色/任职/权限管理接口和个人资料 CRUD 当前仍未提供：后续按实际管理需求收敛最小合同与审计协议，不因 schema 或开发 CLI 存在而视为完成，也不要求先建设完整 IAM 管理平台。
+首个[管理切片](human-administration-first-slice.md)已提供首管本人接受、人员标识目录、有限普通任职授撤和本管理域审计。正式入离职、角色发布、多管理员及个人资料 CRUD 仍未提供；后续按实际需求逐项交付，不把本切片算作完整 IAM 或 Maestro 管理中心。
 
 完整任务业务、人类最终验收及职责分离按已有 P2 规格推进；P1b 要提供能够承载这些规则的可信主体、关系与授权输入。本地 Maestro 的 UI 与模型配置保持独立研发，通过版本化 API 合同对齐。

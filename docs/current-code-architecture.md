@@ -29,9 +29,11 @@ Stage 的运行职责分为三层：
 
 目标上三层共享能力目录、版本和结果契约，但不共享状态所有权；当前通用目录尚未实现。拿到服务租约不等于获得业务权限，组件关闭也不会撤销已提交事实。
 
-图描述 2026-10-26 当前工作区代码。默认 `create_app()` 通过 `ApplicationRuntime` 装配数据库、身份、本人任职发现、人员工作项 provider，以及配置后的 Redis provider；明确开启 `native_auth_enabled` 并提供固定 issuer、组织根和私有密钥文件后，另装配必需的 native-auth provider。`HumanWorkService` 持有身份和存储调用 lease，使用真实人类证据与单任职授权；原通用命令适配器、投递 authorizer/sink 仍按可信组合显式注入。此前 Keycloak 路径验收见[P1b.4 记录](reviews/p1b4-assignments-mfa-2026-10-26.md)；自研模块代码与测试已加入当前工作区，部署切换和实际客户端验收须以对应运行记录为证。
+图描述 2026-10-26 当前工作区代码。默认 `create_app()` 通过 `ApplicationRuntime` 装配数据库、身份、本人任职发现、人员工作项和人员管理 provider，以及配置后的 Redis provider；明确开启 `native_auth_enabled` 并提供固定 issuer、组织根和私有密钥文件后，另装配必需的 native-auth provider。`HumanWorkService` 持有身份和存储调用 lease，使用真实人类证据与单任职授权；原通用命令适配器、投递 authorizer/sink 仍按可信组合显式注入。此前 Keycloak 路径验收见[P1b.4 记录](reviews/p1b4-assignments-mfa-2026-10-26.md)；自研模块代码与测试已加入当前工作区，部署切换和实际客户端验收须以对应运行记录为证。
 
-identity/self-assignments/human-work 当前均在默认 required 集合内；关闭 human-work 会使整体 `/ready` 不通过。HTTP 路由静态注册，关闭组件不会删除 URL 或更新 OpenAPI，对应请求返回 unavailable。因此 Core 程序化启停不等于产品已经支持配置化移除任意业务模块。实际新增/停用步骤见[演进决策](runtime-evolution-and-composition.md#51-新增与停用功能的开发协议)。
+identity/self-assignments/human-work/administration 当前均在默认 required 集合内；关闭 human-work 会使整体 `/ready` 不通过。HTTP 路由静态注册，关闭组件不会删除 URL 或更新 OpenAPI，对应请求返回 unavailable。因此 Core 程序化启停不等于产品已经支持配置化移除任意业务模块。实际新增/停用步骤见[演进决策](runtime-evolution-and-composition.md#51-新增与停用功能的开发协议)。
+
+新增人员管理组件复用 identity/storage 租约与 PostgreSQL 协调。`app.authz.management` 校验固定管理角色、精确可授清单和近期 MFA；`app.administration.service` 通过专用短事务变更安全事实，人员 journal 与 OS journal 明确区分。普通工作项内核继续禁止 handler 修改安全事实，Core 无须新增业务概念。具体边界见[首个管理切片](human-administration-first-slice.md)。
 
 原生认证也采用固定静态路由：OIDC Discovery 位于 `/.well-known/openid-configuration`，授权、表单登录、交换、撤销、UserInfo 和公钥位于 `/oauth/*`；本人密码变更与 TOTP 重置位于 `/api/v1/account/*`。关闭配置时这些原生入口返回 404；开启后缺少可用 provider 则失败关闭。它服务管理员登记的 public/confidential 客户端，支持精确回调、S256 PKCE、openid/profile/offline_access、SSO/同意和确认退出。新应用默认 stage-userinfo，Stage 业务另需 stage-api 与来源准入；公开自动注册、其他 grant、跨域 SPA CORS 和通用身份联邦未开放，范围见[功能矩阵](oauth-functional-coverage.md)。根路径的协议错误采用 OAuth 格式，账户 API 沿用 Stage 的结构化错误。
 
@@ -46,6 +48,7 @@ flowchart TB
     API --> IDENTITY["GET /api/v1/identity/me<br/>身份 provider / 本组织根最小自身投影"]
     API --> ASSIGNMENTS["GET /api/v1/identity/assignments<br/>本人当前任职 / 有界候选分页"]
     API --> HUMAN_WORK["HumanWorkService · 默认装配<br/>工作项读 / 标题说明编辑 / 原 key 结果读"]
+    API --> HUMAN_ADMIN["AdministrationFacade · 默认装配<br/>首管接受 / 人员目录 / 有限任职授撤 / 审计"]
     API --> NATIVE_ROUTES["固定 OAuth/OIDC 根路由<br/>/oauth/* · /.well-known/*<br/>/api/v1/account/*"]
     API -->|lifespan| BOOT["ApplicationRuntime<br/>可信装配 / 必需与可选组件 / 启停"]
 
@@ -69,6 +72,11 @@ flowchart TB
     HOST -.管理.-> ASSIGNMENTS
     ASSIGNMENTS -->|真实人员证据与当前策略| IDENTITY
     ASSIGNMENTS -->|组织 guard / 当前任职角色 scope| STORAGE
+    HOST -.管理.-> HUMAN_ADMIN
+    HUMAN_ADMIN -->|同一人员认证与提交前重验| IDENTITY
+    HUMAN_ADMIN --> ADMIN_POLICY["app.authz.management<br/>独立管理动作 / 精确可授范围 / 近期 MFA"]
+    HUMAN_ADMIN -->|专用安全短事务 / 人员 journal / 原键恢复| STORAGE
+    ADMIN_POLICY -->|当前事实| STORAGE
     HOST -.管理.-> HUMAN_WORK
     HUMAN_WORK -->|事务外人员认证 / 固定依赖租约| IDENTITY
     HOST -.明确启用后管理.-> NATIVE["NativeAuthFacade<br/>密码＋TOTP / 发行配置 / 存储调用租约"]
@@ -112,7 +120,7 @@ flowchart TB
     classDef adapter fill:#edf8f2,stroke:#4d8a68,color:#203d2b;
     classDef internal fill:#fff5e5,stroke:#b87b24,color:#51350d;
     class HOST,CTX,EFFECT,CALL,EVENT core;
-    class BOOT,STORAGE,CACHE,PG,REDIS,IDENTITY,AUTHN,IDP,ADMIN,ASSIGNMENTS,HUMAN_WORK,KERNEL,AUTHZ,NATIVE_ROUTES,NATIVE,CREDENTIALS,OAUTH,KEYS,NATIVE_AUTHN,BROWSER,SESSIONS adapter;
+    class BOOT,STORAGE,CACHE,PG,REDIS,IDENTITY,AUTHN,IDP,ADMIN,ASSIGNMENTS,HUMAN_WORK,KERNEL,AUTHZ,NATIVE_ROUTES,NATIVE,CREDENTIALS,OAUTH,KEYS,NATIVE_AUTHN,BROWSER,SESSIONS,HUMAN_ADMIN,ADMIN_POLICY adapter;
     class COMMAND,WORKER,SINK internal;
 ```
 

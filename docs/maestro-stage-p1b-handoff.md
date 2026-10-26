@@ -7,6 +7,10 @@ policy_effect: none
 
 # Maestro 与 Stage 的 P1b 联调合同
 
+## 2026-10-26 管理中心归属补充
+
+用户已确认完整人员、组织、角色／任职、账户安全、应用认证配置与审计管理体验融入Maestro。Stage提供正式管理API与安全执行，云端和本地分别实现后共同验收。完整页面范围、接口准备项和恢复要求见[管理中心合同边界](maestro-stage-administration.md)。原有25个HTTP操作之后，首个管理切片新增9个操作，见[管理接口合同](human-administration-first-slice.md)；以下本人登录／任职与工作项合同不因此扩大为已完成的管理员产品。
+
 ## 2026-10-26 原生登录合同补充
 
 现行开发方向采用[最小原生认证](native-authentication-design.md)。Maestro 通过系统浏览器访问固定 issuer 的 `/oauth/authorize`，使用 `response_type=code`、`scope=openid`、唯一 `state`/`nonce`、PKCE S256 和预登记的精确回调。浏览器完成密码＋TOTP；首次绑定和恢复进入同一认证流程。客户端收到 code 后核验 state，向 `/oauth/token` 交换；验证 ID token 的 issuer/audience/nonce，调用业务接口使用 access token。现已支持顶层导航 SSO、prompt/max_age、用户同意、标准退出和受控多客户端；公开自动注册与跨域 SPA CORS 不在范围。详见[功能矩阵](oauth-functional-coverage.md)。
@@ -25,7 +29,9 @@ refresh 必须在客户端串行消费并原子替换保存；旧 refresh 重用
 
 ## 1. 登录与部署配置
 
-| 配置 | 当前隔离开发环境 |
+**下表仅记录早期外部 Keycloak fixture，不能作为当前原生登录的默认配置。** 当前原生 profile 为 `stage-native-human@1`，其 issuer、client 和回调取自部署登记，见上方原生登录合同与[原生运行手册](../deployment/identity/native-authentication.md)。
+
+| 配置 | 历史外部 Keycloak 隔离环境 |
 |---|---|
 | Stage base URL | 云设备 `http://127.0.0.1:8080`；本地使用明确的 SSH 转发 |
 | 精确 issuer | `http://127.0.0.1:18080/realms/stage-development` |
@@ -33,13 +39,13 @@ refresh 必须在客户端串行消费并原子替换保存；旧 refresh 重用
 | 精确回调 | `http://127.0.0.1:18765/callback` |
 | Stage audience | `stage-api` |
 | 人员认证选择 | `profile_ref=local-keycloak-human`、`profile_version=1` |
-| 当前人员登录强度 | 密码＋TOTP，`acr_values=mfa`；Stage policy required/version 2，最大认证年龄 900 秒 |
+| 当轮人员登录强度 | 密码＋TOTP，`acr_values=mfa`；Stage policy required/version 2，最大认证年龄 900 秒 |
 
 本地转发需让客户端实际可达的 issuer 与已登记 issuer 保持一致；不能把 token 中的 issuer 改成另一主机名，也不能让 Stage 按 token 自报地址发现信任源。回调、client 和发行者变更必须重新明确登记。上述 loopback HTTP 仅属开发验收，生产入口和代理拓扑单独验收。当前未配置浏览器跨域白名单；Web/BFF 不自动继承 Desktop 拓扑。
 
 客户端使用系统浏览器登录，验证 state、精确回调、PKCE 和自身 ID token 的 nonce/签名/issuer/audience。只把面向 Stage 的 access token 作为 Bearer 发送给 Stage；ID token、refresh token、角色字段和 Agent ID 都不能建立业务权限。refresh token 留在客户端的安全凭据边界，不交给模型、WASM、业务队列或 Stage 工作项 API。
 
-本轮用户选定密码＋TOTP。IdP 执行真实因素验证，Stage 的组织策略统一限制 human 的精确 profile/version、ACR、AMR 和 auth_time 年龄。隔离真实 IdP 与 Stage 链路已有验证，常驻环境是否已启用以[P1b.4 部署记录](reviews/p1b4-assignments-mfa-2026-10-26.md)为准；数据库升级本身不会启用 MFA。
+用户选定密码＋TOTP。当前原生认证模块执行真实因素验证，Stage 的组织策略统一限制 human 的精确 profile/version、ACR、AMR 和 auth_time 年龄。早期外部 IdP 验证见[P1b.4 部署记录](reviews/p1b4-assignments-mfa-2026-10-26.md)，当前原生配置按[原生运行手册](../deployment/identity/native-authentication.md)核验；数据库升级本身不会启用 MFA。
 
 Maestro 从可信部署配置获得要求的 ACR 和认证年龄，在授权码＋PKCE 浏览器流程发送相应 `acr_values` / `max_age`，按 IdP 合同完成密码与 TOTP 输入。收到 `MFA_REQUIRED` 时发起所需的重新认证，不只刷新 token，也不自动切换旧 profile。刷新后的 `iat` 不重置 `auth_time`；刷新 token 不能让弱会话变强。MFA 操作说明见[开发管理](login-mfa-development.md)。
 
@@ -47,9 +53,9 @@ Maestro 从可信部署配置获得要求的 ACR 和认证年龄，在授权码�
 
 ## 2. 最小调用顺序
 
-1. 完成人员登录，以 Bearer 调用 `GET /api/v1/identity/me?profile_ref=local-keycloak-human&profile_version=1`。
+1. 完成人员登录，以 Bearer 调用 `GET /api/v1/identity/me?profile_ref=stage-native-human&profile_version=1`。示例使用当前原生 profile，实际值必须匹配部署登记；全链路使用同一选定 profile/version。
 2. 检查 `principal_type=human`，获取当前主体、组织根、成员经历。响应不是可重用权限票据；`authentication_valid_until` 不表示其间权限不会被撤销。
-3. 调用 `GET /api/v1/identity/assignments?profile_ref=local-keycloak-human&profile_version=1&limit=20`，展示返回的任职名称和 scope，由本人明确选择一个 `assignment_ref`。有 `next_after` 时携其继续查询；即使本页 items 为空也不能提前结束。工作项列表/创建仍未提供，`work_item_id` 由显式联调 fixture 提供；不从角色名称或 scope 拼任职。
+3. 调用 `GET /api/v1/identity/assignments?profile_ref=stage-native-human&profile_version=1&limit=20`，展示返回的任职名称和 scope，由本人明确选择一个 `assignment_ref`。有 `next_after` 时携其继续查询；即使本页 items 为空也不能提前结束。工作项列表/创建仍未提供，`work_item_id` 由显式联调 fixture 提供；不从角色名称或 scope 拼任职。
 4. 调用工作项 GET 获取最新 `version`，然后按下表提交编辑。
 5. 保存原幂等键和原请求输入，按结果状态决定显示、刷新或恢复；同一操作重新认证不会更换原幂等键。
 
@@ -129,9 +135,11 @@ PUT 正文示例（对象及任职来自已登记的合成测试数据）：
 
 ## 5. 注销与撤权
 
-客户端退出应清理自身凭据并按 IdP 合同结束会话。当前 Stage 离线验证 JWT，未接入远端 logout/account-disabled 事件或 introspection：**IdP 注销不保证已签发 access token 立即在 Stage 失效**。旧 access token 受自身 exp、当前组织 MFA 策略的 auth_time 年龄以及 Stage 当前主体/成员/任职/profile 状态约束。内部 evidence TTL（默认 60 秒）不能当作远端撤销时限；同一尚未到期 JWT 能再次签发新的内部 evidence。
+客户端退出应清理自身凭据并按当前 issuer 合同结束会话。**当前原生认证会校验数据库中的会话和凭据状态，撤销提交后原 access token 访问 Stage 会被拒绝。** 单 token revoke 撤销对应会话族，浏览器退出撤销当前浏览器关联会话，本人“全部退出”撤销全部 RP/browser 会话及待完成登录；三者范围不同。第三方 RP 自身的本地登录状态不等于 Stage 会话，当前不提供 front/back-channel logout 通知。具体边界见[OAuth 功能矩阵](oauth-functional-coverage.md)。
 
-Stage 本地撤销与命令提交按共同 PostgreSQL 锁序协调；撤销提交后新请求、重放及结果读取重新判定权限。当前 dev/test 工具可以显式撤销主体、成员、profile 或任职；尚无面向正式管理员的管理 API。生产接入前须确定 access-token 最大寿命、外部撤销可见性及紧急阻断流程。
+仅对仍被部署显式接纳的**外部离线 JWT 来源**，Stage 未接入远端 logout/account-disabled 事件或 introspection，外部 IdP 注销不保证已签发 access token 立即在 Stage 失效。此类旧 token 仍受 exp、组织 MFA 策略的 auth_time 年龄及当前主体/成员/任职/profile 状态约束。内部 evidence TTL（默认 60 秒）不能当作远端撤销时限；同一尚未到期 JWT 能再次签发新的内部 evidence。
+
+Stage 本地撤销与命令提交按共同 PostgreSQL 锁序协调；撤销提交后新请求、重放及结果读取重新判定权限。当前 dev/test 工具可以显式撤销主体、成员、profile 或任职；新增管理 API 只开放首管提名接受与清单内普通任职授撤，主体／成员停用和组合离职仍未交付。生产接入前须确定 access-token 最大寿命、外部撤销可见性及紧急阻断流程。
 
 ## 6. 联调退出记录
 

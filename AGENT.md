@@ -29,6 +29,10 @@
 
 ## 当前状态
 
+2026-10-26 用户批准推进首个正式管理切片，合同见[人员管理员首个切片](docs/human-administration-first-slice.md)。`app.administration` 负责现有人员目录、普通任职授撤和人员审计；管理能力判定在 `app.authz.management`，沿用真实身份和短事务组织 S/X。只启用一名首管，OS 明确提名后须本人近期 MFA 接受；accepted_at 保留后禁止重新 bootstrap。管理授予清单固定角色 revision/digest、精确 scope 和期限，不得自授、授予管理角色或自动扩展子 scope。管理任职从 `/administration/me` 发现，普通业务任职接口仍保持独立支持边界。38 张表与9个新增HTTP操作不等于完整人员生命周期、多管理员、Maestro页面或生产恢复完成。
+
+2026-10-26 用户明确完整身份／人员／权限管理界面融入Maestro；Stage提供正式管理API、当前人员管理授权、生命周期与审计。云端负责Stage，本地负责Maestro，通过[管理中心合同](docs/maestro-stage-administration.md)协作。认证issuer托管的登录／因素／同意／退出页继续遵循独立安全边界；不把dev/test本机CLI直接暴露成管理HTTP，也不把只有后端或页面视为产品闭环完成。具体管理规则／端点未实现部分须明确标注，不能把这一决定当成全功能IAM／OA范围授权。
+
 2026-10-26 用户已批准实施[并发优化计划](docs/stage-concurrency-improvement-plan.md)。当前 `app.storage.coordination` 明确组织 S/X 和单事务命令键互斥；旧 `lock_tenant` 已移除。普通人员查询/元数据命令使用组织 S，管理授权变更和保留兼容的内部 UUID 恢复/Outbox 使用显式 X。幂等键在 trust/principal/组织之前取得，普通 handler 禁止嵌套 kernel 操作、保存点或安全事实修改；完整的读取后/提交前身份验证仍保留。锁键、原键恢复、当前任职和 HTTP 合同不得由业务插件重定义；未来 WASM 的跨阶段持久状态另行实现，不能长期持有本轮事务锁。验收证据见[实现复查](docs/reviews/concurrency-optimization-2026-10-26.md)。
 
 2026-10-26 用户批准落实整体审计的全部五项 P2 与三项 P3（这是发现优先级，不是产品阶段）。[整改记录](docs/reviews/p2p3-architecture-closeout-2026-10-26.md)为后续入口：人员业务复用 `HumanOperations` / `CommandKernel.read`；管理公共协议用 `app.control`；当前原生会话事实用 `native_auth.current_session`。禁止重新跨域导入旧管理私有助手、跨测试模块共享 fixture 或绕开真实浏览器门禁。Runtime 成功历史有界，失败所有权不淘汰；组织 guard 的原排他基线保留为历史证据，当前协调演进见下文。交付用[冻结流程](deployment/dev/release-freeze.md)绑定精确提交、锁和迁移。
@@ -46,4 +50,4 @@ P1b 当前进入 Stage 侧收尾与客户端联调准备：[复查记录](docs/r
 
 P1a 已实现独立 Runtime Core、PG/Redis provider、可信注入的命令/投递组件及系统探针。P1b.1/.2 已有真实身份、成员、固定角色版本、scope/resource/direct ACL 与受控开发管理。P1b.3 当时以已有 WorkItem 的标题/说明编辑接通人员认证和命令提交；当前 P1b.4 另已开放本人任职查询并接入统一 MFA 策略。各轮范围与验证见[P1b.3 记录](docs/reviews/p1b3-human-work-2026-10-25.md)及[P1b.4 记录](docs/reviews/p1b4-assignments-mfa-2026-10-26.md)，目标约束见[身份表结构](docs/identity-schema-design.md)。
 
-公开人员命令必须使用真实认证签发的短期证据，由 `AuthenticatedAuthorizationLoader` 联合当前授权，按 TrustState 共享锁→Principal 共享锁→组织 guard→授权/资源的顺序协调，并在提交前重验 profile/trust/外部映射、来源准入、成员、版本与截止时间。不能从请求 body 或 `/identity/me` 响应构造可信身份。只选一个明确任职，不合并岗位权限；元数据编辑要求显式 `task.metadata.update`、`owner_of`、draft/open 和预期版本。旧 fixture 仅供可信测试，旧角色不自动增加新 action，未映射旧行不授予权限。当前无公开创建工作项、授予任职或授权管理接口；开发数据与新角色 revision 由受控管理员显式安装。P1b.4 新增组织人员认证策略表，该轮为 26 张应用表；原生认证先新增八张表，多应用 OAuth 再新增 browser session/consent/logout request 三张，当前 37 张、head `c6f3a19d820b`；迁移将已有根回填 disabled/v1，仅由显式版本化配置启用 MFA，不因升级自动授予权限或强制 MFA。后续仍按一期推进 WASM 与签名准入，独立 Agent/Delegation 与通用 ServiceGrant 不作为门槛；不得把最小编辑操作计作完整 P2 任务协作、人工批准或生产验收。
+公开人员命令必须使用真实认证签发的短期证据，由 `AuthenticatedAuthorizationLoader` 联合当前授权，按 TrustState 共享锁→Principal 共享锁→组织 guard→授权/资源的顺序协调，并在提交前重验 profile/trust/外部映射、来源准入、成员、版本与截止时间。不能从请求 body 或 `/identity/me` 响应构造可信身份。只选一个明确任职，不合并岗位权限；元数据编辑要求显式 `task.metadata.update`、`owner_of`、draft/open 和预期版本。旧 fixture 仅供可信测试，旧角色不自动增加新 action，未映射旧行不授予权限。当前无公开创建工作项；首个管理切片已开放首管接受、人员目录、清单内普通任职授撤与审计。新角色 revision 仍由受控登记安装。P1b.4 新增组织人员认证策略表，该轮为 26 张应用表；原生认证先新增八张表，多应用 OAuth 再新增 browser session/consent/logout request 三张，首管管理切片再新增 management_authority 一张，当前 38 张、head `a7d4e2c9f501`；迁移将已有根回填 disabled/v1，仅由显式版本化配置启用 MFA，不因升级自动授予权限或强制 MFA。后续仍按一期推进 WASM 与签名准入，独立 Agent/Delegation 与通用 ServiceGrant 不作为门槛；不得把最小编辑操作计作完整 P2 任务协作、人工批准或生产验收。
