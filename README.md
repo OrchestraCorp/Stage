@@ -20,7 +20,7 @@ P1b 的最小人员路径 Stage 收尾见[架构复查与并发基线](docs/revi
 
 2026-10-25 已完成[一期框架实施规格](docs/framework-foundation.md)的 P1a.1～P1a.3：Core、生命周期/事件、PostgreSQL/Redis provider 与 FastAPI 装配。34 个 Core 场景与 12 个边界场景的映射验收为 46/46，真实服务全套 324 项测试通过；复查与只读冒烟见[代码架构复查](docs/reviews/code-architecture-review-2026-10-25.md)。云设备服务已运行，见[运行说明](deployment/dev/README.md)。
 
-产品源码由 GitHub 私有仓库 `OrchestraCorp/Stage` 管理；企业 GitLab 连接器和企业仓库权限仍按业务架构单独建设。
+产品源码在 [OrchestraCorp/Stage](https://github.com/OrchestraCorp/Stage) 按 [MIT 许可证](LICENSE) 公开，允许商业使用、修改和分发，并要求保留版权及许可声明。企业自托管实例的数据、凭据和配置仍由企业独立管理；企业 GitLab 连接器和仓库权限按业务架构建设。
 
 后续实现的统一入口见 [docs 设计目录](docs/README.md)：一期优先建设组件运行时、真实人员身份与授权、受控 WASM 和签名准入。P1a 与身份读取保留各轮验收证据，P1b.2/.3 已分别接入数据库单任职授权及人员工作项元数据命令，见[P1b.3 实施记录](docs/reviews/p1b3-human-work-2026-10-25.md)。完整任务协作按 P2 推进；独立 Agent 身份与委托链后置，ServiceGrant 按真实技术授权需求另案。
 

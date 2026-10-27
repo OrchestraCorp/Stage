@@ -29,6 +29,8 @@
 
 ## 当前状态
 
+2026-10-27 用户确认四个产品仓库统一按 MIT 开放源码，商业定位为专业企业服务和 MaaS，重视模型效果与服务稳定性。Stage 的许可证见 [LICENSE](LICENSE)；企业私有化部署、客户数据和凭据保护不因源码公开改变。公开仓库不得包含实际企业数据或私有运行配置，第三方内容保留原有版权与许可声明。
+
 2026-10-26 用户确认 Maestro 支持多套 Stage 连接和显式切换。每个 `connection_id` 绑定精确 API origin、issuer/client/redirect/profile、独立 OAuth 会话、principal/membership/assignment、缓存、工具上下文和未知结果恢复；回调、请求和原幂等键不能跨实例。此决定只增加客户端连接管理，不改变 Stage 一实例一个组织授权根、禁止客户端选择组织和 PostgreSQL 权威边界。合同见[Maestro 多 Stage 连接](docs/maestro-multi-stage-connections.md)，Maestro 实现和真实桌面验收仍未完成。
 
 2026-10-26 用户批准推进首个正式管理切片，合同见[人员管理员首个切片](docs/human-administration-first-slice.md)。`app.administration` 负责现有人员目录、普通任职授撤和人员审计；管理能力判定在 `app.authz.management`，沿用真实身份和短事务组织 S/X。只启用一名首管，OS 明确提名后须本人近期 MFA 接受；accepted_at 保留后禁止重新 bootstrap。管理授予清单固定角色 revision/digest、精确 scope 和期限，不得自授、授予管理角色或自动扩展子 scope。管理任职从 `/administration/me` 发现，普通业务任职接口仍保持独立支持边界。38 张表与9个新增HTTP操作不等于完整人员生命周期、多管理员、Maestro页面或生产恢复完成。

@@ -12,6 +12,8 @@ migrations = ["script.py.mako"]
 name = "orchestra-stage"
 version = "0.1.0"
 description = "OrchestraCorp Stage — 组织运行与热协作系统底板"
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115.12",
