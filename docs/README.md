@@ -8,6 +8,8 @@ research_date: 2026-10-23
 
 # Stage 设计与实施入口
 
+[分支与发布规则](branch-and-release-policy.md)定义产品仓的人工 PR 审核、主线检查、不可移动标签及首个稳定版本的放行条件。
+
 当前新增[首个人员管理切片](human-administration-first-slice.md)：首管提名接受、已有人员目录、有限普通任职授撤、原键恢复及管理审计；对应 Maestro 体验与后续员工生命周期仍待交付。统一产品归属见[管理中心边界](maestro-stage-administration.md)。
 
 当前代码的[架构全景与目录导航](stage-architecture-panorama.md)、[完整类/函数地图](stage-code-map.md)及[整体工程审计](reviews/stage-engineering-audit-2026-10-26.md)按工作区源码核对，区分已实现、内部底板和未来目标。
