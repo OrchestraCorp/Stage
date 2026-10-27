@@ -8,7 +8,9 @@ research_date: 2026-10-23
 
 # Stage 设计与实施入口
 
-当前新增[首个人员管理切片](human-administration-first-slice.md)：首管提名接受、已有人员目录、有限普通任职授撤、原键恢复及管理审计；对应 Maestro 体验与后续员工生命周期仍待交付。统一产品归属见[管理中心边界](maestro-stage-administration.md)。
+当前新增[员工开户与一次性激活](employee-onboarding.md)，实现与复查见[本轮审计](reviews/employee-onboarding-2026-10-27.md)：显式启用管理角色 revision 2、待激活人员创建、本人设置密码／TOTP、重发撤销和安全结果恢复。迁移不会自动扩权；Maestro 管理页面、离职与生产交付仍另验。
+
+前序[首个人员管理切片](human-administration-first-slice.md)：首管提名接受、已有人员目录、有限普通任职授撤、原键恢复及管理审计；对应 Maestro 体验与后续员工生命周期仍待交付。统一产品归属见[管理中心边界](maestro-stage-administration.md)。
 
 当前代码的[架构全景与目录导航](stage-architecture-panorama.md)、[完整类/函数地图](stage-code-map.md)及[整体工程审计](reviews/stage-engineering-audit-2026-10-26.md)按工作区源码核对，区分已实现、内部底板和未来目标。
 

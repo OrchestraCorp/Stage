@@ -60,6 +60,7 @@ async def test_native_install_preserves_identity_and_never_grants_business_autho
         assert await session.scalar(select(func.count()).select_from(RoleAssignmentTable)) == 0
         account = await session.get(NativeAccountTable, "account:native-human")
         assert account is not None and account.principal_ref == "human-a" and account.totp_secret is None
+        assert account.password_hash is not None
         assert account.password_hash.startswith("$argon2id$") and await verify_password(account.password_hash, PASSWORD)
         mapping = await session.get(ExternalIdentityTable, "external:native-human")
         assert mapping is not None and mapping.subject_exact == account.account_ref

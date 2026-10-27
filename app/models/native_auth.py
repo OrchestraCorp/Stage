@@ -21,7 +21,8 @@ class NativeAccountTable(TimestampMixin, Base):
         ),
         CheckConstraint("principal_type = 'human'", name="ck_native_account_human"),
         CheckConstraint("credential_version > 0", name="ck_native_account_version"),
-        CheckConstraint("status IN ('active', 'disabled')", name="ck_native_account_status"),
+        CheckConstraint("status IN ('active', 'disabled', 'pending')", name="ck_native_account_status"),
+        CheckConstraint("status != 'active' OR password_hash IS NOT NULL", name="ck_native_account_password"),
         CheckConstraint("failures >= 0 AND last_totp_step >= -1", name="ck_native_account_counters"),
         CheckConstraint("length(account_ref) > 0 AND length(username) > 0", name="ck_native_account_keys"),
     )
@@ -31,7 +32,7 @@ class NativeAccountTable(TimestampMixin, Base):
         ExactString(32), nullable=False, default="human", server_default="human"
     )
     username: Mapped[str] = mapped_column(ExactString(128), nullable=False, unique=True)
-    password_hash: Mapped[str] = mapped_column(String(512), nullable=False)
+    password_hash: Mapped[str | None] = mapped_column(String(512))
     credential_version: Mapped[int] = mapped_column(BigInteger, nullable=False, default=1, server_default=text("1"))
     status: Mapped[str] = mapped_column(ExactString(32), nullable=False, default="active", server_default="active")
     totp_secret: Mapped[str | None] = mapped_column(Text)
@@ -42,6 +43,48 @@ class NativeAccountTable(TimestampMixin, Base):
     recovery_hashes: Mapped[list[str]] = mapped_column(_json(), nullable=False, default=list)
     failures: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0, server_default=text("0"))
     locked_until: Mapped[datetime | None] = mapped_column(UTCDateTime())
+
+
+class NativeAccountActivationTable(TimestampMixin, Base):
+    """One pending enrollment per reserved account; history belongs to the control journal."""
+
+    __tablename__ = "native_account_activation"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ("organization_ref", "membership_ref", "principal_ref"),
+            ("tenant_membership.tenant_ref", "tenant_membership.membership_ref", "tenant_membership.principal_ref"),
+            name="fk_native_activation_membership",
+        ),
+        CheckConstraint("status IN ('issued','enrolling','completed','revoked')", name="ck_native_activation_status"),
+        CheckConstraint("version > 0 AND failures >= 0", name="ck_native_activation_version"),
+        CheckConstraint(
+            "status NOT IN ('completed','revoked') OR "
+            "(code_hash IS NULL AND pending_password_hash IS NULL AND pending_totp IS NULL)",
+            name="ck_native_activation_terminal_secrets",
+        ),
+    )
+    activation_ref: Mapped[str] = mapped_column(ExactString(128), primary_key=True)
+    account_ref: Mapped[str] = mapped_column(
+        ExactString(128), ForeignKey("native_account.account_ref"), nullable=False, unique=True
+    )
+    organization_ref: Mapped[str] = mapped_column(ExactString(128), nullable=False)
+    principal_ref: Mapped[str] = mapped_column(ExactString(128), nullable=False)
+    membership_ref: Mapped[str] = mapped_column(ExactString(128), nullable=False)
+    external_identity_ref: Mapped[str] = mapped_column(
+        ExactString(128), ForeignKey("external_identity.external_identity_ref"), nullable=False, unique=True
+    )
+    source_pin: Mapped[dict[str, Any]] = mapped_column(_json(), nullable=False)
+    status: Mapped[str] = mapped_column(ExactString(32), nullable=False, default="issued")
+    version: Mapped[int] = mapped_column(BigInteger, nullable=False, default=1)
+    code_hash: Mapped[str | None] = mapped_column(ExactString(64))
+    expires_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False)
+    browser_hash: Mapped[str | None] = mapped_column(ExactString(64))
+    csrf_hash: Mapped[str | None] = mapped_column(ExactString(64))
+    ceremony_expires_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+    pending_password_hash: Mapped[str | None] = mapped_column(String(512))
+    pending_totp: Mapped[str | None] = mapped_column(Text)
+    failures: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
+    completed_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
 
 
 class NativeClientTable(TimestampMixin, Base):

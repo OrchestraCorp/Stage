@@ -15,6 +15,7 @@ from app.models.identity_foundation import (
     OrganizationRootTable,
     TrustStateTable,
 )
+from app.native_auth.activation import NativeActivation
 from app.native_auth.browser import BrowserAuthorization
 from app.native_auth.config import NativeAuthConfig
 from app.native_auth.credentials import NativeCredentials
@@ -35,6 +36,7 @@ class NativeAuthServices:
     browser: BrowserAuthorization
     logout: NativeLogout
     sessions: AccountSessions
+    activation: NativeActivation
 
 
 class NativeAuthFacade:
@@ -64,7 +66,8 @@ class NativeAuthFacade:
             browser = BrowserAuthorization(sessions, self.config, credentials=credentials, oauth=oauth)
             logout = NativeLogout(sessions, self.config, credentials=credentials, oauth=oauth)
             account_sessions = AccountSessions(sessions, self.config, credentials=credentials, oauth=oauth)
-            yield NativeAuthServices(credentials, oauth, browser, logout, account_sessions)
+            activation = NativeActivation(sessions, self.config, credentials=credentials)
+            yield NativeAuthServices(credentials, oauth, browser, logout, account_sessions, activation)
 
 
 async def _validate_deployment(sessions: async_sessionmaker[AsyncSession], config: NativeAuthConfig) -> None:

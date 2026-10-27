@@ -46,6 +46,90 @@ MANAGEMENT_ACTIONS = frozenset(
 )
 
 
+ONBOARDING_ACTIONS = frozenset(
+    {
+        "administration.people.create",
+        "administration.people.activation.reissue",
+        "administration.people.activation.revoke",
+    }
+)
+
+
+@dataclass(frozen=True)
+class ManagementRoleContract:
+    revision: int
+    policy_release_ref: str
+    actions: frozenset[str]
+
+
+def management_role_contract(revision: int | None) -> ManagementRoleContract | None:
+    """Published revisions are exact contracts; new code never expands revision 1."""
+    if type(revision) is not int:
+        return None
+    if revision == 1:
+        return ManagementRoleContract(1, MANAGEMENT_POLICY_RELEASE, MANAGEMENT_ACTIONS)
+    if revision == 2:
+        return ManagementRoleContract(2, "stage-administration:builtin-v2", MANAGEMENT_ACTIONS | ONBOARDING_ACTIONS)
+    return None
+
+
+async def validate_management_role(
+    session: AsyncSession, organization_ref: str, role_revision: int | None
+) -> ManagementRoleContract:
+    assert_organization_lock(session, organization_ref)
+    contract = management_role_contract(role_revision)
+    if contract is None:
+        raise AdminDenied()
+    role = await session.get(RoleDefinitionTable, (organization_ref, MANAGEMENT_ROLE_REF), populate_existing=True)
+    revision = await session.get(
+        RoleVersionTable, (organization_ref, MANAGEMENT_ROLE_REF, contract.revision), populate_existing=True
+    )
+    actions = tuple(
+        await session.scalars(
+            select(RoleVersionActionTable.action_ref)
+            .where(
+                RoleVersionActionTable.organization_ref == organization_ref,
+                RoleVersionActionTable.role_ref == MANAGEMENT_ROLE_REF,
+                RoleVersionActionTable.role_revision == contract.revision,
+            )
+            .limit(len(contract.actions) + 1)
+        )
+    )
+    registered = (
+        await session.scalars(
+            select(PermissionActionTable)
+            .where(PermissionActionTable.action_ref.in_(actions))
+            .execution_options(populate_existing=True)
+        )
+    ).all()
+    scope = await session.get(AuthorizationScopeTable, (organization_ref, MANAGEMENT_SCOPE_REF), populate_existing=True)
+    if (
+        role is None
+        or role.status != "active"
+        or role.role_code != MANAGEMENT_ROLE_CODE
+        or revision is None
+        or revision.status != "active"
+        or revision.revoked_at is not None
+        or revision.policy_release_ref != contract.policy_release_ref
+        or set(actions) != contract.actions
+        or len(actions) != len(contract.actions)
+        or len(registered) != len(contract.actions)
+        or any(
+            r.status != "active" or r.resource_kind != "administration" or r.contract_version != "1" for r in registered
+        )
+        or revision.content_digest
+        != role_permissions_digest(
+            organization_ref, MANAGEMENT_ROLE_REF, contract.revision, contract.policy_release_ref, actions
+        )
+        or scope is None
+        or scope.status != "active"
+        or scope.scope_kind != "organization"
+        or scope.parent_scope_ref is not None
+    ):
+        raise AdminDenied()
+    return contract
+
+
 def _utf8(value: str) -> str:
     value.encode("utf-8")
     return value
@@ -179,7 +263,7 @@ async def authorize_manager(
     session: AsyncSession, evidence: HumanAuthenticationEvidence, assignment_ref: str, action: str, now: datetime
 ) -> AuthorizedManager:
     assert_organization_lock(session, evidence.organization_ref)
-    if action not in MANAGEMENT_ACTIONS:
+    if action not in MANAGEMENT_ACTIONS | ONBOARDING_ACTIONS:
         raise AdminDenied()
     deadline = await require_management_assurance(session, evidence, now)
     authority = await session.get(ManagementAuthorityTable, evidence.organization_ref, populate_existing=True)
@@ -213,12 +297,6 @@ async def authorize_manager(
         .execution_options(populate_existing=True)
     )
     external = await session.get(ExternalIdentityTable, evidence.external_identity_ref, populate_existing=True)
-    role = await session.get(
-        RoleDefinitionTable, (evidence.organization_ref, MANAGEMENT_ROLE_REF), populate_existing=True
-    )
-    revision = await session.get(
-        RoleVersionTable, (evidence.organization_ref, MANAGEMENT_ROLE_REF, 1), populate_existing=True
-    )
     if (
         assignment is None
         or assignment.principal_ref != evidence.principal_ref
@@ -226,7 +304,6 @@ async def authorize_manager(
         or assignment.membership_ref != evidence.membership_ref
         or assignment.role_ref != MANAGEMENT_ROLE_REF
         or assignment.role_code != MANAGEMENT_ROLE_CODE
-        or assignment.role_revision != 1
         or assignment.scope_ref != MANAGEMENT_SCOPE_REF
         or assignment.grant_source_ref != authority.authority_ref
         or assignment.expires_at is not None
@@ -254,52 +331,9 @@ async def authorize_manager(
         or external.provider_ref != evidence.provider_ref
         or external.subject_namespace != evidence.credential.subject_namespace
         or external.subject_exact != evidence.credential.subject
-        or role is None
-        or role.status != "active"
-        or role.role_code != MANAGEMENT_ROLE_CODE
-        or revision is None
-        or revision.status != "active"
-        or revision.revoked_at is not None
-        or revision.policy_release_ref != MANAGEMENT_POLICY_RELEASE
     ):
         raise AdminDenied()
-    actions = tuple(
-        await session.scalars(
-            select(RoleVersionActionTable.action_ref)
-            .where(
-                RoleVersionActionTable.organization_ref == evidence.organization_ref,
-                RoleVersionActionTable.role_ref == MANAGEMENT_ROLE_REF,
-                RoleVersionActionTable.role_revision == 1,
-            )
-            .limit(len(MANAGEMENT_ACTIONS) + 1)
-        )
-    )
-    registered = (
-        await session.scalars(
-            select(PermissionActionTable)
-            .where(PermissionActionTable.action_ref.in_(actions))
-            .execution_options(populate_existing=True)
-        )
-    ).all()
-    scope = await session.get(
-        AuthorizationScopeTable, (evidence.organization_ref, MANAGEMENT_SCOPE_REF), populate_existing=True
-    )
-    if (
-        set(actions) != MANAGEMENT_ACTIONS
-        or len(actions) != len(MANAGEMENT_ACTIONS)
-        or len(registered) != len(MANAGEMENT_ACTIONS)
-        or any(
-            r.status != "active" or r.resource_kind != "administration" or r.contract_version != "1" for r in registered
-        )
-        or revision.content_digest
-        != role_permissions_digest(
-            evidence.organization_ref, MANAGEMENT_ROLE_REF, 1, MANAGEMENT_POLICY_RELEASE, actions
-        )
-        or scope is None
-        or scope.status != "active"
-        or scope.scope_kind != "organization"
-        or scope.parent_scope_ref is not None
-        or deadline <= max(now, datetime.now(UTC))
-    ):
+    contract = await validate_management_role(session, evidence.organization_ref, assignment.role_revision)
+    if action not in contract.actions or deadline <= max(now, datetime.now(UTC)):
         raise AdminDenied()
     return AuthorizedManager(authority, assignment, deadline)

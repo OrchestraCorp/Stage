@@ -29,10 +29,11 @@ The projects collaborate through explicit interfaces, with integrations delivere
 - **Unified login for registered applications:** OAuth/OIDC authorization code flow with PKCE, multiple registered clients, SSO, refresh rotation, token revocation and confirmed logout. See the [OAuth capability matrix](docs/oauth-functional-coverage.md) for the supported scope.
 - **Current identity and role assignments:** self-discovery of identity and assignments, pinned role revisions, authorization scopes, direct relationships, and time, state and version conditions. Each operation selects one explicit assignment and rechecks authorization.
 - **Initial administration features:** first-administrator nomination and personal acceptance with recent MFA, an existing-member directory, bounded grants and revocations of ordinary role assignments, administration audit, and recovery using the original operation key.
+- **Employee onboarding:** explicit administrator capability upgrade, pending accounts, one-time activation, password and TOTP enrollment, activation reissue/revocation, and recovery without replaying secrets. See the [onboarding contract](docs/employee-onboarding.md).
 - **Minimal work-item operations:** read an existing work item, edit its title and description subject to authorization and version checks, and recover the result using the original idempotency key.
 - **Backend foundation:** component dependencies and lifecycle management, database migrations, short transactions, idempotency, audit, a durable delivery foundation, and health and readiness probes.
 
-Employee activation, coordinated offboarding, multiple administrators, complete task and approval workflows, durable workflows and controlled WASM execution follow the [roadmap](docs/roadmap.md). The delivery foundation does not yet establish production Worker integration, and server-side verification does not replace the actual Maestro administration interface or user acceptance.
+Coordinated offboarding, multiple administrators, complete task and approval workflows, durable workflows and controlled WASM execution follow the [roadmap](docs/roadmap.md). The delivery foundation does not yet establish production Worker integration, and server-side verification does not replace the actual Maestro administration interface or user acceptance.
 
 ## Architecture and deployment boundaries
 

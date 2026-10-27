@@ -15,13 +15,13 @@ from app.administration.errors import AdminDenied
 from app.authz.context import validity_failure
 from app.authz.loader import role_permissions_digest
 from app.authz.management import (
-    MANAGEMENT_ACTIONS,
     MANAGEMENT_POLICY_RELEASE,
     MANAGEMENT_ROLE_CODE,
     MANAGEMENT_ROLE_REF,
     MANAGEMENT_SCOPE_REF,
     GrantRule,
     ManagementReference,
+    management_role_contract,
     parse_grant_rules,
     validate_grant_rule,
 )
@@ -71,7 +71,7 @@ NOMINATE_OPERATION = "nominate.first-administrator"
 _MAX_VERSION = 2**31 - 1
 
 
-class NominationPlan(StrictPlan):
+class ManagementIdentityPlan(StrictPlan):
     environment: Literal["dev", "test", "prod"]
     organization_ref: ManagementReference
     principal_ref: ManagementReference
@@ -79,6 +79,9 @@ class NominationPlan(StrictPlan):
     profile_ref: ManagementReference
     profile_version: int = Field(strict=True, ge=1, le=_MAX_VERSION)
     external_identity_ref: ManagementReference
+
+
+class NominationPlan(ManagementIdentityPlan):
     expected_version: int = Field(strict=True, ge=0, le=_MAX_VERSION)
     expires_at: datetime
     reason: str = Field(min_length=1, max_length=500)
@@ -115,7 +118,7 @@ def authority_snapshot(authority: ManagementAuthorityTable) -> dict[str, object]
     }
 
 
-async def _lock_candidate(session: AsyncSession, plan: NominationPlan) -> None:
+async def lock_management_identity(session: AsyncSession, plan: ManagementIdentityPlan) -> None:
     profile = await session.get(AuthenticationProfileTable, (plan.profile_ref, plan.profile_version))
     provider = await session.get(IdentityProviderTable, profile.provider_ref) if profile is not None else None
     if provider is None:
@@ -137,7 +140,9 @@ async def _lock_candidate(session: AsyncSession, plan: NominationPlan) -> None:
     await lock_organization(session, plan.organization_ref, mode=LockMode.EXCLUSIVE)
 
 
-async def _validate_candidate(session: AsyncSession, plan: NominationPlan, now: datetime) -> datetime:
+async def validate_management_identity(
+    session: AsyncSession, plan: ManagementIdentityPlan, now: datetime
+) -> datetime | None:
     root = await session.get(OrganizationRootTable, plan.organization_ref, populate_existing=True)
     principal = await session.scalar(
         select(PrincipalTable)
@@ -238,10 +243,13 @@ async def _validate_candidate(session: AsyncSession, plan: NominationPlan, now: 
         and constraints.required_acr != rule.required_acr
     ):
         raise AdministrationError("required_management_mfa_not_configured")
-    return min(plan.expires_at, bindings[0].expires_at) if bindings[0].expires_at is not None else plan.expires_at
+    return bindings[0].expires_at
 
 
-async def _install_management_role(session: AsyncSession, organization_ref: str) -> None:
+async def _install_management_role(session: AsyncSession, organization_ref: str, *, role_revision: int = 1) -> None:
+    contract = management_role_contract(role_revision)
+    if contract is None:
+        raise AdministrationError("management_role_revision_unknown")
     scope = await session.get(AuthorizationScopeTable, (organization_ref, MANAGEMENT_SCOPE_REF), populate_existing=True)
     if scope is None:
         session.add(
@@ -268,7 +276,7 @@ async def _install_management_role(session: AsyncSession, organization_ref: str)
         or role.template_source_ref != MANAGEMENT_POLICY_RELEASE
     ):
         raise AdministrationError("management_role_conflict")
-    for action in sorted(MANAGEMENT_ACTIONS):
+    for action in sorted(contract.actions):
         registered = await session.get(PermissionActionTable, action, populate_existing=True)
         if registered is None:
             session.add(PermissionActionTable(action_ref=action, resource_kind="administration", contract_version="1"))
@@ -279,26 +287,31 @@ async def _install_management_role(session: AsyncSession, organization_ref: str)
         ):
             raise AdministrationError("management_action_conflict")
     await session.flush()
-    revision = await session.get(RoleVersionTable, (organization_ref, MANAGEMENT_ROLE_REF, 1), populate_existing=True)
+    revision = await session.get(
+        RoleVersionTable, (organization_ref, MANAGEMENT_ROLE_REF, contract.revision), populate_existing=True
+    )
     digest = role_permissions_digest(
-        organization_ref, MANAGEMENT_ROLE_REF, 1, MANAGEMENT_POLICY_RELEASE, MANAGEMENT_ACTIONS
+        organization_ref, MANAGEMENT_ROLE_REF, contract.revision, contract.policy_release_ref, contract.actions
     )
     if revision is None:
         session.add(
             RoleVersionTable(
                 organization_ref=organization_ref,
                 role_ref=MANAGEMENT_ROLE_REF,
-                role_revision=1,
-                policy_release_ref=MANAGEMENT_POLICY_RELEASE,
+                role_revision=contract.revision,
+                policy_release_ref=contract.policy_release_ref,
                 content_digest=digest,
             )
         )
         await session.flush()
         session.add_all(
             RoleVersionActionTable(
-                organization_ref=organization_ref, role_ref=MANAGEMENT_ROLE_REF, role_revision=1, action_ref=action
+                organization_ref=organization_ref,
+                role_ref=MANAGEMENT_ROLE_REF,
+                role_revision=contract.revision,
+                action_ref=action,
             )
-            for action in sorted(MANAGEMENT_ACTIONS)
+            for action in sorted(contract.actions)
         )
     else:
         actions = tuple(
@@ -307,18 +320,18 @@ async def _install_management_role(session: AsyncSession, organization_ref: str)
                 .where(
                     RoleVersionActionTable.organization_ref == organization_ref,
                     RoleVersionActionTable.role_ref == MANAGEMENT_ROLE_REF,
-                    RoleVersionActionTable.role_revision == 1,
+                    RoleVersionActionTable.role_revision == contract.revision,
                 )
-                .limit(len(MANAGEMENT_ACTIONS) + 1)
+                .limit(len(contract.actions) + 1)
             )
         )
         if (
             revision.status != "active"
             or revision.revoked_at is not None
-            or revision.policy_release_ref != MANAGEMENT_POLICY_RELEASE
+            or revision.policy_release_ref != contract.policy_release_ref
             or revision.content_digest != digest
-            or set(actions) != MANAGEMENT_ACTIONS
-            or len(actions) != len(MANAGEMENT_ACTIONS)
+            or set(actions) != contract.actions
+            or len(actions) != len(contract.actions)
         ):
             raise AdministrationError("management_role_conflict")
     await session.flush()
@@ -347,7 +360,7 @@ async def nominate(
             now = datetime.now(UTC)
             if not now < plan.expires_at <= now + timedelta(hours=1):
                 raise AdministrationError("nomination_expiry_out_of_bounds")
-            await _lock_candidate(session, plan)
+            await lock_management_identity(session, plan)
             authority = await session.get(ManagementAuthorityTable, plan.organization_ref, populate_existing=True)
             if authority is not None and authority.accepted_at is not None:
                 raise AdministrationError("first_administrator_already_accepted")
@@ -357,7 +370,8 @@ async def nominate(
                 raise AdministrationError("version_conflict")
             if authority is not None and (authority.status != "pending" or authority.version == _MAX_VERSION):
                 raise AdministrationError("nomination_not_replaceable")
-            deadline = await _validate_candidate(session, plan, datetime.now(UTC))
+            binding_deadline = await validate_management_identity(session, plan, datetime.now(UTC))
+            deadline = min(plan.expires_at, binding_deadline) if binding_deadline is not None else plan.expires_at
             try:
                 parse_grant_rules(plan.grant_rules)
                 for rule in plan.grant_rules:

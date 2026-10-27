@@ -35,6 +35,8 @@ identity/self-assignments/human-work/administration 当前均在默认 required 
 
 新增人员管理组件复用 identity/storage 租约与 PostgreSQL 协调。`app.authz.management` 校验固定管理角色、精确可授清单和近期 MFA；`app.administration.service` 通过专用短事务变更安全事实，人员 journal 与 OS journal 明确区分。普通工作项内核继续禁止 handler 修改安全事实，Core 无须新增业务概念。具体边界见[首个管理切片](human-administration-first-slice.md)。
 
+后续[员工开户激活](employee-onboarding.md)仍在同一模块单体内组合：`EmployeeAdministration` 负责待激活人员和交付管理，`NativeActivation` 负责本人一次性密码／TOTP ceremony，`onboarding_source` 固定来源配置；仅新增一张持久表，不新增 provider、队列或通用工作流。开启原生认证时 administration 显式依赖 NATIVE_AUTH，并在调用期间同时持有 identity/storage/native-auth 租约；未开启时普通管理仍可用，开户入口失败关闭。管理角色 revision 2 须显式升级，旧 revision 1 不隐式扩权。
+
 原生认证也采用固定静态路由：OIDC Discovery 位于 `/.well-known/openid-configuration`，授权、表单登录、交换、撤销、UserInfo 和公钥位于 `/oauth/*`；本人密码变更与 TOTP 重置位于 `/api/v1/account/*`。关闭配置时这些原生入口返回 404；开启后缺少可用 provider 则失败关闭。它服务管理员登记的 public/confidential 客户端，支持精确回调、S256 PKCE、openid/profile/offline_access、SSO/同意和确认退出。新应用默认 stage-userinfo，Stage 业务另需 stage-api 与来源准入；公开自动注册、其他 grant、跨域 SPA CORS 和通用身份联邦未开放，范围见[功能矩阵](oauth-functional-coverage.md)。根路径的协议错误采用 OAuth 格式，账户 API 沿用 Stage 的结构化错误。
 
 登录 HTML 使用 `Referrer-Policy: same-origin`，保持 Chromium 同源表单 POST 的明确 `Origin`，仍不向跨源回调发送 Referer；协议 JSON、错误 JSON 和授权重定向继续使用 `no-referrer`。HTML 的 CSP `form-action` 仅包含 `'self'` 与服务端已验证、持久绑定的回调 origin，允许真实浏览器跟随授权后的跨源 303；不读取 POST 自报回调，不使用通配符，也不把回调 path/query 拼进 CSP。协议层仍精确校验完整注册 URI；JSON 和重定向响应自身保持严格 `'self'`。所有这些响应均禁止缓存。不能为解决浏览器提交问题而接受 `Origin: null`：服务端仍精确检查配置 issuer 的 origin、浏览器秘密 cookie 和持久请求的 CSRF 绑定。仅用 HTTP 客户端模拟表单不足以验证真实浏览器的这些行为。
@@ -48,7 +50,7 @@ flowchart TB
     API --> IDENTITY["GET /api/v1/identity/me<br/>身份 provider / 本组织根最小自身投影"]
     API --> ASSIGNMENTS["GET /api/v1/identity/assignments<br/>本人当前任职 / 有界候选分页"]
     API --> HUMAN_WORK["HumanWorkService · 默认装配<br/>工作项读 / 标题说明编辑 / 原 key 结果读"]
-    API --> HUMAN_ADMIN["AdministrationFacade · 默认装配<br/>首管接受 / 人员目录 / 有限任职授撤 / 审计"]
+    API --> HUMAN_ADMIN["AdministrationFacade · 默认装配<br/>首管接受 / 目录 / 任职授撤 / 员工开户 / 审计"]
     API --> NATIVE_ROUTES["固定 OAuth/OIDC 根路由<br/>/oauth/* · /.well-known/*<br/>/api/v1/account/*"]
     API -->|lifespan| BOOT["ApplicationRuntime<br/>可信装配 / 必需与可选组件 / 启停"]
 
@@ -82,6 +84,9 @@ flowchart TB
     HOST -.明确启用后管理.-> NATIVE["NativeAuthFacade<br/>密码＋TOTP / 发行配置 / 存储调用租约"]
     NATIVE_ROUTES --> NATIVE
     NATIVE --> CREDENTIALS["NativeCredentials<br/>绑定与恢复 / 一次性 OTP / 凭据变更 / 撤会话"]
+    HUMAN_ADMIN -->|原生开启时显式依赖与调用租约| NATIVE
+    NATIVE --> ACTIVATION["NativeActivation<br/>单次激活 / 本人设密与 TOTP / 原子启用人员"]
+    ACTIVATION -->|来源固定 / 短事务 / 不签发会话| STORAGE
     NATIVE --> OAUTH["NativeOAuth<br/>多客户端 / PKCE / refresh 缩权与重用检测"]
     CREDENTIALS -->|短事务 / 共同锁序 / 审计| STORAGE
     OAUTH -->|持久请求 / code / session / refresh| STORAGE

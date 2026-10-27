@@ -2,7 +2,7 @@
 title: Maestro 管理中心与 Stage 管理接口边界
 status: accepted-product-boundary-contract-details-pending
 date: 2026-10-26
-implementation_status: first-administrator-and-limited-assignments-server-implemented-client-pending
+implementation_status: employee-onboarding-server-implemented-client-pending
 policy_effect: product-ownership-and-acceptance
 ---
 
@@ -13,6 +13,8 @@ policy_effect: product-ownership-and-acceptance
 本轮在 Stage 仓库记录并实施接口与产品边界，没有修改本地研发的 Maestro 代码。现有认证／本人账户安全和人员业务接口见[联调合同](maestro-stage-p1b-handoff.md)；此前管理缺口见[完备性评估](reviews/enterprise-identity-completeness-2026-10-26.md)。
 
 随后已获批准实施[首个管理切片](human-administration-first-slice.md)：Stage 提供首管提名／本人接受、现有人员目录、有限普通任职授撤、原键恢复及本切片审计。具体请求见[OpenAPI](../contracts/openapi.yaml)，本地 Maestro 页面与实际联调仍单独验收。
+
+员工开户后续切片见[员工开户与一次性激活](employee-onboarding.md)，包括新增 HTTP 合同与秘密交付规则。`/administration/me` 现在返回明确的管理角色 revision、任职行版本和 action 集合；显示按钮可据此提示，服务端仍逐次授权。
 
 ## 1. 产品责任
 
@@ -39,7 +41,7 @@ Stage 现有 issuer 托管的登录、TOTP绑定／恢复、同意和退出确�
 
 | 模块 | 完整体验至少包含 | 当前后端状态 |
 |---|---|---|
-| 人员与成员 | 目录／详情、开户激活、成员状态、离职冻结、复职边界及操作结果 | 首个组织级人员目录／详情已实现；开户激活和组合离职待后续切片 |
+| 人员与成员 | 目录／详情、开户激活、成员状态、离职冻结、复职边界及操作结果 | 目录／详情、员工开户、独立 issuer 密码＋TOTP 激活及重发撤销已实现；组合离职与客户端页面另验 |
 | 组织、岗位与范围 | 组织关系／职务及其与授权scope的映射、岗位责任说明 | 已有授权scope与assignment，完整组织／岗位目录未实现 |
 | 角色、任职与权限 | 版本化角色、授予／撤销／期限、管理范围、权限解释和变更影响 | 首管与精确清单内普通任职授撤已实现；多管理员、管理权转交、角色发布和影响预览待后续 |
 | 本人账户安全 | 改密、因素恢复／重绑、会话和应用同意管理、重新登录与错误恢复 | 相关Stage本人API已实现，Maestro实际体验另验 |

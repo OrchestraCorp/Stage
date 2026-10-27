@@ -406,12 +406,24 @@ components:
             type: string
           - type: 'null'
           title: Accepted At
+        actions:
+          default: []
+          items:
+            type: string
+          title: Actions
+          type: array
         assignment_ref:
           maxLength: 128
           minLength: 1
           pattern: ^[^\s\x00-\x1f\x7f]+$
           title: Assignment Ref
           type: string
+        assignment_version:
+          default: 1
+          maximum: 2147483647.0
+          minimum: 1.0
+          title: Assignment Version
+          type: integer
         authority_ref:
           maxLength: 128
           minLength: 1
@@ -429,6 +441,12 @@ components:
             type: string
           - type: 'null'
           title: Nomination Expires At
+        role_revision:
+          default: 1
+          maximum: 2147483647.0
+          minimum: 1.0
+          title: Role Revision
+          type: integer
         status:
           enum:
           - pending
@@ -461,6 +479,266 @@ components:
       required:
       - credential_version
       title: CredentialVersionResponse
+      type: object
+    EmployeeActivationChange:
+      additionalProperties: false
+      properties:
+        expected_activation_version:
+          maximum: 2147483647.0
+          minimum: 1.0
+          title: Expected Activation Version
+          type: integer
+        expected_authority_version:
+          maximum: 2147483647.0
+          minimum: 1.0
+          title: Expected Authority Version
+          type: integer
+        reason:
+          maxLength: 500
+          minLength: 1
+          title: Reason
+          type: string
+      required:
+      - expected_authority_version
+      - expected_activation_version
+      - reason
+      title: EmployeeActivationChange
+      type: object
+    EmployeeActivationReissue:
+      additionalProperties: false
+      properties:
+        expected_activation_version:
+          maximum: 2147483647.0
+          minimum: 1.0
+          title: Expected Activation Version
+          type: integer
+        expected_authority_version:
+          maximum: 2147483647.0
+          minimum: 1.0
+          title: Expected Authority Version
+          type: integer
+        expires_in_seconds:
+          default: 3600
+          maximum: 86400.0
+          minimum: 60.0
+          title: Expires In Seconds
+          type: integer
+        reason:
+          maxLength: 500
+          minLength: 1
+          title: Reason
+          type: string
+      required:
+      - expected_authority_version
+      - expected_activation_version
+      - reason
+      title: EmployeeActivationReissue
+      type: object
+    EmployeeActivationView:
+      additionalProperties: false
+      properties:
+        account_ref:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Account Ref
+          type: string
+        activation_ref:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Activation Ref
+          type: string
+        completed_at:
+          anyOf:
+          - format: date-time
+            type: string
+          - type: 'null'
+          title: Completed At
+        expires_at:
+          format: date-time
+          title: Expires At
+          type: string
+        membership_ref:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Membership Ref
+          type: string
+        principal_ref:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Principal Ref
+          type: string
+        status:
+          enum:
+          - issued
+          - enrolling
+          - completed
+          - revoked
+          title: Status
+          type: string
+        username:
+          title: Username
+          type: string
+        version:
+          maximum: 2147483647.0
+          minimum: 1.0
+          title: Version
+          type: integer
+      required:
+      - activation_ref
+      - principal_ref
+      - membership_ref
+      - account_ref
+      - username
+      - status
+      - version
+      - expires_at
+      - completed_at
+      title: EmployeeActivationView
+      type: object
+    EmployeeAuditList:
+      additionalProperties: false
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/EmployeeAuditView'
+          title: Items
+          type: array
+        next_after:
+          anyOf:
+          - maxLength: 128
+            minLength: 1
+            pattern: ^[^\s\x00-\x1f\x7f]+$
+            type: string
+          - type: 'null'
+          title: Next After
+      required:
+      - items
+      - next_after
+      title: EmployeeAuditList
+      type: object
+    EmployeeAuditView:
+      additionalProperties: false
+      properties:
+        actor_ref:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Actor Ref
+          type: string
+        assignment_ref:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Assignment Ref
+          type: string
+        operation:
+          $ref: '#/components/schemas/EmployeeOperationResult'
+        reason:
+          title: Reason
+          type: string
+        request_id:
+          title: Request Id
+          type: string
+      required:
+      - operation
+      - actor_ref
+      - assignment_ref
+      - request_id
+      - reason
+      title: EmployeeAuditView
+      type: object
+    EmployeeCreateRequest:
+      additionalProperties: false
+      properties:
+        expected_authority_version:
+          maximum: 2147483647.0
+          minimum: 1.0
+          title: Expected Authority Version
+          type: integer
+        expires_in_seconds:
+          default: 3600
+          maximum: 86400.0
+          minimum: 60.0
+          title: Expires In Seconds
+          type: integer
+        reason:
+          maxLength: 500
+          minLength: 1
+          title: Reason
+          type: string
+        username:
+          maxLength: 128
+          minLength: 1
+          title: Username
+          type: string
+      required:
+      - username
+      - expected_authority_version
+      - reason
+      title: EmployeeCreateRequest
+      type: object
+    EmployeeDelivery:
+      additionalProperties: false
+      properties:
+        activation_code:
+          anyOf:
+          - maxLength: 43
+            minLength: 43
+            pattern: ^[A-Za-z0-9_-]+$
+            type: string
+          - type: 'null'
+          title: Activation Code
+        activation_url:
+          title: Activation Url
+          type: string
+        operation:
+          $ref: '#/components/schemas/EmployeeOperationResult'
+      required:
+      - operation
+      - activation_url
+      title: EmployeeDelivery
+      type: object
+    EmployeeOperationResult:
+      additionalProperties: false
+      properties:
+        completed_at:
+          format: date-time
+          title: Completed At
+          type: string
+        operation_ref:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Operation Ref
+          type: string
+        operation_type:
+          enum:
+          - person.create
+          - person.activation.reissue
+          - person.activation.revoke
+          title: Operation Type
+          type: string
+        replayed:
+          title: Replayed
+          type: boolean
+        result:
+          $ref: '#/components/schemas/EmployeeActivationView'
+        status:
+          const: succeeded
+          default: succeeded
+          title: Status
+          type: string
+      required:
+      - operation_ref
+      - operation_type
+      - result
+      - replayed
+      - completed_at
+      title: EmployeeOperationResult
       type: object
     ErrorDetail:
       properties:
@@ -2162,6 +2440,604 @@ paths:
       summary: Me
       tags:
       - Administration
+  /api/v1/administration/onboarding/activations/{activation_ref}:
+    get:
+      operationId: administration_get_employee_activation
+      parameters:
+      - in: path
+        name: activation_ref
+        required: true
+        schema:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Activation Ref
+          type: string
+      - in: query
+        name: profile_ref
+        required: true
+        schema:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Profile Ref
+          type: string
+      - in: query
+        name: profile_version
+        required: true
+        schema:
+          maximum: 9223372036854775807
+          minimum: 1
+          title: Profile Version
+          type: integer
+      - in: query
+        name: assignment_ref
+        required: true
+        schema:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Assignment Ref
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeActivationView'
+          description: Successful Response
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: A current human token and fresh MFA are required
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The selected current administration assignment is not permitted
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The requested managed object or operation is unavailable
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Current versions, nomination state or original input conflict
+        '413':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The request exceeds the bounded JSON body size
+        '415':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: A JSON request body is required
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Request validation failed
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unexpected server error
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unavailable or commit outcome unknown; preserve the original
+            key
+          headers:
+            Location:
+              description: Recover with current credentials and the original idempotency
+                key
+              schema:
+                type: string
+      security:
+      - HTTPBearer: []
+      summary: Activation Status
+      tags:
+      - Administration
+  /api/v1/administration/onboarding/activations/{activation_ref}/reissue:
+    post:
+      operationId: administration_reissue_employee_activation
+      parameters:
+      - in: path
+        name: activation_ref
+        required: true
+        schema:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Activation Ref
+          type: string
+      - in: query
+        name: profile_ref
+        required: true
+        schema:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Profile Ref
+          type: string
+      - in: query
+        name: profile_version
+        required: true
+        schema:
+          maximum: 9223372036854775807
+          minimum: 1
+          title: Profile Version
+          type: integer
+      - in: query
+        name: assignment_ref
+        required: true
+        schema:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Assignment Ref
+          type: string
+      - in: header
+        name: Idempotency-Key
+        required: true
+        schema:
+          maxLength: 128
+          pattern: ^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$
+          title: Idempotency-Key
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeActivationReissue'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeDelivery'
+          description: Successful Response
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: A current human token and fresh MFA are required
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The selected current administration assignment is not permitted
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The requested managed object or operation is unavailable
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Current versions, nomination state or original input conflict
+        '413':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The request exceeds the bounded JSON body size
+        '415':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: A JSON request body is required
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Request validation failed
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unexpected server error
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unavailable or commit outcome unknown; preserve the original
+            key
+          headers:
+            Location:
+              description: Recover with current credentials and the original idempotency
+                key
+              schema:
+                type: string
+      security:
+      - HTTPBearer: []
+      summary: Reissue Activation
+      tags:
+      - Administration
+  /api/v1/administration/onboarding/activations/{activation_ref}/revoke:
+    post:
+      operationId: administration_revoke_employee_activation
+      parameters:
+      - in: path
+        name: activation_ref
+        required: true
+        schema:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Activation Ref
+          type: string
+      - in: query
+        name: profile_ref
+        required: true
+        schema:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Profile Ref
+          type: string
+      - in: query
+        name: profile_version
+        required: true
+        schema:
+          maximum: 9223372036854775807
+          minimum: 1
+          title: Profile Version
+          type: integer
+      - in: query
+        name: assignment_ref
+        required: true
+        schema:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Assignment Ref
+          type: string
+      - in: header
+        name: Idempotency-Key
+        required: true
+        schema:
+          maxLength: 128
+          pattern: ^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$
+          title: Idempotency-Key
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeActivationChange'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeDelivery'
+          description: Successful Response
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: A current human token and fresh MFA are required
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The selected current administration assignment is not permitted
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The requested managed object or operation is unavailable
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Current versions, nomination state or original input conflict
+        '413':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The request exceeds the bounded JSON body size
+        '415':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: A JSON request body is required
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Request validation failed
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unexpected server error
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unavailable or commit outcome unknown; preserve the original
+            key
+          headers:
+            Location:
+              description: Recover with current credentials and the original idempotency
+                key
+              schema:
+                type: string
+      security:
+      - HTTPBearer: []
+      summary: Revoke Activation
+      tags:
+      - Administration
+  /api/v1/administration/onboarding/audit:
+    get:
+      operationId: administration_get_onboarding_audit
+      parameters:
+      - in: query
+        name: profile_ref
+        required: true
+        schema:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Profile Ref
+          type: string
+      - in: query
+        name: profile_version
+        required: true
+        schema:
+          maximum: 9223372036854775807
+          minimum: 1
+          title: Profile Version
+          type: integer
+      - in: query
+        name: assignment_ref
+        required: true
+        schema:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Assignment Ref
+          type: string
+      - in: query
+        name: limit
+        required: false
+        schema:
+          default: 20
+          maximum: 50
+          minimum: 1
+          title: Limit
+          type: integer
+      - in: query
+        name: after
+        required: false
+        schema:
+          anyOf:
+          - maxLength: 128
+            minLength: 1
+            pattern: ^[^\s\x00-\x1f\x7f]+$
+            type: string
+          - type: 'null'
+          title: After
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeAuditList'
+          description: Successful Response
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: A current human token and fresh MFA are required
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The selected current administration assignment is not permitted
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The requested managed object or operation is unavailable
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Current versions, nomination state or original input conflict
+        '413':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The request exceeds the bounded JSON body size
+        '415':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: A JSON request body is required
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Request validation failed
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unexpected server error
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unavailable or commit outcome unknown; preserve the original
+            key
+          headers:
+            Location:
+              description: Recover with current credentials and the original idempotency
+                key
+              schema:
+                type: string
+      security:
+      - HTTPBearer: []
+      summary: Onboarding Audit
+      tags:
+      - Administration
+  /api/v1/administration/onboarding/operations/{idempotency_key}:
+    get:
+      operationId: administration_get_onboarding_operation
+      parameters:
+      - in: path
+        name: idempotency_key
+        required: true
+        schema:
+          maxLength: 128
+          pattern: ^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$
+          title: Idempotency Key
+          type: string
+      - in: query
+        name: profile_ref
+        required: true
+        schema:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Profile Ref
+          type: string
+      - in: query
+        name: profile_version
+        required: true
+        schema:
+          maximum: 9223372036854775807
+          minimum: 1
+          title: Profile Version
+          type: integer
+      - in: query
+        name: assignment_ref
+        required: true
+        schema:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Assignment Ref
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeOperationResult'
+          description: Successful Response
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: A current human token and fresh MFA are required
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The selected current administration assignment is not permitted
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The requested managed object or operation is unavailable
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Current versions, nomination state or original input conflict
+        '413':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The request exceeds the bounded JSON body size
+        '415':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: A JSON request body is required
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Request validation failed
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unexpected server error
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unavailable or commit outcome unknown; preserve the original
+            key
+          headers:
+            Location:
+              description: Recover with current credentials and the original idempotency
+                key
+              schema:
+                type: string
+      security:
+      - HTTPBearer: []
+      summary: Onboarding Operation
+      tags:
+      - Administration
   /api/v1/administration/operations/{idempotency_key}:
     get:
       operationId: administration_get_operation
@@ -2394,6 +3270,122 @@ paths:
       security:
       - HTTPBearer: []
       summary: People
+      tags:
+      - Administration
+    post:
+      operationId: administration_create_employee
+      parameters:
+      - in: query
+        name: profile_ref
+        required: true
+        schema:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Profile Ref
+          type: string
+      - in: query
+        name: profile_version
+        required: true
+        schema:
+          maximum: 9223372036854775807
+          minimum: 1
+          title: Profile Version
+          type: integer
+      - in: query
+        name: assignment_ref
+        required: true
+        schema:
+          maxLength: 128
+          minLength: 1
+          pattern: ^[^\s\x00-\x1f\x7f]+$
+          title: Assignment Ref
+          type: string
+      - in: header
+        name: Idempotency-Key
+        required: true
+        schema:
+          maxLength: 128
+          pattern: ^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$
+          title: Idempotency-Key
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeCreateRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeDelivery'
+          description: Successful Response
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: A current human token and fresh MFA are required
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The selected current administration assignment is not permitted
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The requested managed object or operation is unavailable
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Current versions, nomination state or original input conflict
+        '413':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The request exceeds the bounded JSON body size
+        '415':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: A JSON request body is required
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Request validation failed
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unexpected server error
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unavailable or commit outcome unknown; preserve the original
+            key
+          headers:
+            Location:
+              description: Recover with current credentials and the original idempotency
+                key
+              schema:
+                type: string
+      security:
+      - HTTPBearer: []
+      summary: Create Employee
       tags:
       - Administration
   /api/v1/administration/people/{principal_ref}:
@@ -3391,6 +4383,598 @@ paths:
       summary: Liveness probe
       tags:
       - system
+  /oauth/activate:
+    get:
+      operationId: native_activation_entry
+      responses:
+        '200':
+          content:
+            text/html:
+              schema:
+                type: string
+          description: Successful Response
+        '400':
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                properties:
+                  error:
+                    title: Error
+                    type: string
+                required:
+                - error
+                title: OAuthFailure
+                type: object
+          description: Bad Request
+        '401':
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                properties:
+                  error:
+                    title: Error
+                    type: string
+                required:
+                - error
+                title: OAuthFailure
+                type: object
+          description: Unauthorized
+        '403':
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                properties:
+                  error:
+                    title: Error
+                    type: string
+                required:
+                - error
+                title: OAuthFailure
+                type: object
+          description: Forbidden
+        '404':
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                properties:
+                  error:
+                    title: Error
+                    type: string
+                required:
+                - error
+                title: OAuthFailure
+                type: object
+          description: Not Found
+        '413':
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                properties:
+                  error:
+                    title: Error
+                    type: string
+                required:
+                - error
+                title: OAuthFailure
+                type: object
+          description: Request Entity Too Large
+        '415':
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                properties:
+                  error:
+                    title: Error
+                    type: string
+                required:
+                - error
+                title: OAuthFailure
+                type: object
+          description: Unsupported Media Type
+        '422':
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Request validation failed
+        '429':
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                properties:
+                  error:
+                    title: Error
+                    type: string
+                required:
+                - error
+                title: OAuthFailure
+                type: object
+          description: Too Many Requests
+        '500':
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unexpected server error
+        '503':
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                properties:
+                  error:
+                    title: Error
+                    type: string
+                required:
+                - error
+                title: OAuthFailure
+                type: object
+          description: Service Unavailable
+      summary: Activation Entry
+      tags:
+      - Native authentication
+    post:
+      operationId: native_activation_begin
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              additionalProperties: false
+              properties:
+                activation_ref:
+                  type: string
+                code:
+                  type: string
+                csrf_token:
+                  type: string
+                password:
+                  type: string
+              required:
+              - activation_ref
+              - code
+              - password
+              - csrf_token
+              type: object
+        required: true
+      responses:
+        '200':
+          content:
+            text/html:
+              schema:
+                type: string
+          description: Successful Response
+        '400':
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                properties:
+                  error:
+                    title: Error
+                    type: string
+                required:
+                - error
+                title: OAuthFailure
+                type: object
+          description: Bad Request
+        '401':
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                properties:
+                  error:
+                    title: Error
+                    type: string
+                required:
+                - error
+                title: OAuthFailure
+                type: object
+          description: Unauthorized
+        '403':
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                properties:
+                  error:
+                    title: Error
+                    type: string
+                required:
+                - error
+                title: OAuthFailure
+                type: object
+          description: Forbidden
+        '404':
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                properties:
+                  error:
+                    title: Error
+                    type: string
+                required:
+                - error
+                title: OAuthFailure
+                type: object
+          description: Not Found
+        '413':
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                properties:
+                  error:
+                    title: Error
+                    type: string
+                required:
+                - error
+                title: OAuthFailure
+                type: object
+          description: Request Entity Too Large
+        '415':
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                properties:
+                  error:
+                    title: Error
+                    type: string
+                required:
+                - error
+                title: OAuthFailure
+                type: object
+          description: Unsupported Media Type
+        '422':
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Request validation failed
+        '429':
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                properties:
+                  error:
+                    title: Error
+                    type: string
+                required:
+                - error
+                title: OAuthFailure
+                type: object
+          description: Too Many Requests
+        '500':
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unexpected server error
+        '503':
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                properties:
+                  error:
+                    title: Error
+                    type: string
+                required:
+                - error
+                title: OAuthFailure
+                type: object
+          description: Service Unavailable
+      summary: Activation Begin
+      tags:
+      - Native authentication
+  /oauth/activate/complete:
+    post:
+      operationId: native_activation_complete
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              additionalProperties: false
+              properties:
+                activation_ref:
+                  type: string
+                csrf_token:
+                  type: string
+                otp:
+                  type: string
+              required:
+              - activation_ref
+              - csrf_token
+              - otp
+              type: object
+        required: true
+      responses:
+        '200':
+          content:
+            text/html:
+              schema:
+                type: string
+          description: Successful Response
+        '400':
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                properties:
+                  error:
+                    title: Error
+                    type: string
+                required:
+                - error
+                title: OAuthFailure
+                type: object
+          description: Bad Request
+        '401':
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                properties:
+                  error:
+                    title: Error
+                    type: string
+                required:
+                - error
+                title: OAuthFailure
+                type: object
+          description: Unauthorized
+        '403':
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                properties:
+                  error:
+                    title: Error
+                    type: string
+                required:
+                - error
+                title: OAuthFailure
+                type: object
+          description: Forbidden
+        '404':
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                properties:
+                  error:
+                    title: Error
+                    type: string
+                required:
+                - error
+                title: OAuthFailure
+                type: object
+          description: Not Found
+        '413':
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                properties:
+                  error:
+                    title: Error
+                    type: string
+                required:
+                - error
+                title: OAuthFailure
+                type: object
+          description: Request Entity Too Large
+        '415':
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                properties:
+                  error:
+                    title: Error
+                    type: string
+                required:
+                - error
+                title: OAuthFailure
+                type: object
+          description: Unsupported Media Type
+        '422':
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Request validation failed
+        '429':
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                properties:
+                  error:
+                    title: Error
+                    type: string
+                required:
+                - error
+                title: OAuthFailure
+                type: object
+          description: Too Many Requests
+        '500':
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unexpected server error
+        '503':
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                properties:
+                  error:
+                    title: Error
+                    type: string
+                required:
+                - error
+                title: OAuthFailure
+                type: object
+          description: Service Unavailable
+      summary: Activation Complete
+      tags:
+      - Native authentication
+  /oauth/activate/status:
+    get:
+      operationId: native_activation_status
+      parameters:
+      - in: query
+        name: activation_ref
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            text/html:
+              schema:
+                type: string
+          description: Successful Response
+        '400':
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                properties:
+                  error:
+                    title: Error
+                    type: string
+                required:
+                - error
+                title: OAuthFailure
+                type: object
+          description: Bad Request
+        '401':
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                properties:
+                  error:
+                    title: Error
+                    type: string
+                required:
+                - error
+                title: OAuthFailure
+                type: object
+          description: Unauthorized
+        '403':
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                properties:
+                  error:
+                    title: Error
+                    type: string
+                required:
+                - error
+                title: OAuthFailure
+                type: object
+          description: Forbidden
+        '404':
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                properties:
+                  error:
+                    title: Error
+                    type: string
+                required:
+                - error
+                title: OAuthFailure
+                type: object
+          description: Not Found
+        '413':
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                properties:
+                  error:
+                    title: Error
+                    type: string
+                required:
+                - error
+                title: OAuthFailure
+                type: object
+          description: Request Entity Too Large
+        '415':
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                properties:
+                  error:
+                    title: Error
+                    type: string
+                required:
+                - error
+                title: OAuthFailure
+                type: object
+          description: Unsupported Media Type
+        '422':
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Request validation failed
+        '429':
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                properties:
+                  error:
+                    title: Error
+                    type: string
+                required:
+                - error
+                title: OAuthFailure
+                type: object
+          description: Too Many Requests
+        '500':
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unexpected server error
+        '503':
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                properties:
+                  error:
+                    title: Error
+                    type: string
+                required:
+                - error
+                title: OAuthFailure
+                type: object
+          description: Service Unavailable
+      summary: Activation Status
+      tags:
+      - Native authentication
   /oauth/authorize:
     get:
       operationId: native_authorize

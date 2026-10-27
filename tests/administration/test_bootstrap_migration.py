@@ -16,7 +16,7 @@ def test_management_migration_adds_no_authority_and_matches_models(tmp_path: Pat
     migrate(database, "upgrade", PREVIOUS)
     with sqlite3.connect(database) as connection:
         connection.execute("INSERT INTO organization_root (organization_ref, display_name) VALUES ('org', 'Existing')")
-    migrate(database, "upgrade", REVISION)
+    migrate(database, "upgrade", "head")
     migrate(database, "check")
     with sqlite3.connect(database) as connection:
         assert connection.execute("SELECT count(*) FROM management_authority").fetchone() == (0,)
@@ -24,7 +24,7 @@ def test_management_migration_adds_no_authority_and_matches_models(tmp_path: Pat
         assert connection.execute("SELECT organization_ref FROM organization_root").fetchone() == ("org",)
         assert connection.execute("PRAGMA foreign_key_check").fetchall() == []
     migrate(database, "downgrade", PREVIOUS)
-    migrate(database, "upgrade", REVISION)
+    migrate(database, "upgrade", "head")
     migrate(database, "check")
 
 

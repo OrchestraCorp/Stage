@@ -15,6 +15,7 @@ from fastapi.routing import APIRoute
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy.exc import SQLAlchemyError
+from starlette._utils import get_route_path
 from starlette.datastructures import MutableHeaders
 from starlette.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
@@ -49,7 +50,7 @@ def _oauth_error(error: str, status: int) -> JSONResponse:
 
 
 def _native_error(request: Request, error: str, status: int) -> JSONResponse:
-    if not request.url.path.startswith("/api/v1/account/"):
+    if not get_route_path(request.scope).startswith("/api/v1/account/"):
         return _oauth_error(error, status)
     code, message = {
         "invalid_token": ("INVALID_CREDENTIAL", "The access token is not valid"),
@@ -111,7 +112,10 @@ class NativeAuthSecurityMiddleware:
         self.app = app
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
-        path = scope.get("path", "")
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+        path = get_route_path(scope)
         private = (
             path == "/oauth"
             or path.startswith("/oauth/")
@@ -119,7 +123,7 @@ class NativeAuthSecurityMiddleware:
             or path == "/api/v1/account"
             or path.startswith("/api/v1/account/")
         )
-        if scope["type"] != "http" or not private:
+        if not private:
             await self.app(scope, receive, send)
             return
 
@@ -129,7 +133,15 @@ class NativeAuthSecurityMiddleware:
                 headers["Cache-Control"] = "no-store"
                 headers["Pragma"] = "no-cache"
                 login_document = (
-                    path in {"/oauth/authorize", "/oauth/login", "/oauth/logout"}
+                    path
+                    in {
+                        "/oauth/authorize",
+                        "/oauth/login",
+                        "/oauth/logout",
+                        "/oauth/activate",
+                        "/oauth/activate/status",
+                        "/oauth/activate/complete",
+                    }
                     and headers.get("content-type", "").split(";", 1)[0] == "text/html"
                 )
                 # Chromium gives form POSTs an opaque Origin under no-referrer.

@@ -24,7 +24,7 @@ def test_authorization_expansion_preserves_unmapped_legacy_rows(tmp_path: Path) 
     migrate(database, "upgrade", "head")
     migrate(database, "check")
     with sqlite3.connect(database) as connection:
-        assert connection.execute("SELECT version_num FROM alembic_version").fetchone() == ("a7d4e2c9f501",)
+        assert connection.execute("SELECT version_num FROM alembic_version").fetchone() == ("d8e4b6c2a901",)
         assert connection.execute(
             "SELECT id, principal_ref, role_code, scope_ref, organization_ref, membership_ref FROM role_assignment"
         ).fetchone() == (17, "legacy:person", "legacy:role", "legacy:scope", None, None)

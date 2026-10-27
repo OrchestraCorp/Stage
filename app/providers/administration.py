@@ -19,19 +19,40 @@ from app.administration.contracts import (
 from app.core.config import Settings
 from app.identity.evidence import HumanAuthenticationEvidence
 from app.providers.identity import IDENTITY
+from app.providers.native_auth import NATIVE_AUTH
 from app.providers.storage import STORAGE
-from app.runtime import ComponentContext, PluginSpec, ServiceKey
+from app.runtime import ComponentContext, MissingService, PluginSpec, ServiceKey
 
 if TYPE_CHECKING:
+    from app.administration.onboarding import EmployeeAdministration
     from app.administration.service import AdministrationService
 
 ADMINISTRATION: ServiceKey["AdministrationFacade"] = ServiceKey("stage", "administration", "1")
 
 
 class AdministrationFacade:
-    def __init__(self, context: ComponentContext, timeout_seconds: float) -> None:
+    def __init__(self, context: ComponentContext, timeout_seconds: float, *, native_enabled: bool = False) -> None:
         self._context = context
         self._timeout_seconds = timeout_seconds
+        self._native_enabled = native_enabled
+
+    @asynccontextmanager
+    async def employee_operation(
+        self, token: str, *, profile_ref: str, profile_version: int
+    ) -> AsyncIterator[tuple["EmployeeAdministration", HumanAuthenticationEvidence]]:
+        from app.administration.onboarding import EmployeeAdministration
+
+        if not self._native_enabled:
+            raise MissingService("employee_onboarding_requires_native_auth")
+        async with asyncio.timeout(self._timeout_seconds), self._context.call(IDENTITY, STORAGE, NATIVE_AUTH) as call:
+            identity = call.require(IDENTITY)
+            evidence = await identity.authenticate_human(
+                token, profile_ref=profile_ref, profile_version=profile_version
+            )
+            yield (
+                EmployeeAdministration(call.require(STORAGE).sessions, identity, call.require(NATIVE_AUTH).config),
+                evidence,
+            )
 
     @asynccontextmanager
     async def _operation(
@@ -180,6 +201,12 @@ class AdministrationFacade:
 
 def administration_plugin(config: Settings) -> PluginSpec:
     def setup(ctx: ComponentContext) -> None:
-        ctx.provide(ADMINISTRATION, AdministrationFacade(ctx, config.command_request_timeout_seconds))
+        ctx.provide(
+            ADMINISTRATION,
+            AdministrationFacade(
+                ctx, config.command_request_timeout_seconds, native_enabled=config.native_auth_enabled
+            ),
+        )
 
-    return PluginSpec("administration", setup, requires=(IDENTITY, STORAGE), provides=(ADMINISTRATION,))
+    requirements = (IDENTITY, STORAGE, NATIVE_AUTH) if config.native_auth_enabled else (IDENTITY, STORAGE)
+    return PluginSpec("administration", setup, requires=requirements, provides=(ADMINISTRATION,))

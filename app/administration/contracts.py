@@ -42,6 +42,9 @@ class AuthorityView(Contract):
     nomination_expires_at: datetime | None
     accepted_at: datetime | None
     grant_rules: tuple[GrantRule, ...]
+    assignment_version: Version = 1
+    role_revision: Version = 1
+    actions: tuple[str, ...] = ()
 
 
 class AdministrationMe(Contract):

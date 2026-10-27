@@ -3,6 +3,7 @@
 from fastapi import APIRouter
 
 from app.api.native.account import account_router as account_router
+from app.api.native.activation import router as activation_router
 from app.api.native.browser import router as browser_router
 from app.api.native.common import NativeAuthSecurityMiddleware as NativeAuthSecurityMiddleware
 from app.api.native.common import NativeHTTPError as NativeHTTPError
@@ -28,3 +29,4 @@ router = APIRouter()
 router.include_router(oauth_router)
 router.include_router(browser_router)
 router.include_router(logout_router)
+router.include_router(activation_router)
