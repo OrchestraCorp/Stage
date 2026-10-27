@@ -86,14 +86,16 @@ Principal 是单个 Stage 部署内稳定的责任主体。一个 human Principa
 
 ## 4. Maestro 的多实例边界
 
-Maestro 可以维护多个 Stage endpoint，但每个 endpoint 都是独立的安全会话：
+Maestro 可以维护多个 Stage endpoint，但每个 endpoint 都是独立的安全会话。连接、登录事务、凭据、主体、成员经历、任职、缓存和恢复地址必须绑定同一个客户端 `connection_id`：
 
 ```text
 Stage A endpoint → Stage A issuer/profile → Stage A token/session → Stage A Principal
 Stage B endpoint → Stage B issuer/profile → Stage B token/session → Stage B Principal
 ```
 
-Maestro 可以在界面上帮助用户切换实例，不能把 A 的 access token、refresh token、Principal、assignment 或授权结果发送给 B。Stage 不需要为了支持这个客户端体验而建立跨企业全局身份表。
+Maestro 可以在界面上显式切换实例，不能把 A 的 access token、refresh token、Principal、assignment 或授权结果发送给 B。登录回调、迟到请求和 `COMMIT_OUTCOME_UNKNOWN` 恢复都回到发起它们的实例；切换不等于退出其他实例。Stage 不需要为了支持这个客户端体验而建立跨企业全局身份表。
+
+具体连接对象、切换不变量和共同验收见[Maestro 多 Stage 连接与切换合同](maestro-multi-stage-connections.md)。
 
 跨实例协作如果以后出现，应通过两个实例各自签发、各自验证的受控命令或交换协议实现，并在两边留下本地审计；它不等于跨实例共享身份或原子事务。
 
@@ -103,7 +105,7 @@ Maestro 可以在界面上帮助用户切换实例，不能把 A 的 access toke
 
 - 组织单元、集团/子公司业务树和法人登记；
 - 多实例统一人员目录、跨实例账号合并或跨实例角色；
-- 公司切换、SaaS 租户开通和共享数据库控制面；
-- 个人资料、人员列表或任职管理 CRUD。
+- Stage 端的公司切换、SaaS 租户开通和共享数据库控制面；Maestro 的多实例连接切换属于客户端合同，尚待本地实现和验收；
+- 完整个人资料 CRUD；首个组织级人员目录和有限任职管理已在独立管理切片交付。
 
 人员角色版本、scope/resource 已有内部切片，业务领域关系按[身份表结构设计](identity-schema-design.md)继续推进。独立 Agent 委托和 ServiceGrant 属于后置候选，不构成一期门槛；本文不宣称完整协作业务已经实现。

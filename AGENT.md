@@ -29,6 +29,8 @@
 
 ## 当前状态
 
+2026-10-26 用户确认 Maestro 支持多套 Stage 连接和显式切换。每个 `connection_id` 绑定精确 API origin、issuer/client/redirect/profile、独立 OAuth 会话、principal/membership/assignment、缓存、工具上下文和未知结果恢复；回调、请求和原幂等键不能跨实例。此决定只增加客户端连接管理，不改变 Stage 一实例一个组织授权根、禁止客户端选择组织和 PostgreSQL 权威边界。合同见[Maestro 多 Stage 连接](docs/maestro-multi-stage-connections.md)，Maestro 实现和真实桌面验收仍未完成。
+
 2026-10-26 用户批准推进首个正式管理切片，合同见[人员管理员首个切片](docs/human-administration-first-slice.md)。`app.administration` 负责现有人员目录、普通任职授撤和人员审计；管理能力判定在 `app.authz.management`，沿用真实身份和短事务组织 S/X。只启用一名首管，OS 明确提名后须本人近期 MFA 接受；accepted_at 保留后禁止重新 bootstrap。管理授予清单固定角色 revision/digest、精确 scope 和期限，不得自授、授予管理角色或自动扩展子 scope。管理任职从 `/administration/me` 发现，普通业务任职接口仍保持独立支持边界。38 张表与9个新增HTTP操作不等于完整人员生命周期、多管理员、Maestro页面或生产恢复完成。
 
 2026-10-26 用户明确完整身份／人员／权限管理界面融入Maestro；Stage提供正式管理API、当前人员管理授权、生命周期与审计。云端负责Stage，本地负责Maestro，通过[管理中心合同](docs/maestro-stage-administration.md)协作。认证issuer托管的登录／因素／同意／退出页继续遵循独立安全边界；不把dev/test本机CLI直接暴露成管理HTTP，也不把只有后端或页面视为产品闭环完成。具体管理规则／端点未实现部分须明确标注，不能把这一决定当成全功能IAM／OA范围授权。

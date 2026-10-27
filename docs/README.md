@@ -63,6 +63,7 @@ OrchestraCorp 的长期愿景是 **AI 驱动、安全可靠的分布式工作协
 | [核心对象与契约](core-object-contracts.md) | 能力、身份、命令结果、流程实例、发布清单的关系和权威边界 |
 | [身份认证与授权](identity-and-authorization.md) | 人员认证、主体映射、任职、当前授权、批准与撤销；独立 Agent 委托候选后置 |
 | [组织授权根语义](organization-root-semantics.md) | 一实例一个授权/信任/治理根；组织单元、scope、法人和跨 Stage 身份的边界 |
+| [Maestro 多 Stage 连接与切换](maestro-multi-stage-connections.md) | 多套 Stage 连接、独立会话、切换、缓存和未知结果恢复合同 |
 | [企业私有化部署与 API v1](private-deployment-api-v1.md) | 专属数据库、固定组织根、API 大版本与个人资料职责；当前改动和验收记录 |
 | [P1b 实施入口](p1b-implementation-entry.md) | 身份管理、认证与授权的起步切片、现有代码接缝、最少待决项及 Maestro 联调边界 |
 | [P1b Stage 侧收尾](reviews/p1b-closeout-2026-10-25.md) | 身份/权限代码复查、输入修复、恢复隔离、组织锁并发基线及验收边界 |

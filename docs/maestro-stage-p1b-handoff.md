@@ -27,6 +27,8 @@ refresh 必须在客户端串行消费并原子替换保存；旧 refresh 重用
 
 本合同面向本地开发的 Maestro 与云设备上的 Stage。Stage 侧已支持人员认证、本人任职发现、组织统一 MFA 策略、当前单任职授权及已有工作项标题/说明编辑；实际桌面登录、回调、token 保管和交互验收由客户端联调完成。当前不提供完整人员管理或任务产品，整体 P1b 尚未退出；本合同覆盖密码＋TOTP 登录与本人任职选择接缝，服务端和真实隔离协议证据不替代 Maestro 实际交互、因素绑定/恢复或生产验收。字段以 [OpenAPI](../contracts/openapi.yaml) 为准，本轮证据见 [P1b.4](reviews/p1b4-assignments-mfa-2026-10-26.md)，历史 I1 范围见 [覆盖矩阵](reviews/p1b-identity-coverage-2026-10-25.md)。
 
+Maestro 可以登记和切换多套 Stage，但当前 P1b 联调一次只验证一个活动实例。多连接的独立 OAuth 会话、回调绑定、缓存／工具上下文隔离和跨实例结果恢复边界见[多 Stage 连接合同](maestro-multi-stage-connections.md)；这属于 Maestro 客户端里程碑，不改变 Stage 单组织根或本合同的单实例业务请求语义。
+
 ## 1. 登录与部署配置
 
 **下表仅记录早期外部 Keycloak fixture，不能作为当前原生登录的默认配置。** 当前原生 profile 为 `stage-native-human@1`，其 issuer、client 和回调取自部署登记，见上方原生登录合同与[原生运行手册](../deployment/identity/native-authentication.md)。
