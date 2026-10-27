@@ -63,7 +63,7 @@ async def test_browser_enrollment_login_refresh_userinfo_and_logout(native_http:
         account = await session.get(NativeAccountTable, "account:http")
         assert account is not None and secret not in str(account.totp_secret)
         assert not set(codes) & set(account.recovery_hashes)
-        assert PASSWORD not in account.password_hash
+        assert account.password_hash is not None and PASSWORD not in account.password_hash
     for response in (user, revoke):
         assert response.headers["cache-control"] == "no-store"
         assert response.headers["referrer-policy"] == "no-referrer"

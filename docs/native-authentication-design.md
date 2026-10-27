@@ -98,6 +98,8 @@ issuer 必须是规范化浏览器 origin：不能包含路径、空 `?/#`、默
 
 原生认证 HTTP 的组合入口仍为 `app/api/native_auth.py`，具体实现位于 `api/native/`：common 负责解析/浏览器安全边界，browser 负责登录/因素/同意，logout 负责退出及跨站 relay，oauth 负责标准协议，account 负责本人账户管理。路径、operationId 与 OpenAPI 合同保持一致。
 
+2026-10-27 新增[员工开户与一次性激活](employee-onboarding.md)。`api/native/activation.py` 提供独立 issuer 页面；`NativeActivation` 消费管理员签发的单次证明，由本人设密并完成 TOTP 后原子激活待入职事实。`native_account_activation` 保存哈希／加密秘密及明确来源版本，`native_account` 增加 pending；普通 OAuth 密码流程仍要求 active，不能凭空种子退回密码引导。完成激活不签发 code、token 或 SSO；原有登录与任职授权仍分别执行。恢复码仅在首次完成响应展示，原浏览器在五分钟绝对窗口内只能恢复安全状态。
+
 `native_auth/protocol.py` 定义协议值对象和错误；`current_session.py` 读取当前账号、客户端、RP/浏览器会话事实，不自行取得或释放锁。identity、credentials、OAuth 和会话管理在原有 trust→principal→组织→account 顺序内复用验证，不再为了读取当前会话而导入 OAuth 服务。共享令牌配置名为 `AccessTokenProfile`，`KeycloakProfile` 保留兼容别名。
 
 UserInfo 的 profile 投影直接在一次已验证的账户事务内读取，避免重复取得组织 guard；数据库等待之后仍检查 token/session 截止。OAuth client 配置、原生安装、组织 MFA 和授权管理复用 `app.control` 的公共控制操作协议，原有日志摘要、幂等身份与未知结果恢复保持一致。

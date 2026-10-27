@@ -29,6 +29,8 @@
 
 ## 当前状态
 
+2026-10-27 延续人员管理路线新增[员工开户与一次性激活](docs/employee-onboarding.md)。旧管理角色 revision 1 不扩权；dev/test 受控操作显式升级到 revision 2 才能开户／重发／撤销。新 Principal、成员、原生映射 suspended，账号 pending；独立 issuer ceremony 完成密码＋TOTP 后原子激活，不签发会话或授予任职。单次秘密不入日志、URL、审计或幂等回放；未知提交按原键／原浏览器恢复，重发废弃旧证明。完整离职、管理员恢复、再入职、生产交付和 Maestro 页面仍待后续切片。
+
 2026-10-27 用户确认四个产品仓库统一按 MIT 开放源码，商业定位为专业企业服务和 MaaS，重视模型效果与服务稳定性。Stage 的许可证见 [LICENSE](LICENSE)；企业私有化部署、客户数据和凭据保护不因源码公开改变。公开仓库不得包含实际企业数据或私有运行配置，第三方内容保留原有版权与许可声明。
 
 2026-10-26 用户确认 Maestro 支持多套 Stage 连接和显式切换。每个 `connection_id` 绑定精确 API origin、issuer/client/redirect/profile、独立 OAuth 会话、principal/membership/assignment、缓存、工具上下文和未知结果恢复；回调、请求和原幂等键不能跨实例。此决定只增加客户端连接管理，不改变 Stage 一实例一个组织授权根、禁止客户端选择组织和 PostgreSQL 权威边界。合同见[Maestro 多 Stage 连接](docs/maestro-multi-stage-connections.md)，Maestro 实现和真实桌面验收仍未完成。
@@ -54,4 +56,4 @@ P1b 当前进入 Stage 侧收尾与客户端联调准备：[复查记录](docs/r
 
 P1a 已实现独立 Runtime Core、PG/Redis provider、可信注入的命令/投递组件及系统探针。P1b.1/.2 已有真实身份、成员、固定角色版本、scope/resource/direct ACL 与受控开发管理。P1b.3 当时以已有 WorkItem 的标题/说明编辑接通人员认证和命令提交；当前 P1b.4 另已开放本人任职查询并接入统一 MFA 策略。各轮范围与验证见[P1b.3 记录](docs/reviews/p1b3-human-work-2026-10-25.md)及[P1b.4 记录](docs/reviews/p1b4-assignments-mfa-2026-10-26.md)，目标约束见[身份表结构](docs/identity-schema-design.md)。
 
-公开人员命令必须使用真实认证签发的短期证据，由 `AuthenticatedAuthorizationLoader` 联合当前授权，按 TrustState 共享锁→Principal 共享锁→组织 guard→授权/资源的顺序协调，并在提交前重验 profile/trust/外部映射、来源准入、成员、版本与截止时间。不能从请求 body 或 `/identity/me` 响应构造可信身份。只选一个明确任职，不合并岗位权限；元数据编辑要求显式 `task.metadata.update`、`owner_of`、draft/open 和预期版本。旧 fixture 仅供可信测试，旧角色不自动增加新 action，未映射旧行不授予权限。当前无公开创建工作项；首个管理切片已开放首管接受、人员目录、清单内普通任职授撤与审计。新角色 revision 仍由受控登记安装。P1b.4 新增组织人员认证策略表，该轮为 26 张应用表；原生认证先新增八张表，多应用 OAuth 再新增 browser session/consent/logout request 三张，首管管理切片再新增 management_authority 一张，当前 38 张、head `a7d4e2c9f501`；迁移将已有根回填 disabled/v1，仅由显式版本化配置启用 MFA，不因升级自动授予权限或强制 MFA。后续仍按一期推进 WASM 与签名准入，独立 Agent/Delegation 与通用 ServiceGrant 不作为门槛；不得把最小编辑操作计作完整 P2 任务协作、人工批准或生产验收。
+公开人员命令必须使用真实认证签发的短期证据，由 `AuthenticatedAuthorizationLoader` 联合当前授权，按 TrustState 共享锁→Principal 共享锁→组织 guard→授权/资源的顺序协调，并在提交前重验 profile/trust/外部映射、来源准入、成员、版本与截止时间。不能从请求 body 或 `/identity/me` 响应构造可信身份。只选一个明确任职，不合并岗位权限；元数据编辑要求显式 `task.metadata.update`、`owner_of`、draft/open 和预期版本。旧 fixture 仅供可信测试，旧角色不自动增加新 action，未映射旧行不授予权限。当前无公开创建工作项；首个管理切片已开放首管接受、人员目录、清单内普通任职授撤与审计。新角色 revision 仍由受控登记安装。P1b.4 新增组织人员认证策略表，该轮为 26 张应用表；原生认证先新增八张表，多应用 OAuth 再新增 browser session/consent/logout request 三张，首管管理切片再新增 management_authority 一张，随后员工激活新增一张表，当前 39 张、head `d8e4b6c2a901`；迁移将已有根回填 disabled/v1，仅由显式版本化配置启用 MFA，不因升级自动授予权限或强制 MFA。后续仍按一期推进 WASM 与签名准入，独立 Agent/Delegation 与通用 ServiceGrant 不作为门槛；不得把最小编辑操作计作完整 P2 任务协作、人工批准或生产验收。

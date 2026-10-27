@@ -37,6 +37,7 @@ from app.identity.authentication import (
     AuthenticationUnavailable,
 )
 from app.identity.service import IdentityDenied
+from app.native_auth.errors import NativeCredentialError
 from app.providers.administration import ADMINISTRATION, AdministrationFacade
 from app.runtime import MissingService, RuntimeClosed
 
@@ -151,14 +152,16 @@ class AdministrationSecurityMiddleware:
         await self.app(scope, receive, private_send)
 
 
-def _recovery_location(request: Request, query: IdentityQuery, assignment_ref: str, key: str) -> str:
+def _recovery_location(
+    request: Request, query: IdentityQuery, assignment_ref: str, key: str, collection: str = "operations"
+) -> str:
     values = {
         "profile_ref": query.profile_ref,
         "profile_version": query.profile_version,
         "assignment_ref": assignment_ref,
     }
     root = request.scope.get("root_path", "")
-    return f"{root}/api/v1/administration/operations/{quote(key, safe='')}?{urlencode(values)}"
+    return f"{root}/api/v1/administration/{collection}/{quote(key, safe='')}?{urlencode(values)}"
 
 
 async def _call[Model: BaseModel](
@@ -168,6 +171,7 @@ async def _call[Model: BaseModel](
     *,
     query: IdentityQuery,
     idempotency_key: str | None = None,
+    recovery_collection: str = "operations",
 ) -> Model | JSONResponse:
     if credentials is None:
         return error_response(
@@ -199,6 +203,10 @@ async def _call[Model: BaseModel](
         return error_response(request, 403, "ADMINISTRATION_ACCESS_DENIED", "Administration access is not permitted")
     except AdminConflict as error:
         return error_response(request, 409, error.code, "The operation conflicts with current state or input")
+    except NativeCredentialError:
+        return error_response(
+            request, 409, "ACTIVATION_UNAVAILABLE", "The current enrollment configuration or state is unavailable"
+        )
     except AdminNotFound:
         return error_response(
             request, 404, "ADMINISTRATION_NOT_FOUND", "The managed object or operation is not available"
@@ -208,7 +216,9 @@ async def _call[Model: BaseModel](
             request, 503, "COMMIT_OUTCOME_UNKNOWN", "Query the operation with its original idempotency key"
         )
         if idempotency_key is not None:
-            response.headers["Location"] = _recovery_location(request, query, error.assignment_ref, idempotency_key)
+            response.headers["Location"] = _recovery_location(
+                request, query, error.assignment_ref, idempotency_key, recovery_collection
+            )
         return response
     except (
         AuthenticationUnavailable,

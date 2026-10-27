@@ -256,6 +256,10 @@ class NativeCredentials:
         """Bound anonymous logout requests separately from login ceremonies."""
         await self._throttle("logout:" + client_address, limit=self.authorization_attempt_limit)
 
+    async def throttle_activation(self, client_address: str) -> None:
+        """Bound unauthenticated activation attempts before any password work."""
+        await self._throttle("activation:" + client_address)
+
     @staticmethod
     def _active(account: NativeAccountTable, now: datetime) -> bool:
         return account.status == "active" and (account.locked_until is None or account.locked_until <= now)
@@ -566,7 +570,7 @@ class NativeCredentials:
         async with self.sessions() as session:
             login = await session.get(NativeSessionTable, session_ref)
             account = await session.get(NativeAccountTable, login.account_ref) if login is not None else None
-            if account is None:
+            if account is None or account.password_hash is None:
                 raise NativeCredentialError()
             return account.account_ref, account.password_hash, account.credential_version
 

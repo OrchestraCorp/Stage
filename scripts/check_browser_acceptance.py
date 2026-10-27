@@ -17,6 +17,9 @@ from xml.etree import ElementTree
 
 ROOT = Path(__file__).resolve().parents[1]
 CASES = {
+    "test_real_browser_employee_activation_requires_password_and_totp_without_login_or_grants": (
+        "tests/integration/test_employee_activation_browser.py"
+    ),
     "test_real_browser_factor_reset_requires_rebind_proof_and_new_otp": (
         "tests/integration/test_native_recovery_browser.py"
     ),
@@ -82,7 +85,7 @@ def main() -> int:
         return 1
     finally:
         raw_report.unlink(missing_ok=True)
-    print("Chromium acceptance: both required scenarios executed and passed")
+    print(f"Chromium acceptance: all {len(CASES)} required scenarios executed and passed")
     return 0
 
 

@@ -15,7 +15,7 @@ def test_browser_gate_rejects_non_passing_scenario(tmp_path: Path, marker: str) 
         verify_report(report)
 
 
-def test_browser_gate_requires_both_scenarios_and_accepts_passing_report(tmp_path: Path) -> None:
+def test_browser_gate_requires_all_scenarios_and_accepts_passing_report(tmp_path: Path) -> None:
     report = tmp_path / "report.xml"
     report.write_text('<testsuite><testcase name="unrelated_passing_test"/></testsuite>')
     with pytest.raises(ValueError, match="cases_missing"):

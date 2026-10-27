@@ -35,6 +35,7 @@ from app.authz.management import (
     AuthorizedManager,
     GrantRule,
     authorize_manager,
+    management_role_contract,
     parse_grant_rules,
     require_management_assurance,
     validate_grant_rule,
@@ -199,6 +200,17 @@ class AdministrationService:
             authority = await uow.session.get(ManagementAuthorityTable, evidence.organization_ref)
             view = None
             if authority is not None and self._is_nominee(authority, evidence):
+                assignment = await uow.session.scalar(
+                    select(RoleAssignmentTable).where(
+                        RoleAssignmentTable.organization_ref == evidence.organization_ref,
+                        RoleAssignmentTable.assignment_ref == authority.assignment_ref,
+                    )
+                )
+                if assignment is None:
+                    raise AdminDenied()
+                contract = management_role_contract(assignment.role_revision)
+                if contract is None:
+                    raise AdminDenied()
                 if authority.status == "active":
                     await authorize_manager(
                         uow.session, evidence, authority.assignment_ref, "administration.people.read", datetime.now(UTC)
@@ -212,6 +224,9 @@ class AdministrationService:
                         "nomination_expires_at": authority.nomination_expires_at,
                         "accepted_at": authority.accepted_at,
                         "grant_rules": parse_grant_rules(authority.grant_rules_json),
+                        "assignment_version": assignment.version,
+                        "role_revision": contract.revision,
+                        "actions": tuple(sorted(contract.actions)),
                     }
                 )
             await self._finish(

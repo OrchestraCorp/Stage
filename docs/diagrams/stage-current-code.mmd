@@ -4,7 +4,7 @@ flowchart TB
     API --> IDENTITY["GET /api/v1/identity/me<br/>身份 provider / 本组织根最小自身投影"]
     API --> ASSIGNMENTS["GET /api/v1/identity/assignments<br/>本人当前任职 / 有界候选分页"]
     API --> HUMAN_WORK["HumanWorkService · 默认装配<br/>工作项读 / 标题说明编辑 / 原 key 结果读"]
-    API --> HUMAN_ADMIN["AdministrationFacade · 默认装配<br/>首管接受 / 人员目录 / 有限任职授撤 / 审计"]
+    API --> HUMAN_ADMIN["AdministrationFacade · 默认装配<br/>首管接受 / 目录 / 任职授撤 / 员工开户 / 审计"]
     API --> NATIVE_ROUTES["固定 OAuth/OIDC 根路由<br/>/oauth/* · /.well-known/*<br/>/api/v1/account/*"]
     API -->|lifespan| BOOT["ApplicationRuntime<br/>可信装配 / 必需与可选组件 / 启停"]
 
@@ -38,6 +38,9 @@ flowchart TB
     HOST -.明确启用后管理.-> NATIVE["NativeAuthFacade<br/>密码＋TOTP / 发行配置 / 存储调用租约"]
     NATIVE_ROUTES --> NATIVE
     NATIVE --> CREDENTIALS["NativeCredentials<br/>绑定与恢复 / 一次性 OTP / 凭据变更 / 撤会话"]
+    HUMAN_ADMIN -->|原生开启时显式依赖与调用租约| NATIVE
+    NATIVE --> ACTIVATION["NativeActivation<br/>单次激活 / 本人设密与 TOTP / 原子启用人员"]
+    ACTIVATION -->|来源固定 / 短事务 / 不签发会话| STORAGE
     NATIVE --> OAUTH["NativeOAuth<br/>多客户端 / PKCE / refresh 缩权与重用检测"]
     CREDENTIALS -->|短事务 / 共同锁序 / 审计| STORAGE
     OAUTH -->|持久请求 / code / session / refresh| STORAGE

@@ -10,7 +10,7 @@
 
 源码归档直接来自 `git archive <revision>`，不包含忽略的 `.env`、私有密钥、运行数据库或工作区临时改动。gzip 时间固定，构建使用提交时间作为 `SOURCE_DATE_EPOCH`，构建器由 pyproject 固定。发布输出为完整 Git 源码归档与 wheel；同提交重复构建应比较 manifest 中的这两种制品摘要。跨平台的 wheel/依赖解析仍需在目标 Python/操作系统再次验证。wheel 包含应用和启动检查需要的 migrations；运行手册、Alembic CLI 配置和锁文件以源码归档为准。CI 构建 wheel 后执行 `scripts/check_distribution.py`，在独立目录验证包导入、路由和迁移 head，避免源码目录掩盖缺失的打包资源。
 
-CI 中的 SQLite 快测、PostgreSQL 真库和 Chromium 门禁分开运行。GitHub/GitLab 浏览器作业使用专属一次性 PostgreSQL，并执行 `scripts/check_browser_acceptance.py`：两个真实浏览器场景必须执行，缺少依赖、跳过或失败均不能通过。仅上传经过裁剪的 JUnit 名称、时间与状态；不上传凭据 fixture、浏览器存储、页面或 trace。
+CI 中的 SQLite 快测、PostgreSQL 真库和 Chromium 门禁分开运行。GitHub/GitLab 浏览器作业使用专属一次性 PostgreSQL，并执行 `scripts/check_browser_acceptance.py`：员工开户激活、因素恢复和多应用 OAuth 三个真实浏览器场景必须执行，缺少依赖、跳过或失败均不能通过。仅上传经过裁剪的 JUnit 名称、时间与状态；不上传凭据 fixture、浏览器存储、页面或 trace。
 
 本地运行与 CI 相同的浏览器门禁：
 
