@@ -2,57 +2,61 @@
 
 # Stage
 
-**面向企业自托管的组织协作后端。**
+English | [中文](README.zh.md)
 
-Stage 为 OrchestraCorp 提供身份认证、组织权限、受控操作和审计。人员通过客户端选择明确任职，Agent 在人员监督下调用同一套接口；服务端根据当前身份、权限和对象状态决定操作是否可以执行，并持久保存结果。
+**A collaboration backend for self-hosted enterprise deployments.**
 
-本项目采用 [MIT 许可证](LICENSE)，处于开发者预览阶段。当前已有可运行的后端基础和首个管理切片，完整企业业务流程、客户端联调与生产运维验收仍在推进。
+Stage provides identity, organization permissions, controlled operations and audit for OrchestraCorp. People select an explicit role assignment through a client, and agents use the same APIs under human supervision. The server checks current identity, permissions and object state before allowing an operation, then persists its outcome.
 
-[开发启动](#本地开发) · [API 合同](contracts/openapi.yaml) · [设计文档](docs/README.md) · [开发路线](docs/roadmap.md)
+The project is available under the [MIT license](LICENSE) and is in developer preview. A working backend foundation and the first administration feature set are available; complete enterprise workflows, client integration and production operations acceptance remain in progress.
 
-## OrchestraCorp 的四个项目
+[Local development](#local-development) · [API contract](contracts/openapi.yaml) · [Design documentation](docs/README.md) · [Roadmap](docs/roadmap.md)
 
-| 项目 | 负责什么 |
+## The OrchestraCorp projects
+
+| Project | Responsibility |
 |---|---|
-| **[Stage](https://github.com/OrchestraCorp/Stage)** | 组织身份、权限、业务操作、持久结果与审计。 |
-| [Maestro](https://github.com/OrchestraCorp/Maestro) | 企业管理与协作工作台，支持人员监督 Agent 整理知识、协调工作。 |
-| [Virtuoso](https://github.com/OrchestraCorp/Virtuoso) | 员工使用 Agent、会话和工具完成日常工作的个人工作台。 |
-| [ScoreBook](https://github.com/OrchestraCorp/ScoreBook) | 组织手册、岗位契约、正式知识与流程模板的版本化载体。 |
+| **[Stage](https://github.com/OrchestraCorp/Stage)** | Organization identity, permissions, business operations, persistent results and audit. |
+| [Maestro](https://github.com/OrchestraCorp/Maestro) | Enterprise administration and coordination, with people supervising agents that organize knowledge and assist with work. |
+| [Virtuoso](https://github.com/OrchestraCorp/Virtuoso) | The employee workspace for conversations, tools and everyday work with agents. |
+| [ScoreBook](https://github.com/OrchestraCorp/ScoreBook) | Versioned organizational handbooks, role contracts, formal knowledge and process templates. |
 
-这些项目通过明确的接口协作，集成能力逐步交付。Maestro 承载管理界面；Stage 保存服务端事实并执行权限。客户端的模型连接凭据、私人会话与企业正式记录分别管理。
+The projects collaborate through explicit interfaces, with integrations delivered incrementally. Maestro hosts the administration experience; Stage stores authoritative server-side facts and enforces permissions. Client model credentials, private conversations and formal enterprise records are managed separately.
 
-## 当前可以做什么
+## Available capabilities
 
-- **人员认证与账户安全**：原生密码＋TOTP、因素绑定与恢复、本人改密、会话和应用同意管理。
-- **受控应用统一登录**：OAuth/OIDC 授权码＋PKCE、多客户端登记、SSO、刷新轮换、令牌撤销与确认退出。支持范围见 [OAuth 功能矩阵](docs/oauth-functional-coverage.md)。
-- **当前身份与任职**：本人身份和任职发现、固定角色版本、授权范围、直接关系和时间／状态／版本条件。每次操作选择一个明确任职并重新授权。
-- **首个管理切片**：首管提名与本人近期 MFA 接受、现有人员目录、有限普通任职授予／撤销、本管理域审计和原键恢复。
-- **最小工作项操作**：读取已有工作项，按版本与权限修改标题和说明，使用原幂等键恢复提交结果。
-- **后端基础**：组件依赖和生命周期管理、数据库迁移、短事务、幂等、审计、可靠投递底板、健康与就绪探针。
+- **Human authentication and account security:** native passwords and TOTP, factor enrollment and recovery, self-service password changes, session management and application consent management.
+- **Unified login for registered applications:** OAuth/OIDC authorization code flow with PKCE, multiple registered clients, SSO, refresh rotation, token revocation and confirmed logout. See the [OAuth capability matrix](docs/oauth-functional-coverage.md) for the supported scope.
+- **Current identity and role assignments:** self-discovery of identity and assignments, pinned role revisions, authorization scopes, direct relationships, and time, state and version conditions. Each operation selects one explicit assignment and rechecks authorization.
+- **Initial administration features:** first-administrator nomination and personal acceptance with recent MFA, an existing-member directory, bounded grants and revocations of ordinary role assignments, administration audit, and recovery using the original operation key.
+- **Minimal work-item operations:** read an existing work item, edit its title and description subject to authorization and version checks, and recover the result using the original idempotency key.
+- **Backend foundation:** component dependencies and lifecycle management, database migrations, short transactions, idempotency, audit, a durable delivery foundation, and health and readiness probes.
 
-员工开户激活、组合离职、多管理员、完整任务／审批、持久工作流和受控 WASM 等能力按[路线](docs/roadmap.md)继续建设。现有投递底板不等于已接通生产 Worker；服务端验证也不代替 Maestro 的实际管理界面与用户验收。
+Employee activation, coordinated offboarding, multiple administrators, complete task and approval workflows, durable workflows and controlled WASM execution follow the [roadmap](docs/roadmap.md). The delivery foundation does not yet establish production Worker integration, and server-side verification does not replace the actual Maestro administration interface or user acceptance.
 
-## 架构与部署边界
+## Architecture and deployment boundaries
 
-Stage 是组件化的模块单体：FastAPI 提供 HTTP 接入，应用 provider 管理服务依赖，Runtime Core 管组件生命周期，领域服务负责业务规则，PostgreSQL 保存权威事实。
+Stage is a modular monolith. FastAPI handles HTTP requests, application providers manage service dependencies, Runtime Core manages component lifecycles, domain services implement business rules, and PostgreSQL stores authoritative facts.
 
-| 层次 | 当前选择 |
+| Layer | Current choice |
 |---|---|
-| 语言与接口 | Python 3.12+、FastAPI、Pydantic、版本化 `/api/v1`；OAuth 标准入口独立。 |
-| 持久存储 | PostgreSQL 17、SQLAlchemy 异步 ORM、Alembic 迁移。 |
-| 辅助设施 | Redis 8；当前不作为授权、幂等或业务结果的权威。 |
-| 事务与权限 | 当前人员重验、组织读写保护、对象版本、幂等与原子审计。 |
-| 组件运行 | 自研 Runtime Core，参考 Cordis 的依赖与资源生命周期机制。 |
+| Language and interfaces | Python 3.12+, FastAPI, Pydantic and versioned `/api/v1` endpoints; standard OAuth endpoints are separate. |
+| Persistent storage | PostgreSQL 17, SQLAlchemy's async ORM and Alembic migrations. |
+| Supporting infrastructure | Redis 8; it is not authoritative for authorization, idempotency or business outcomes. |
+| Transactions and permissions | Current human identity checks, organization read/write coordination, object versions, idempotency and atomic audit. |
+| Component runtime | An independently developed Runtime Core informed by Cordis dependency and resource-lifecycle mechanisms. |
 
-每套 Stage 使用一个组织授权根、一套专属数据库和固定环境。组织根表示授权和治理边界；部门、项目及法人关系按业务需要建模。客户端可以分别连接不同 Stage，凭据与工作上下文按实例隔离，详见[多实例连接合同](docs/maestro-multi-stage-connections.md)。
+Each Stage deployment has one organization authorization root, a dedicated database and a fixed environment. The root defines authorization and governance boundaries; departments, projects and legal entities are modeled as business needs arise. Clients may connect to separate Stage deployments, with credentials and working context isolated per instance. See the [multi-instance connection contract](docs/maestro-multi-stage-connections.md).
 
-参考 Cordis 的目标是支持实际后端组件的组合、停止和恢复。Stage 的身份、事务与持久事实协议仍由自身负责；详见[当前架构图](docs/current-code-architecture.md)和[运行时演进](docs/runtime-evolution-and-composition.md)。
+The purpose of studying Cordis is to support composition, shutdown and recovery of real backend components. Stage owns its identity, transaction and persistent-fact protocols. See the [current architecture](docs/current-code-architecture.md) and [runtime evolution](docs/runtime-evolution-and-composition.md).
 
-## 本地开发
+<a id="本地开发"></a>
 
-需要 Python 3.12+、[uv](https://docs.astral.sh/uv/) 和 Docker Compose，或自行准备 PostgreSQL 17／Redis 8。
+## Local development
 
-以下步骤面向新的本地开发目录；`compose.yaml` 与 `.env.example` 中的凭据是公开的本地示例。
+Use Python 3.12+, [uv](https://docs.astral.sh/uv/) and Docker Compose, or provide PostgreSQL 17 and Redis 8 yourself.
+
+The following steps target a fresh local development checkout. Credentials in `compose.yaml` and `.env.example` are public local-development examples.
 
 ```bash
 git clone https://github.com/OrchestraCorp/Stage.git
@@ -64,17 +68,17 @@ uv run alembic upgrade head
 uv run uvicorn app.main:app --host 127.0.0.1 --port 8080
 ```
 
-启动后可访问：
+Once started, these endpoints are available:
 
-- `http://127.0.0.1:8080/health`：进程健康。
-- `http://127.0.0.1:8080/ready`：必需组件、数据库和迁移就绪。
-- `http://127.0.0.1:8080/docs`：开发环境 API 文档。
+- `http://127.0.0.1:8080/health`: process liveness.
+- `http://127.0.0.1:8080/ready`: required components, database and migration readiness.
+- `http://127.0.0.1:8080/docs`: development API documentation.
 
-这条路径启动服务基础；组织、人员和权限需要显式配置，迁移不会自动创建管理员。原生认证默认关闭，启用需登记身份、配置私有密钥与 MFA。后续按[身份开发说明](deployment/identity/README.md)、[原生认证手册](deployment/identity/native-authentication.md)和[首管引导手册](deployment/identity/human-administration.md)操作。当前开发安装工具不代表完整生产初始化与恢复流程。
+These steps start the service foundation. Organizations, people and permissions require explicit configuration; migrations do not automatically create administrators. Native authentication is disabled by default and requires registered identities, private keys and MFA configuration. Continue with the [identity development guide](deployment/identity/README.md), [native authentication runbook](deployment/identity/native-authentication.md) and [first-administrator guide](deployment/identity/human-administration.md). The development installation tools do not constitute a complete production initialization and recovery process.
 
-生产部署需要独立凭据、HTTPS、备份恢复和明确的身份管理责任；具体限制以对应手册为准。
+Production deployment requires dedicated credentials, HTTPS, backup and recovery, and clearly assigned identity-management responsibilities. Refer to the relevant runbooks for specific limitations.
 
-## 检查与验证
+## Checks and verification
 
 ```bash
 uv run ruff check app tests scripts
@@ -84,21 +88,23 @@ uv run python scripts/check_contract.py --check
 uv run pytest -q
 ```
 
-默认未设置测试数据库时使用 SQLite 快测。运行期间的主库为 PostgreSQL；授权竞争、撤销排序和事务一致性必须通过真实 PostgreSQL 验证。数据库测试会重置测试表，须使用明确授权的独立测试库，见[存储说明](docs/storage-strategy.md)和[验证手册](deployment/dev/release-freeze.md)。
+Without an explicit test database, the default suite uses SQLite for fast tests. PostgreSQL is the runtime database; authorization races, revocation ordering and transaction consistency require real PostgreSQL verification. Database tests reset test tables, so use a separate, explicitly authorized test database. See the [storage policy](docs/storage-strategy.md) and [verification guide](deployment/dev/release-freeze.md).
 
-最近的[管理切片验收](docs/reviews/human-administration-first-slice-2026-10-26.md)记录了 PostgreSQL、SQLite、Chromium、静态检查和在线冒烟的具体范围与结果；历史数字不作为新版本自动通过的证明。
+The latest [administration acceptance report](docs/reviews/human-administration-first-slice-2026-10-26.md) records the scope and results of PostgreSQL, SQLite, Chromium, static checks and live smoke tests. Historical results do not automatically establish that a newer version passes.
 
-## 文档与贡献
+## Documentation and contribution
 
-- [设计与实施入口](docs/README.md)：架构、身份、存储和阶段路线。
-- [管理 API 与 Maestro 联调](deployment/identity/human-administration.md)：首管、任职、审计及错误恢复。
-- [客户端登录与工作项合同](docs/maestro-stage-p1b-handoff.md)：认证、任职选择、版本冲突和未知结果。
-- [原生 OAuth/OIDC](docs/oauth-functional-coverage.md)：已支持与尚未支持的协议能力。
-- [开发设备说明](deployment/dev/README.md)：本项目开发环境记录。
-- [维护约束](AGENT.md)：身份、权限、事务与敏感数据边界。
+Most linked design documents and runbooks are currently in Chinese.
 
-欢迎通过 [Issues](https://github.com/OrchestraCorp/Stage/issues)讨论需求或报告问题。修改 API 时同步 OpenAPI 与契约测试；涉及权限或事务的改动应提供负向和并发验证。不要提交实际企业资料、密钥或运行凭据。
+- [Design and implementation index](docs/README.md): architecture, identity, storage and the phased roadmap.
+- [Administration APIs and Maestro integration](deployment/identity/human-administration.md): the first administrator, assignments, audit and error recovery.
+- [Client login and work-item contract](docs/maestro-stage-p1b-handoff.md): authentication, assignment selection, version conflicts and uncertain results.
+- [Native OAuth/OIDC](docs/oauth-functional-coverage.md): supported and unsupported protocol capabilities.
+- [Development environment](deployment/dev/README.md): records for this project's development setup.
+- [Maintainer instructions](AGENT.md): identity, authorization, transaction and sensitive-data boundaries.
 
-## 许可证
+Use [Issues](https://github.com/OrchestraCorp/Stage/issues) to discuss requirements or report problems. API changes must update OpenAPI and contract tests; authorization or transaction changes should include negative and concurrency verification. Do not commit real enterprise data, keys or runtime credentials.
 
-[MIT](LICENSE)。允许商业使用、修改和分发，须保留版权及许可声明。企业自托管实例、客户数据和私有配置不因采用本项目而需要公开；第三方依赖保留各自许可证。
+## License
+
+[MIT](LICENSE). Commercial use, modification and distribution are permitted, subject to retaining the copyright and license notices. Self-hosted deployments, customer data and private configuration do not have to be made public by adopting this project. Third-party dependencies retain their respective licenses.
