@@ -1,10 +1,10 @@
 # OrchestraCorp maintainers. A review from any one listed maintainer is required
 # for protected main once branch rules are enabled.
-* @yry0008 @icelee-asr @even-ship-it
+* @egoleecode @yry0008 @icelee-asr @even-ship-it
 
 # Security and release-sensitive paths remain visible to the same maintainer set.
-/.github/ @yry0008 @icelee-asr @even-ship-it
-/app/authz/ @yry0008 @icelee-asr @even-ship-it
-/app/identity/ @yry0008 @icelee-asr @even-ship-it
-/contracts/ @yry0008 @icelee-asr @even-ship-it
-/migrations/ @yry0008 @icelee-asr @even-ship-it
+/.github/ @egoleecode @yry0008 @icelee-asr @even-ship-it
+/app/authz/ @egoleecode @yry0008 @icelee-asr @even-ship-it
+/app/identity/ @egoleecode @yry0008 @icelee-asr @even-ship-it
+/contracts/ @egoleecode @yry0008 @icelee-asr @even-ship-it
+/migrations/ @egoleecode @yry0008 @icelee-asr @even-ship-it
